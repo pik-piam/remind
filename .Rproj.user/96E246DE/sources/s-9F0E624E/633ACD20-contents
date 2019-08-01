@@ -1,0 +1,247 @@
+---
+title: "REMIND tutorials - Creating plots to include in the compare scenarios pdf report"
+author: "Renato Rodrigues"
+output: html_document
+---
+
+
+<br/>
+
+******
+
+**This tutorial aims to help the creation of new charts for the compare scenarios report** 
+
+******
+
+<br/>
+
+Loading the required libraries
+```{r, message=FALSE}
+# the compareScenarios function is part of remind library
+library(remind)
+# other libraries are needed when manually executing parts of the compareScenarios function
+library(lucode) # required for the path function 
+library(mip) # library containing model intercomparison plot functions
+library(ggplot2)
+```
+
+<br/>
+
+Specifying the path to the .mif files to be compared:
+```{r}
+datapath <- 'data'
+# adding all scenarios found in the data folder 
+scenFolders <-  list.dirs("data", recursive=FALSE)
+scenNames <- sub("_.*","",sub(".*/", "", scenFolders)) #scenario names
+# creating vector with all mif paths
+mifPath <- path(scenFolders,paste("REMIND_generic_",scenNames,".mif",sep=""))
+histPath <- path(scenFolders,"historical.mif")
+
+mifPath
+histPath
+```
+
+<br/>
+
+Specifying the path to save the report pdf file:
+```{r}
+outputPath <- 'output/Compare Scenarios'
+outfile <- file.path(outputPath,'CompareScenarios.pdf')
+
+outfile
+```
+
+<br/>
+
+Calling the function to create the pdf report (as it would be called after the REMIND run):
+```{r}
+# normaly you would call the function to create the report, but as we want to work on new plots, we can run only the part of the function that prepare the data to working in the new charts creation
+#compareScenarios(mif=mifPath, hist=histPath, reg="all_reg", fileName = outfile) 
+```
+
+<br/>
+
+******
+
+**Loading the data**
+
+******
+
+<br/>
+
+Initializing the CompareScenarios function inputs:
+```{r}
+mif=mifPath
+hist=histPath
+reg="all_reg"
+fileName = outfile
+y=c(seq(2005,2060,5),seq(2070,2100,10));y_hist=c(seq(1960,2015,1));y_bar=c(2010,2030,2050,2100) #default function inputs
+```
+
+<br/>
+
+Data preparation code (copied directly from the compareScenarios function code in the remind library)
+```{r}
+# read model results 
+data <- NULL
+for(i in 1:length(mif)){
+  data_new <- read.report(mif[i],as.list=FALSE)
+  if (magclass::getNames(data_new,fulldim = TRUE)[["scenario"]] %in% magclass::getNames(data,fulldim = TRUE)[["scenario"]]) magclass::getNames(data_new) <- gsub(magclass::getNames(data_new,fulldim = TRUE)["scenario"],paste0(magclass::getNames(data_new,fulldim = TRUE)["scenario"],i),magclass::getNames(data_new))
+  if(all(getRegions(data) %in% getRegions(data_new))) {
+    data <- mbind(data,data_new)
+  } else {
+    if(is.null(reg)){
+      stop("the regional aggregation of the results are different, you might use reg='all_reg'")
+    } else if(reg=="all_reg"){
+      if(all(getRegions(data_new) %in% getRegions(data))) {
+        # expand data_new by old regions from data
+        oldReg         <- getRegions(data)[-which(getRegions(data) %in% getRegions(data_new))]
+        dummy_data_new <- new.magpie(oldReg,getYears(data_new),getNames(data_new),fill=NA)
+        data_new       <- mbind(data_new,dummy_data_new)
+        # compine old and new data
+        data <- mbind(data,data_new) 
+      } else {
+        # expand data by new regions from data_new
+        newReg     <- getRegions(data_new)[-which(getRegions(data_new) %in% getRegions(data))]
+        dummy_data <- new.magpie(newReg,getYears(data),getNames(data),fill=NA)
+        data       <- mbind(data,dummy_data)
+        # expand data_new by old regions from data
+        oldReg         <- getRegions(data)[-which(getRegions(data) %in% getRegions(data_new))]
+        dummy_data_new <- new.magpie(oldReg,getYears(data_new),getNames(data_new),fill=NA)
+        data_new       <- mbind(data_new,dummy_data_new)
+        # compine old and new data
+        data <- mbind(data,data_new) 
+      }
+      
+    } else { 
+      stop("the regional aggregation of the results are different, you might use reg='all_reg'")
+    }
+  }  
+}
+
+if (!(is.null(reg))) {
+  if (!reg=="all_reg") {
+     data <- data[reg,y,]
+  } else {
+     data <- data[,y,]
+  }  
+} else {
+  data <- data[,y,]
+}
+# delete "+" and "++" from variable names
+data <- deletePlus(data)
+
+# read historical data
+hist <- read.report(hist,as.list=FALSE)
+if(all(getRegions(data) %in% getRegions(hist))) {
+  hist <- hist[getRegions(data),y_hist,]
+} else {
+  if(reg=="all_reg"){
+    # fill up historical data for additional regions with 0
+    dataReg    <- getRegions(data)[-which(getRegions(data) %in% getRegions(hist))]
+    dummy_hist <- new.magpie(dataReg,getYears(hist),getNames(hist),fill=NA)
+    hist       <- mbind(hist,dummy_hist)
+    hist       <- hist[getRegions(data),y_hist,]
+  } else {
+    stop("historical data do not contain the choosen region")
+  }
+}
+```
+
+<br/>
+
+******
+
+**We can finally start working with the new charts creation!**
+
+******
+
+<br/>
+
+Creating an Area plot
+```{r}
+items<- c("FE|Solids (EJ/yr)",
+          "FE|Liquids (EJ/yr)",
+          "FE|Gases (EJ/yr)",
+          "FE|Heat (EJ/yr)",
+          "FE|Hydrogen (EJ/yr)",
+          "FE|Electricity (EJ/yr)")
+var <- data[,,intersect(items,getNames(data,dim=3))]
+
+p <- mipArea(var["GLO",,],scales="free_y")
+
+p
+```
+
+<br/>
+
+Creating a Bar plot
+```{r}
+items<- c("FE|Solids (EJ/yr)",
+          "FE|Liquids (EJ/yr)",
+          "FE|Gases (EJ/yr)",
+          "FE|Heat (EJ/yr)",
+          "FE|Hydrogen (EJ/yr)",
+          "FE|Electricity (EJ/yr)")
+var <- data[,,intersect(items,getNames(data,dim=3))]
+
+p <- mipBarYearData(var["GLO",y_bar,])
+
+p
+```
+
+<br/>
+
+Creating a Line plot
+```{r}
+p <- mipLineHistorical(data["GLO",,"SE|Electricity|Coal (EJ/yr)"],
+                       x_hist=hist["GLO",,"SE|Electricity|Coal (EJ/yr)"],
+                       ylab='SE|Electricity|Coal [EJ/yr]',
+                       scales="free_y",plot.priority=c("x_hist","x","x_proj"))
+
+p
+```
+
+<br/>
+
+******
+
+**Further steps once you are happy with your new chart and want to share the results:**
+
+******
+
+<br/>
+
+1. Download the latest version of the remind library:
+    + use SVN Update to update your local copy of the remind library to the latest version
+    + or use SVN Checkout to create a clone of the remind library in a local folder of your choice. Repository:  http://subversion/svn/magpie/libraries/remind
+2. Open the remind library project file in RStudio (remind.Rproj). 
+3. Open the compareScenarios.R file.
+4. Copy your chart code to the desired place in the function.
+    + use swlatex commands to create pdf sections or subsections to place your new chart.
+    + use swfigure function to drawn the chart in the pdf.
+Example:
+```{r, eval = FALSE}
+swlatex(sw,"\\subsection{Mitigation Indicators}")
+
+swfigure(sw,print,p,sw_option="height=8,width=8")
+```
+5. Save the compareScenarios.R file with your changes.
+6. Go to the Build tab in Rsctudio and rebuild your local remind library using your new updated files.
+7. Run the compareScenarios function to create a new pdf report and check if everything is working nicely.
+  + If the pdf report file is created without any errors you can go to the next step.
+8. Preparing the library changes commit:
+  + Load the library lucode in your RStudio console:
+```{r, eval = FALSE}
+library(lucode)
+```
++ Execute the buildLibrary function:
+```{r, eval = FALSE}
+buildLibrary("remind")
+```
+ + The function will ask for the revision type if no error is detected. Just chose minor revision. 
+8. If the buildLibrary function is executed without errors, you can finally commit your changes so everybody can use your new charts:
+ + Go to your remind library folder
+ + Choose SVN Commit, add comments and commit your new remind library version.
+9. From now on all REMIND compare scenarios reports will include your new charts.
+

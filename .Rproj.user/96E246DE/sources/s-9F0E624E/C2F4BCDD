@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1559591308173.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "C2F4BCDD",
+    "lastKnownWriteTime" : 1558089940,
+    "last_content_update" : 1558089940,
+    "path" : "~/Documents/work/libraries/remind/R/reportCrossVariables.R",
+    "project_path" : "R/reportCrossVariables.R",
+    "properties" : {
+        "cursorPosition" : "411,104",
+        "scrollLine" : "390"
+    },
+    "relative_order" : 17,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

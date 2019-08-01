@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "igdx(\"/Applications/GAMS24.5/sysdir\")\n",
+    "created" : 1512215995928.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1220882660",
+    "id" : "5112C942",
+    "lastKnownWriteTime" : 1512216043,
+    "last_content_update" : 1512216043263,
+    "path" : "~/igdx_command.R",
+    "project_path" : null,
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 15,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

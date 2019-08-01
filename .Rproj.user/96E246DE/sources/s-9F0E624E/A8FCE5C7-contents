@@ -1,0 +1,24 @@
+cat("Global .Rprofile loaded!\n")
+#options(repos = c(getOption("repos"), pik = "https://rse.pik-potsdam.de/r/packages"))
+#options(repos = c(getOption("repos"), pik2 = "https://www.pik-potsdam.de/rd3mod/R/"))
+
+#library(gdx)
+#igdx("/Users/anastasisg/Applications/GAMS/gams24.2_osx_x64_64_sfx")
+options(remind_repos=list("~/tmp/"=NULL))
+# Set mainfolder for madrat package
+#options(MADRAT_MAINFOLDER="/Users/anastasisg/Documents/work/R2")
+options(appResults=list( "REMIND"= list(file="https://rse.pik-potsdam.de/data/remind/results/rev1/overview.rds",
+                                        resultsfolder="https://rse.pik-potsdam.de/data/remind/results/rev1/",
+                                        valfile="https://rse.pik-potsdam.de/data/remind/results/rev1/validation.rds", 
+                                        username="remind",
+                                        password="dr4g0nsc4nfly"),"MAgPIE"= list(file="https://rse.pik-potsdam.de/data/magpie/results/rev1/overview.rds",
+                                       resultsfolder="https://rse.pik-potsdam.de/data/magpie/results/rev1/",
+                                       valfile="https://rse.pik-potsdam.de/data/magpie/results/rev1/validation.rds",
+                                       username="magpie",
+                                       password="b1rdsc4nfly")))
+
+
+
+# Set mainfolder for madrat package
+options(MADRAT_MAINFOLDER="/Users/anastasisg/Documents/work/R2")
+

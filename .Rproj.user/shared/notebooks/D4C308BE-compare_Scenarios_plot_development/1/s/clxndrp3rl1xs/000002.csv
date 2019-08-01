@@ -1,0 +1,6 @@
+"0","# the compareScenarios function is part of remind library"
+"0","library(remind)"
+"0","# other libraries are needed when manually executing parts of the compareScenarios function"
+"0","library(lucode) # required for the path function "
+"0","library(mip) # library containing model intercomparison plot functions"
+"0","library(ggplot2)"

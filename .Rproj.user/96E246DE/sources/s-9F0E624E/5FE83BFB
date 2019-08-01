@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1550231942982.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "5FE83BFB",
+    "lastKnownWriteTime" : 1553605103,
+    "last_content_update" : 1553605103,
+    "path" : "~/Documents/work/libraries/remind/R/compareScenarios.R",
+    "project_path" : "R/compareScenarios.R",
+    "properties" : {
+        "cursorPosition" : "514,14",
+        "docOutlineVisible" : "0",
+        "scrollLine" : "498"
+    },
+    "relative_order" : 30,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

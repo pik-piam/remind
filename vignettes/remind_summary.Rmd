@@ -1,0 +1,219 @@
+---
+title: "Adding plots to the REMIND_summary.pdf"
+author: "David Klein"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Adding plots to the REMIND_summary.pdf}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+# Learning objectives
+
+* Add code for a new plot to the validationSummary function in the remind package
+* Rebuild the package
+* Generate a pdf containing the new plot
+* Commit your changes to the repository
+
+# Introduction
+
+The `REMIND_summary_*.pdf` compiles plots of REMIND's most relevant output variables contained in the REMIND_generic.mif. To have it generated automatically after a REMIND finished it needs to be listed in the default.cfg:
+
+```{r, eval=FALSE}
+cfg$output <- c("reporting","validation","validationSummary")
+```
+
+This will cause the script `scripts/output/single/validationSummary.R` to be executed at the end of a REMIND run, which in turn calls the function `validationSummary()` from the remind library that finally produces the `REMIND_summary_*.pdf`.
+
+You can also call the script by executing in your command line
+
+```{r, eval=FALSE}
+Rscript output.R
+```
+
+in the main directory of your REMIND run. Then follow the instructions.
+
+# Call the (untouched) function
+
+Before changing the code of the function let's see how it works and what it does. Install the latest version of the remind library.
+
+```{r, eval=FALSE}
+install.packages("remind")
+```
+
+Initialize some variables and download test data.
+```{r, eval=FALSE}
+# validationSummary() is part of remind library
+library(remind)
+
+# Specifying path to .mif and .gdx files.
+reportfile <- "REMIND_generic_RCP26.mif"
+gdx        <- "fulldata.gdx"
+outfile    <- "validationSummary.pdf"
+hist       <- NULL
+
+# Download test data from PIK's RSE server
+download.file("http://rse.pik-potsdam.de/data/example/fulldata.gdx", "fulldata.gdx",mode = "wb")
+download.file("http://rse.pik-potsdam.de/data/example/REMIND_generic_RCP26.mif", "REMIND_generic_RCP26.mif")
+
+```
+
+Call the function with these inputs to produce entire PDF (as it would be called after REMIND run):
+
+```{r, eval=FALSE}
+validationSummary(gdx = gdx, reportfile = reportfile, outfile = outfile, hist = hist)
+```
+
+# Get the code
+
+Please note: installing a R package like `remind` on your computer **_is a different thing than_** downloading the R code of this package from the SVN repository. To make changes to the `validationSummary()` function you need to checkout the remind library from SVN. Eeither use http://subversion/svn/magpie/libraries/remind if you only want the code of the remind library, or use http://subversion/svn/magpie/libraries if you want it together with the code of all other R libraries.
+
+Open your RStudio, click **File -> Open Project** and browse to the location where you downloaded the source code of the remind package and double click on `remind.Rproj`. If not automatically openend, please open the file `validationSummary.R` in the R subdirectory. 
+
+# Code chunk of a single plot
+
+So far there are two types of plots present in the code: an area plot generated using `mipArea` and a line plot generated using `mipLineHistorical` from the `mip` package.
+
+## Area plot
+
+A typical code chunk that generates an area plot looks like this:
+
+```{r, eval=FALSE}
+# ---- FE Transport ----
+swlatex(sw,"\\subsection{FE Transport}")
+
+var.tot <-"FE|Transport (EJ/yr)"
+vars <- c("FE|Transport|Liquids|Oil (EJ/yr)",
+          "FE|Transport|Liquids|Coal (EJ/yr)",
+          "FE|Transport|Liquids|Biomass (EJ/yr)",
+          #"FE|Transport|Gases (EJ/yr)",
+          "FE|Transport|Electricity (EJ/yr)",
+          "FE|Transport|Hydrogen (EJ/yr)"
+)
+
+p <- mipArea(data["GLO",,vars], total = data["GLO",,var.tot]) + theme(legend.position="none")
+swfigure(sw,print,p,fig.width=0.5)
+
+p <- mipArea(data[,,vars]["GLO",,invert=TRUE], total = data[,,var.tot]["GLO",,invert=TRUE])
+swfigure(sw,print,p,fig.width=1)
+
+```
+
+* There is an introductory comment
+* The call of the LaTeX wrapper function providing the caption of the subsection
+* The definition of the variable name that holds the total values in the REMIND_generic.mif
+* The individual subcategories
+* The generation of the global plot using mipArea
+* The call of the LaTeX wrapper function that adds the plot to the pdf
+* The same for the regional plots
+
+## Line plot
+
+Let's have a short look at the line plots. Line plots (234 ff). Here the plot code is already wrapped in a call to swfigure because we only want it in the PDF later.
+```{r, eval=FALSE}
+swfigure(sw,mipLineHistorical, data[,,"Price|Final Energy|Liquids|Transport (US$2005/GJ)"],x_hist=NULL,
+                                  ylab='Price|Final Energy|Liquids|Transport [US$2005/GJ]',color.dim="region",facet.dim="scenario",color.dim.name="Region",
+                                  legend.ncol=8,plot.priority=c("x_hist","x","x_proj"),sw_option="height=10,width=9")
+```
+
+If we want to look at it directly, we just call mipLineHistorical()
+```{r, eval=FALSE}
+library(mip)
+mipLineHistorical(data[,,"Price|Final Energy|Liquids|Transport (US$2005/GJ)"],x_hist=NULL,
+                                 ylab='Price|Final Energy|Liquids|Transport [US$2005/GJ]',color.dim="region",facet.dim="scenario",color.dim.name="Region",
+                                 legend.ncol=8,plot.priority=c("x_hist","x","x_proj"))
+```
+
+
+# Manually executing parts of the function
+
+This is a good way to see what parts of the code do and to create new plots. You can execute the code line by line by placing the cursor somewhere in the line you want to execute an then press **CTRL + ENTER**
+
+Load other libraries needed when manually executing parts of `validationSummary()`
+```{r, eval=FALSE}
+library(mip)
+```
+
+Read data: lines 34ff
+```{r, eval=FALSE}
+data <- read.report(reportfile,as.list=FALSE)
+data <- collapseNames(data)
+data <- data[,getYears(data)<="y2100",]
+```
+
+Example of individual plot (lines 124 ff). Now change the code (pick other variables or whatever). Let's pick fossil fuels only
+```{r, eval = FALSE}
+vars <- c("PE|Coal|w/ CCS (EJ/yr)", 
+          "PE|Coal|w/o CCS (EJ/yr)",
+          "PE|+|Oil (EJ/yr)",
+          "PE|Gas|w/ CCS (EJ/yr)",
+          "PE|Gas|w/o CCS (EJ/yr)",
+          "PE|+|Nuclear (EJ/yr)")
+
+p <- mipArea(data["GLO",,vars], total = FALSE) + theme(legend.position="none")
+```
+
+Now let's have a look at the plot
+```{r, eval = FALSE}
+print(p)
+```
+
+Look at the beautiful coal phase out!
+
+# Add a new plot
+
+Insert the code chunk of the plot at an appropriate place insde the `validationSummary.R`. Don't forget to add a comment and a LaTeX title.
+
+```{r, eval=FALSE}
+# ---- PE Fossil ----
+swlatex(sw,"\\subsection{PE Fossil}")
+
+vars <- c("PE|Coal|w/ CCS (EJ/yr)", 
+          "PE|Coal|w/o CCS (EJ/yr)",
+          "PE|+|Oil (EJ/yr)",
+          "PE|Gas|w/ CCS (EJ/yr)",
+          "PE|Gas|w/o CCS (EJ/yr)",
+          "PE|+|Nuclear (EJ/yr)")
+
+p <- mipArea(data["GLO",,vars], total = FALSE) + theme(legend.position="none")
+swfigure(sw,print,p,fig.width=0.5)
+
+p <- mipArea(data[,,vars]["GLO",,invert=TRUE], total = FALSE)
+swfigure(sw,print,p,fig.width=1)
+
+```
+
+# Rebuild the package
+
+Now that you have added new code to the function you must rebuild the package for the new code to take effect by
+
+* **either** choosing the **BUILD** tab in RStudio and clicking on **Install and Restart**
+* **or** going to the menue and clicking **Build -> Install and Restart**
+* **or** pressing **CTRL + SHIFT + B**
+
+For details please refer to this Wiki explaining the universe of our packages and how to build them https://redmine.pik-potsdam.de/projects/mo/wiki/R_-_Libraries_-_Installation_Updating_and_Commiting
+
+# Generate a pdf containing the new plot
+
+Now call the function again. The resulting pdf should contain your new plot.
+
+```{r, eval=FALSE}
+validationSummary(gdx = gdx, reportfile = reportfile, outfile = outfile, hist = hist)
+```
+
+# Commit your changes to the repository
+
+So far the new code is only available on your local machine. To make it accessible for everyone and to install the updated remind package on the cluster please do the following. Make sure your are in the main folder of the source code of the remind package. Make sure to delte all files that might have been generated from the steps above (pdfs, tex files, figures folder, ...). Make sure your packages are up-to-date. Then rebuild the package
+
+```{r, eval=FALSE}
+lucode::buildLibrary()
+```
+
+If this runs through without errors follow the instructions. Then commit the changes to the SVN using the command line "SVN Commit" or any other SVN tool (e.g. Tortoise SVN). Along with your changes you will see the DESCRIPTION and NAMESPACE file, which have also been updated reflecting the new dependencies, reversion number etc.
+
+After committing the package will be built and installed automatically on the cluster, no further actions needed.

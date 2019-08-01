@@ -1,0 +1,519 @@
+data <- mbind(data,data_new)
+} else {
+if(is.null(reg)){
+stop("the regional aggregation of the results are different, you might use reg='all_reg'")
+} else if(reg=="all_reg"){
+if(all(getRegions(data_new) %in% getRegions(data))) {
+# expand data_new by old regions from data
+oldReg         <- getRegions(data)[-which(getRegions(data) %in% getRegions(data_new))]
+dummy_data_new <- new.magpie(oldReg,getYears(data_new),getNames(data_new),fill=NA)
+data_new       <- mbind(data_new,dummy_data_new)
+# compine old and new data
+data <- mbind(data,data_new)
+} else {
+# expand data by new regions from data_new
+newReg     <- getRegions(data_new)[-which(getRegions(data_new) %in% getRegions(data))]
+dummy_data <- new.magpie(newReg,getYears(data),getNames(data),fill=NA)
+data       <- mbind(data,dummy_data)
+# expand data_new by old regions from data
+oldReg         <- getRegions(data)[-which(getRegions(data) %in% getRegions(data_new))]
+dummy_data_new <- new.magpie(oldReg,getYears(data_new),getNames(data_new),fill=NA)
+data_new       <- mbind(data_new,dummy_data_new)
+# compine old and new data
+data <- mbind(data,data_new)
+}
+} else {
+stop("the regional aggregation of the results are different, you might use reg='all_reg'")
+}
+}
+}
+if (!(is.null(reg))) {
+if (!reg=="all_reg") {
+data <- data[reg,y,]
+} else {
+data <- data[,y,]
+}
+} else {
+data <- data[,y,]
+}
+# delete "+" and "++" from variable names
+data <- deletePlus(data)
+# read historical data
+hist <- read.report(hist,as.list=FALSE)
+if(all(getRegions(data) %in% getRegions(hist))) {
+hist = hist[getRegions(data),,]
+if ( any(grepl("EDGE_SSP2",getNames(hist)))){
+hist_edge = hist[,union(y_hist,y),]
+hist = hist[,,"EDGE_SSP2", invert = T]
+}
+hist <- hist[,y_hist,]
+} else {
+if(reg=="all_reg"){
+# fill up historical data for additional regions with 0
+dataReg    <- getRegions(data)[-which(getRegions(data) %in% getRegions(hist))]
+dummy_hist <- new.magpie(dataReg,getYears(hist),getNames(hist),fill=NA)
+hist       <- mbind(hist,dummy_hist)
+hist = hist[getRegions(data),,]
+if ( any(grepl("EDGE_SSP2",getNames(hist)))){
+#EDGE projections are stored in hist. Retrieve them
+hist_edge = hist[,union(y_hist,y),]
+hist = hist[,,"EDGE_SSP2", invert = T]
+}
+hist <- hist[,y_hist,]
+} else {
+stop("historical data do not contain the choosen region")
+}
+}
+# read model results
+data <- NULL
+for(i in 1:length(mif)){
+data_new <- read.report(mif[i],as.list=FALSE)
+if (magclass::getNames(data_new,fulldim = TRUE)[["scenario"]] %in% magclass::getNames(data,fulldim = TRUE)[["scenario"]]) magclass::getNames(data_new) <- gsub(magclass::getNames(data_new,fulldim = TRUE)["scenario"],paste0(magclass::getNames(data_new,fulldim = TRUE)["scenario"],i),magclass::getNames(data_new))
+if(all(getRegions(data) %in% getRegions(data_new))) {
+data <- mbind(data,data_new)
+} else {
+if(is.null(reg)){
+stop("the regional aggregation of the results are different, you might use reg='all_reg'")
+} else if(reg=="all_reg"){
+if(all(getRegions(data_new) %in% getRegions(data))) {
+# expand data_new by old regions from data
+oldReg         <- getRegions(data)[-which(getRegions(data) %in% getRegions(data_new))]
+dummy_data_new <- new.magpie(oldReg,getYears(data_new),getNames(data_new),fill=NA)
+data_new       <- mbind(data_new,dummy_data_new)
+# compine old and new data
+data <- mbind(data,data_new)
+} else {
+# expand data by new regions from data_new
+newReg     <- getRegions(data_new)[-which(getRegions(data_new) %in% getRegions(data))]
+dummy_data <- new.magpie(newReg,getYears(data),getNames(data),fill=NA)
+data       <- mbind(data,dummy_data)
+# expand data_new by old regions from data
+oldReg         <- getRegions(data)[-which(getRegions(data) %in% getRegions(data_new))]
+dummy_data_new <- new.magpie(oldReg,getYears(data_new),getNames(data_new),fill=NA)
+data_new       <- mbind(data_new,dummy_data_new)
+# compine old and new data
+data <- mbind(data,data_new)
+}
+} else {
+stop("the regional aggregation of the results are different, you might use reg='all_reg'")
+}
+}
+}
+if (!(is.null(reg))) {
+if (!reg=="all_reg") {
+data <- data[reg,y,]
+} else {
+data <- data[,y,]
+}
+} else {
+data <- data[,y,]
+}
+# delete "+" and "++" from variable names
+data <- deletePlus(data)
+# read historical data
+hist <- read.report(hist,as.list=FALSE)
+getwd()
+setwd("/Users/anastasisg/Documents/work/compare_scenarios_plot_development/")
+# the compareScenarios function is part of remind library
+library(remind)
+# other libraries are needed when manually executing parts of the compareScenarios function
+library(lucode) # required for the path function
+library(mip) # library containing model intercomparison plot functions
+library(ggplot2)
+datapath <- 'data'
+# adding all scenarios found in the data folder
+scenFolders <-  list.dirs("data", recursive=FALSE)
+scenNames <- sub("_.*","",sub(".*/", "", scenFolders)) #scenario names
+# creating vector with all mif paths
+mifPath <- path(scenFolders,paste("REMIND_generic_",scenNames,".mif",sep=""))
+histPath <- path(scenFolders,"historical.mif")
+mifPath
+histPath
+outputPath <- 'output/Compare Scenarios'
+outfile <- file.path(outputPath,'CompareScenarios.pdf')
+outfile
+mif=mifPath
+hist=histPath
+reg="all_reg"
+fileName = outfile
+y=c(seq(2005,2060,5),seq(2070,2100,10));y_hist=c(seq(1960,2015,1));y_bar=c(2010,2030,2050,2100) #default function inputs
+data <- NULL
+for(i in 1:length(mif)){
+data_new <- read.report(mif[i],as.list=FALSE)
+if (magclass::getNames(data_new,fulldim = TRUE)[["scenario"]] %in% magclass::getNames(data,fulldim = TRUE)[["scenario"]]) magclass::getNames(data_new) <- gsub(magclass::getNames(data_new,fulldim = TRUE)["scenario"],paste0(magclass::getNames(data_new,fulldim = TRUE)["scenario"],i),magclass::getNames(data_new))
+if(all(getRegions(data) %in% getRegions(data_new))) {
+data <- mbind(data,data_new)
+} else {
+if(is.null(reg)){
+stop("the regional aggregation of the results are different, you might use reg='all_reg'")
+} else if(reg=="all_reg"){
+if(all(getRegions(data_new) %in% getRegions(data))) {
+# expand data_new by old regions from data
+oldReg         <- getRegions(data)[-which(getRegions(data) %in% getRegions(data_new))]
+dummy_data_new <- new.magpie(oldReg,getYears(data_new),getNames(data_new),fill=NA)
+data_new       <- mbind(data_new,dummy_data_new)
+# compine old and new data
+data <- mbind(data,data_new)
+} else {
+# expand data by new regions from data_new
+newReg     <- getRegions(data_new)[-which(getRegions(data_new) %in% getRegions(data))]
+dummy_data <- new.magpie(newReg,getYears(data),getNames(data),fill=NA)
+data       <- mbind(data,dummy_data)
+# expand data_new by old regions from data
+oldReg         <- getRegions(data)[-which(getRegions(data) %in% getRegions(data_new))]
+dummy_data_new <- new.magpie(oldReg,getYears(data_new),getNames(data_new),fill=NA)
+data_new       <- mbind(data_new,dummy_data_new)
+# compine old and new data
+data <- mbind(data,data_new)
+}
+} else {
+stop("the regional aggregation of the results are different, you might use reg='all_reg'")
+}
+}
+}
+if (!(is.null(reg))) {
+if (!reg=="all_reg") {
+data <- data[reg,y,]
+} else {
+data <- data[,y,]
+}
+} else {
+data <- data[,y,]
+}
+# delete "+" and "++" from variable names
+data <- deletePlus(data)
+# read historical data
+hist <- read.report(hist,as.list=FALSE)
+if(all(getRegions(data) %in% getRegions(hist))) {
+hist = hist[getRegions(data),,]
+if ( any(grepl("EDGE_SSP2",getNames(hist)))){
+hist_edge = hist[,union(y_hist,y),]
+hist = hist[,,"EDGE_SSP2", invert = T]
+}
+hist <- hist[,y_hist,]
+} else {
+if(reg=="all_reg"){
+# fill up historical data for additional regions with 0
+dataReg    <- getRegions(data)[-which(getRegions(data) %in% getRegions(hist))]
+dummy_hist <- new.magpie(dataReg,getYears(hist),getNames(hist),fill=NA)
+hist       <- mbind(hist,dummy_hist)
+hist = hist[getRegions(data),,]
+if ( any(grepl("EDGE_SSP2",getNames(hist)))){
+#EDGE projections are stored in hist. Retrieve them
+hist_edge = hist[,union(y_hist,y),]
+hist = hist[,,"EDGE_SSP2", invert = T]
+}
+hist <- hist[,y_hist,]
+} else {
+stop("historical data do not contain the choosen region")
+}
+}
+items<- c("FE|Solids (EJ/yr)",
+"FE|Liquids (EJ/yr)",
+"FE|Gases (EJ/yr)",
+"FE|Heat (EJ/yr)",
+"FE|Hydrogen (EJ/yr)",
+"FE|Electricity (EJ/yr)")
+var <- data[,,intersect(items,getNames(data,dim=3))]
+p <- mipBarYearData(var["GLO",y_bar,])
+p
+getItems(data)
+getItems(data,dim = 3)
+grep("Final",getItems(data,dim = 3))
+grep("Final",getItems(data,dim = 3),v=T)
+grep("Final Energy",getItems(data,dim = 3),v=T)
+grep("Final Energy",getItems(data,dim = 3.3),v=T)
+grep("^Final Energy",getItems(data,dim = 3.3),v=T)
+grep("\^Final Energy",getItems(data,dim = 3.3),v=T)
+grep("\\^Final Energy",getItems(data,dim = 3.3),v=T)
+grep("^Price ",getItems(data,dim = 3.3),v=T)
+grep("^Price",getItems(data,dim = 3.3),v=T)
+grep("^Final",getItems(data,dim = 3.3),v=T)
+grep("^FE",getItems(data,dim = 3.3),v=T)
+var
+intersect(items,getNames(data,dim=3))
+varis <- c("FE|Industry",
+"FE|Industry|Solids|Coal",
+"FE|Residential and Commercial|Solids",
+"FE|Residential and Commercial|Solids|Biomass",
+"FE|Residential and Commercial",
+"FE|Transportation",
+"FE",
+"Emi|CO2|Carbon Capture and Storage|Fossil|Energy|Demand|Industry",
+"SE|Electricity")
+length(varis)
+var <- data[,,intersect(varis,getNames(data,dim=3))]
+getItems(var,dim = 3.3)
+getItems(var,dim = 3.2)
+intersect(varis,getNames(data,dim=3))
+varis
+getNames(data,dim=3)
+varis <- c("FE|Industry (EJ/yr)",
+"FE|Industry|Solids|Coal (EJ/yr)",
+"FE|Residential and Commercial|Solids (EJ/yr)",
+"FE|Residential and Commercial|Solids|Biomass (EJ/yr)",
+"FE|Residential and Commercial (EJ/yr)",
+"FE|Transportation (EJ/yr)",
+"FE (EJ/yr)",
+"Emi|CO2|Carbon Capture and Storage|Fossil|Energy|Demand|Industry",
+"SE|Electricity (EJ/yr)")
+var <- data[,,intersect(varis,getNames(data,dim=3))]
+getItems(var,dim = 3.2)
+getItems(var,dim = 3.3)
+varis <- c("FE|Industry (EJ/yr)",
+"FE|Industry|Solids|Coal (EJ/yr)",
+"FE|Buildings|Solids (EJ/yr)",
+"FE|Buildings|Solids|Biomass (EJ/yr)",
+"FE|Buildings (EJ/yr)",
+"FE|Transport (EJ/yr)",
+"FE (EJ/yr)",
+"Emi|CO2|Carbon Capture and Storage|Fossil|Energy|Demand|Industry",
+"SE|Electricity (EJ/yr)")
+var <- data[,,intersect(varis,getNames(data,dim=3))]
+getItems(var,dim = 3.3)
+varis <- c("FE|Industry (EJ/yr)",
+"FE|Industry|Solids|Coal (EJ/yr)",
+"FE|Buildings|Solids (EJ/yr)",
+"FE|Buildings|Solids|Biomass (EJ/yr)",
+"FE|Buildings (EJ/yr)",
+"FE|Transport (EJ/yr)",
+"FE (EJ/yr)",
+"Emi|CO2|Carbon Capture and Storage|Fossil|Energy|Demand|Industry  (Mt CO2/yr)",
+"SE|Electricity (EJ/yr)")
+var <- data[,,intersect(varis,getNames(data,dim=3))]
+getItems(var,dim = 3.3)
+varis <- c("FE|Industry (EJ/yr)",
+"FE|Industry|Solids|Coal (EJ/yr)",
+"FE|Buildings|Solids (EJ/yr)",
+"FE|Buildings|Solids|Biomass (EJ/yr)",
+"FE|Buildings (EJ/yr)",
+"FE|Transport (EJ/yr)",
+"FE (EJ/yr)",
+"Emi|CO2|Carbon Capture and Storage|Fossil|Energy|Demand|Industry (Mt CO2/yr)",
+"SE|Electricity (EJ/yr)")
+var <- data[,,intersect(varis,getNames(data,dim=3))]
+getItems(var,dim = 3.3)
+grep("Useful",getItems(data,dim = 3.3),v=T)
+head(var)
+getNames(var)
+var_bu <- var
+renm <- list("FE|Industry (EJ/yr)"="Final Energy|Industry (EJ/yr)","FE|Industry|Solids|Coal (EJ/yr)"="Final Energy|Industry|Solids|Coal (EJ/yr)")
+renm
+as.character(renm[getNames(var)])
+as.character(renm[getItems(var,3.3)])
+getSets(var)
+fulldim(var)
+getNames(var)
+gsub(names(renm),renm,getNames(var))
+gsub(names(renm),renm,getNames(var,dim = 3.3))
+gsub(names(renm),renm,getNames(var,dim = 33))
+gsub(names(renm),renm,getNames(var,dim = 3))
+getNames(var,3.3)
+getNames(var,"variable")
+getNames(var,fulldim = T)
+getNames(var,fulldim = T)$variable
+gsub(names(renm),renm,getNames(var,fulldim = T)$variable)
+gsub(names(renm),as.character(renm),getNames(var,fulldim = T)$variable)
+grep("FE|Transport|Electricity",getItems(data,dim = 3.3),v=T)
+grep("FE\\|Transport\\|Electricity",getItems(data,dim = 3.3),v=T)
+varis <- c("FE|Industry (EJ/yr)",
+"FE|Industry|Solids|Coal (EJ/yr)",
+"FE|Buildings|Solids (EJ/yr)",
+"FE|Buildings|Solids|Biomass (EJ/yr)",
+"FE|Buildings (EJ/yr)",
+"FE|Transport (EJ/yr)",
+"FE (EJ/yr)",
+"Emi|CO2|Carbon Capture and Storage|Fossil|Energy|Demand|Industry (Mt CO2/yr)",
+"SE|Electricity (EJ/yr)")
+varind <- data[,,intersect(varis,getNames(data,dim=3))]
+varind <- mbind(varind,
+setNames(data[,,"FE|Transport|Electricity (EJ/yr)"])*0.85, sub("FE|Transport|Electricity (EJ/yr)","Useful Energy|Transportation|Electricity (EJ/yr)",getNames(data[,,"FE|Transport|Electricity (EJ/yr)"])))
+sub("FE|Transport|Electricity (EJ/yr)","Useful Energy|Transportation|Electricity (EJ/yr)",getNames(data[,,"FE|Transport|Electricity (EJ/yr)"])
+)
+getNames(data[,,"FE|Transport|Electricity (EJ/yr)"])
+sub("FE\\|Transport\\|Electricity (EJ/yr)","Useful Energy|Transportation|Electricity (EJ/yr)",getNames(data[,,"FE|Transport|Electricity (EJ/yr)"])
+)
+sub("FE\|Transport\|Electricity (EJ/yr)","Useful Energy|Transportation|Electricity (EJ/yr)",getNames(data[,,"FE|Transport|Electricity (EJ/yr)"]))
+sub("FE|Transport|Electricity (EJ/yr)","Useful Energy|Transportation|Electricity (EJ/yr)",getNames(data[,,"FE|Transport|Electricity (EJ/yr)"]),fixed = T)
+varind <- mbind(varind,
+setNames(data[,,"FE|Transport|Electricity (EJ/yr)"])*0.85, sub("FE|Transport|Electricity (EJ/yr)","Useful Energy|Transportation|Electricity (EJ/yr)",getNames(data[,,"FE|Transport|Electricity (EJ/yr)"]),fixed = T))
+varind
+setNames(data[,,"FE|Transport|Electricity (EJ/yr)"])*0.85, sub("FE|Transport|Electricity (EJ/yr)","Useful Energy|Transportation|Electricity (EJ/yr)",getNames(data[,,"FE|Transport|Electricity (EJ/yr)"]),fixed = T)
+varind <- mbind(varind,
+setNames(data[,,"FE|Transport|Electricity (EJ/yr)"])*0.85, sub("FE|Transport|Electricity (EJ/yr)","Useful Energy|Transportation|Electricity (EJ/yr)",getNames(data[,,"FE|Transport|Electricity (EJ/yr)"]),fixed = T)))
+setNames(data[,,"FE|Transport|Electricity (EJ/yr)"])*0.85, sub("FE|Transport|Electricity (EJ/yr)","Useful Energy|Transportation|Electricity (EJ/yr)",getNames(data[,,"FE|Transport|Electricity (EJ/yr)"]),fixed = T))
+sub("FE|Transport|Electricity (EJ/yr)","Useful Energy|Transportation|Electricity (EJ/yr)",getNames(data[,,"FE|Transport|Electricity (EJ/yr)"]),fixed = T)
+setNames(data[,,"FE|Transport|Electricity (EJ/yr)"])*0.85, sub("FE|Transport|Electricity (EJ/yr)","Useful Energy|Transportation|Electricity (EJ/yr)",getNames(data[,,"FE|Transport|Electricity (EJ/yr)"]),fixed = T))
+data[,,"FE|Transport|Electricity (EJ/yr)"])*0.85
+data[,,"FE|Transport|Electricity (EJ/yr)"])*0.85
+varind <- mbind(varind,
+setNames(data[,,"FE|Transport|Electricity (EJ/yr)"]*0.85, sub("FE|Transport|Electricity (EJ/yr)","Useful Energy|Transportation|Electricity (EJ/yr)",getNames(data[,,"FE|Transport|Electricity (EJ/yr)"]),fixed = T)))
+setNames(data[,,"FE|Transport|Electricity (EJ/yr)"]*0.85, sub("FE|Transport|Electricity (EJ/yr)","Useful Energy|Transportation|Electricity (EJ/yr)",getNames(data[,,"FE|Transport|Electricity (EJ/yr)"]),fixed = T))
+varind <- data[,,intersect(varis,getNames(data,dim=3))]
+varind <- mbind(varind,
+setNames(data[,,"FE|Transport|Electricity (EJ/yr)"]*0.85, sub("FE|Transport|Electricity (EJ/yr)","Useful Energy|Transportation|Electricity (EJ/yr)",getNames(data[,,"FE|Transport|Electricity (EJ/yr)"]),fixed = T)))
+getNames(varind)
+# FIGURE 5
+scen <- c("LTA_BAU_h","BG_BAU","LTA_BAU_l","NL_BAU")
+dat <- xq %>% filter(region %in% c("CHN"),
+period %in% c(2010,2015,2020,2025,2030,2035,2040,2045,2050),
+scenario %in% scen,
+variable %in% c("Investments|Non-ESM","Energy Investments"))
+library(luplot)
+library(ggplot2)
+library(dplyr)
+library(mip)
+library(fmsb)
+scen <- c("LTA_BAU_h","BG_BAU","LTA_BAU_l","NL_BAU")
+dat <- xq %>% filter(region %in% c("CHN"),
+period %in% c(2010,2015,2020,2025,2030,2035,2040,2045,2050),
+scenario %in% scen,
+variable %in% c("Investments|Non-ESM","Energy Investments"))
+dat$scenario <- factor(dat$scenario,scen)
+levels(dat$scenario) <- as.character(plotstyle(levels(dat$scenario),out = "legend"))
+mycolors <- as.character(plotstyle(scen))
+ggplot(dat,aes(x=period,y=value)) +
+labs(y="Billion US$2005/yr",x="Year") +
+scale_color_manual(values=mycolors) +
+#geom_point(aes(shape=uncertainty)) + scale_shape_manual(values = plotstyle(as.character(unique(dat$uncertainty))))
+#  geom_point(aes(color=scenario,shape=uncertainty),size=3.5)   + scale_shape_manual(values = c("ATL"=15, "Best-Guess"=16, "NL"=17)) +
+geom_line(aes(color=scenario),size=2)  +
+theme(legend.key.width =unit(2,"cm"),legend.position = "bottom",panel.background = NULL,text = element_text(size=20)) + facet_wrap(~ variable,scales = "free")
+# FIGURE 5
+scen <- c("LTA_BAU_h","BG_BAU","LTA_BAU_l","NL_BAU")
+dat <- xq %>% filter(region %in% c("CHN"),
+period %in% c(2010,2015,2020,2025,2030,2035,2040,2045,2050),
+scenario %in% scen,
+variable %in% c("Investments|Non-ESM","Energy Investments"))
+library(mip)
+grep("Emi|CO2|Energy|Demand|Transport (Mt CO2/yr)",getItems(data,dim = 3))
+grep("Emi|CO2|Energy|Demand|Transport (Mt CO2/yr)",getItems(data,dim = 3),v=T)
+grep("Emi\\|CO2\\|Energy\\|Demand\\|Transport (Mt CO2/yr)",getItems(data,dim = 3),v=T)
+grep("Emi|CO2|Carbon Capture and Storage|Fossil|Energy|Demand|Industry (Mt CO2/yr)",getItems(data,dim = 3),v=T)
+grep("Emi\\|CO2\\|Carbon Capture and Storage\\|Fossil\\|Energy\\|Demand\\|Industry (Mt CO2/yr)",getItems(data,dim = 3),v=T)
+grep("Emi\\|CO2\\|Carbon Capture and Storage\\|Fossil\\|Energy Demand\\|Industry (Mt CO2/yr)",getItems(data,dim = 3),v=T)
+grep("Energy Demand",getItems(data,dim = 3),v=T)
+grep("Energy Demand",getItems(data,dim = 3.3),v=T)
+grep("Demand",getItems(data,dim = 3.3),v=T)
+librr
+library(mip)
+load("~/Documents/work/libraries/remind/.RData")
+# the compareScenarios function is part of remind library
+library(remind)
+# other libraries are needed when manually executing parts of the compareScenarios function
+library(lucode) # required for the path function
+library(mip) # library containing model intercomparison plot functions
+library(ggplot2)
+View(a)
+rm(a)
+rm(b)
+renm
+vignette("mip")
+varis
+library(mip)
+str(data)
+str(data_new)
+getItems(data,3.1)
+getItems(data_new,3.2)
+getItems(data_new,3.1)
+mipBarYearData(data["GLO",2050,varis[1:4]])
+mipBarYearData(data["GLO",2050,varis[1:4]],colour = "scenario")
+library(ggplot2)
+library(quitte)
+dataq <- as.quitte(data)
+dataq50 <- dplyr::filter(period=2050)
+dataq50 <- dplyr::filter(data,period=2050)
+dataq50 <- dplyr::filter(dataq,period=2050)
+dataq50 <- dplyr::filter(dataq,period==2050)
+head(dataq50)
+dataq50 <- dplyr::filter(dataq,period==2050)
+head(dataq50)
+dataq50 <- dplyr::filter(dataq,period==2050,variable %in% c("FE|Industry",
+"FE|Industry|Solids|Coal (EJ/yr)",
+"FE|Buildings|Solids (EJ/yr)",
+"FE|Buildings|Solids|Biomass (EJ/yr)",
+"FE|Buildings",
+"FE|Transport",
+"FE"))
+head(dataq50)
+unique(dataq50[,variable])
+unique(dataq50[,"variable"])
+geom_bar( data, aes_string(x = scenario, y = value),stat = "identity")
+geom_bar( data, aes(x = scenario, y = value),stat = "identity")
+geom_bar( dataq50, aes(x = scenario, y = value),stat = "identity")
+geom_bar( dataq50)
+geom_bar(dataq50)
+p <- ggplot()
+p <- p + geom_bar(dataq50)
+p <- p + geom_bar(dataq50,aes(x = scenario, y = value),stat = "identity"))
+p <- p + geom_bar(dataq50,aes(x = scenario, y = value),stat = "identity")
+p <- p + geom_bar(dataq50,aes(x = scenario, y = value))
+p
+p <- ggplot(dataq50, aes(x = scenario, y = value))
+p <- p + geom_bar()
+dataq50
+levels(dataq50$scenario)
+p
+p <- ggplot(dataq50, aes(x = scenario, y = value))
+p
+p + geom_bar()
+p + geom_col()
+p + geom_col() + facet_wrap(variable)
+p + geom_col() + facet_wrap("variable")
+p + geom_col(aes(fill=scenario)) + facet_wrap("variable")
+p + geom_bar(aes(fill=scenario)) + facet_wrap("variable")
+p + geom_col(aes(fill=scenario,size=1)) + facet_wrap("variable")
+p + geom_col(aes(fill=scenario)size=1) + facet_wrap("variable")
+p + geom_col(aes(fill=scenario),size=1) + facet_wrap("variable")
+p + geom_col(aes(fill=scenario),size=0.5) + facet_wrap("variable")
+p + geom_col(aes(fill=scenario),width =0.5) + facet_wrap("variable")
+varis <- c("FE|Industry",
+"FE|Industry|Solids|Coal",
+"FE|Buildings|Solids",
+"FE|Buildings|Solids|Biomass",
+"FE|Buildings",
+"FE|Transport",
+"FE",
+"Emi|CO2|Carbon Capture and Storage|Fossil|Energy|Demand|Industry",
+"SE|Electricity")
+dataq50 <- dplyr::filter(dataq,period==2050,variable %in% varis)
+View(dataq50)
+p + geom_col(aes(fill=scenario),width =0.5) + facet_wrap("variable")
+p <- ggplot(dataq50, aes(x = scenario, y = value))
+p + geom_col(aes(fill=scenario),width =0.5) + facet_wrap("variable")
+p + geom_col(aes(fill=scenario),width =0.5) + facet_wrap("variable",scales = "free_y")
+savehistory("~/ownCloud/work/indicators.Rhistory")
+getItems(data,3.3)
+grep("Year",getItems(data,3.3),v=T)
+grep("year",getItems(data,3.3),v=T)
+grep("Year",getItems(data,3.3),v=T)
+grep("Years",getItems(data,3.3),v=T)
+grep("share",getItems(data,3.3),ignore.case = T,v=T)
+grep("fuels",getItems(data,3.3),ignore.case = T,v=T)
+grep("heat",getItems(data,3.3),ignore.case = T,v=T)
+library(remind)
+library(remind)
+a <- convGDX2MIF("/Users/anastasisg/tmp/fulldata.gdx")
+igdx("/Users/anastasisg/Applications/GAMS/gams24.2_osx_x64_64_sfx")
+a <- convGDX2MIF("/Users/anastasisg/tmp/fulldata.gdx")
+a <- convGDX2MIF("/Users/anastasisg/tmp/fulldata.gdx")
+library(remind)
+grep("Fuels share", getItems(a,3.3))
+getItems(a,3.3)
+grep("Fuel share", getItems(a,3.3))
+grep("Fuel share", getItems(a,3.3),v=T,ignore.case = T)
+grep("Fuels|share", getItems(a,3.3),v=T,ignore.case = T)
+warnings()
+library(remind)
+a <- convGDX2MIF("/Users/anastasisg/tmp/fulldata.gdx")
+igdx("/Users/anastasisg/Applications/GAMS/gams24.2_osx_x64_64_sfx")
+a <- convGDX2MIF("/Users/anastasisg/tmp/fulldata.gdx")
+grep("Fuels|share", getItems(a,3.3),v=T,ignore.case = T)
+savehistory("~/ownCloud/work/reporting_comparison/indicators2.Rhistory")
+
+
+dataq50$variable<-NULL
+dataq50$unit<-NULL
+dataq50$variable<-dataq50$data1
+dataq50$data1<-NULL
+

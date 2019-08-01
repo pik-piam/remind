@@ -1,0 +1,2 @@
+"0","# normaly you would call the function to create the report, but as we want to work on new plots, we can run only the part of the function that prepare the data to working in the new charts creation"
+"0","#compareScenarios(mif=mifPath, hist=histPath, reg=""all_reg"", fileName = outfile) "

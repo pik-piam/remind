@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "#' Read in GDX and write *.mif reporting\n#' \n#' Read in all information from GDX file and create\n#' the *.mif reporting\n#' \n#' \n#' @param gdx a GDX as created by readGDX, or the file name of a gdx\n#' @param gdx_ref reference-gdx for policy costs, a GDX as created by readGDX, or the file name of a gdx\n#' @param file name of the mif file which will be written, if no name is\n#' provided a magpie object containing all the reporting information is\n#' returned\n#' @param scenario scenario name that is used in the *.mif reporting\n#' @param t temporal resolution of the reporting, default:\n#' t=c(seq(2005,2060,5),seq(2070,2110,10),2030,2050)\n#' @author Lavinia Baumstark\n#' @examples\n#' \n#' \\dontrun{convGDX2MIF(gdx,gdx_ref,file=\"REMIND_generic_default.csv\",scenario=\"default\")}\n#' \n#' @export\n#' @importFrom gdx readGDX\n#' @importFrom magclass mbind write.report\n\nconvGDX2MIF <- function(gdx,gdx_ref=NULL,file=NULL,scenario=\"default\",t=c(seq(2005,2060,5),seq(2070,2110,10),2130,2150)) {\n \n  #[TMP] Get realisation name \n  realisation <- readGDX(gdx, \"module2realisation\")\n  realisation <- realisation[which(realisation[,1] == \"aerosols\"),2]  \n  \n  # make the reporting\n  output <- NULL\n  output <- mbind(output,reportMacroEconomy(gdx)[,t,])\n  output <- mbind(output,reportTrade(gdx)[,t,])\n  output <- mbind(output,reportTax(gdx)[,t,])\n    \n  output <- mbind(output,reportPE(gdx)[,t,])\n  output <- mbind(output,reportSE(gdx)[,t,])\n  output <- mbind(output,reportFE(gdx)[,t,])\n  output <- mbind(output,reportExtraction(gdx)[,t,])\n  output <- mbind(output,reportCapacity(gdx)[,t,])\n  #output <- mbind(output,reportLCOE(gdx)[,t,])     will be added soon\n  output <- mbind(output,reportCapitalStock(gdx)[,t,])\n  output <- mbind(output,reportEnergyInvestment(gdx)[,t,])\n  output <- mbind(output,reportEmi(gdx)[,t,])\n  tmp <- try(reportEmiAirPol(gdx))  # test whether reportEmiAirPol works\n  if(class(tmp)!=\"try-error\") {\n     if(!is.null(reportEmiAirPol(gdx))) output <- mbind(output, reportEmiAirPol(gdx)[,t,])\n  } else {cat(\"function reportEmiAirPol does not work and is skipped \\n\")}   \n  \n  # reporting of variables that need variables from different other report functions\n  output <- mbind(output,reportTechnology(gdx)[,t,])    # needs output from reportSE\n  output <- mbind(output,reportPrices(gdx,output)[,t,]) # needs output from reportSE, reportFE, reportEmi, reportExtraction, reportMacroEconomy  \n  output <- mbind(output,reportCosts(gdx,output)[,t,])  # needs output from reportEnergyInvestment, reportPrices, reportEnergyInvestments\n\n  # reporting of cross variables - needs variables from different other report* functions\n  output <- mbind(output,reportCrossVariables(gdx,output)[,t,]) \n    \n  if(!is.null(gdx_ref)) {\n    if (file.exists(gdx_ref)) {\n      output <- mbind(output,reportPolicyCosts(gdx,gdx_ref)[,t,])\n    } else {\n      warning(paste0(\"File \",gdx_ref,\" not found. Did not execute 'reportPolicyCosts'!\"))\n    }\n  }\n  \n  # write the *.mif or give back the magpie opject output\n  if(!is.null(file)) write.report(output,model=\"REMIND\",scenario=scenario,file=file,ndigit=7)\n  else return(output)  \n}\n",
+    "created" : 1510752684672.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "674242428",
+    "id" : "B8DF6E7C",
+    "lastKnownWriteTime" : 1488390957,
+    "last_content_update" : 1488390957,
+    "path" : "~/Documents/work/libraries/remind/R/convGDX2MIF.R",
+    "project_path" : "R/convGDX2MIF.R",
+    "properties" : {
+    },
+    "relative_order" : 17,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
