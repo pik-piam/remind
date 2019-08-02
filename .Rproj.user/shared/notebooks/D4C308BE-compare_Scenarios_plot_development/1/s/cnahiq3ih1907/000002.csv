@@ -1,7 +1,0 @@
-"0","outputPath <- 'output/Compare Scenarios'"
-"0","outfile <- file.path(outputPath,'CompareScenarios.pdf')"
-"0","outfile"
-"1","[1]"
-"1"," ""output/Compare Scenarios/CompareScenarios.pdf"""
-"1","
-"

@@ -1,5 +1,0 @@
-"0","mif=mifPath"
-"0","hist=histPath"
-"0","reg=""all_reg"""
-"0","fileName = outfile"
-"0","y=c(seq(2005,2060,5),seq(2070,2100,10));y_hist=c(seq(1960,2015,1));y_bar=c(2010,2030,2050,2100) #default function inputs"
