@@ -43,7 +43,7 @@ reportCrossVariables <- function(gdx,output=NULL,regionSubsetList=NULL){
   budget.m       <- readGDX(gdx,name='qm_budget',types = "equations",field = "m",format = "first_found") # Alternative: calcPrice
   demPE  <- readGDX(gdx,name=c("vm_demPe","v_pedem"),field="l",restore_zeros=FALSE,format="first_found") * TWa_2_EJ
   demPE  <- demPE[pe2se]
-  ####### calculate minimal tempotal and regional resolution #####
+  ####### calculate minimal temporal and regional resolution #####
   y <- Reduce(intersect,list(getYears(output),getYears(sebal.m)))
   r <- Reduce(intersect,list(getRegions(output),getRegions(sebal.m)))
   output   <- output[,y,]

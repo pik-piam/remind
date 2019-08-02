@@ -30,7 +30,7 @@ reportTechnology <- function(gdx,output=NULL,regionSubsetList=NULL) {
   tran_mod = module2realisation[module2realisation$modules == "transport", 2]
   
   sety       <- readGDX(gdx,c("entySe","sety"),format="first_found")
-  # calculate maximal tempotal resolution
+  # calculate maximal temporal resolution
   p_dataeta    <- readGDX(gdx,name=c("pm_dataeta","p_dataeta"),format = "first_found")
   p_eta_conv   <- readGDX(gdx,name=c("pm_eta_conv","p_eta_conv"),format = "first_found")
   pm_inco0_t   <- readGDX(gdx,name=c("pm_inco0_t","p_inco0_t"),format = "first_found")

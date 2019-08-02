@@ -110,7 +110,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     tran_mod = "complex"
   }
 
-  ####### calculate minimal tempotal resolution #####
+  ####### calculate minimal temporal resolution #####
   y <- Reduce(intersect,list(getYears(prodFE),getYears(prodSE)))
   prodFE  <- prodFE[,y,]
   prodSE <- prodSE[,y,]

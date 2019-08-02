@@ -51,7 +51,7 @@ reportPE <- function(gdx,regionSubsetList=NULL){
   fuelex <- readGDX(gdx,c("vm_fuExtr","vm_fuelex"),field="l",format="first_found")*TWa_2_EJ
   Mport  <- readGDX(gdx,c("vm_Mport"),field="l",format="first_found")*TWa_2_EJ
   Xport  <- readGDX(gdx,c("vm_Xport"),field="l",format="first_found")*TWa_2_EJ
-  ####### calculate minimal tempotal resolution #####
+  ####### calculate minimal temporal resolution #####
   y <- Reduce(intersect,list(getYears(demPE),getYears(prodSE)))
   demPE  <- demPE[,y,]
   prodSE <- prodSE[,y,]

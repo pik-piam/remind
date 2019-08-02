@@ -41,7 +41,7 @@ reportPolicyCosts <- function(gdx,gdx_ref,regionSubsetList=NULL){
   v_costom         <- readGDX(gdx,name=c("v_costOM","v_costom"),         field="l",                    format="first_found")
   v_costin         <- readGDX(gdx,name=c("v_costInv","v_costin"),         field = "l",format = "first_found")
   
-  ####### calculate minimal tempotal and regional resolution #####
+  ####### calculate minimal temporal and regional resolution #####
   y <- Reduce(intersect,list(getYears(cons),getYears(gdp),getYears(Xport),getYears(Mport),getYears(pm_pvp)))
   cons_bau  <- cons_bau[,y,]
   gdp_bau   <- gdp_bau[,y,]
