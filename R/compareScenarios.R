@@ -1,20 +1,20 @@
 #' Read in mif and write comparison.pdf
-#' 
+#'
 #' Read in all information from mif file and create
 #' the comparison.pdf
-#' 
+#'
 #' @param mif a path to one or more mif-files (might be created by confGDX2MIF)
 #' @param hist a path to one mif-file containing historical data
-#' @param y time span for the data in line plots, default: y=c(seq(2005,2060,5),seq(2070,2100,10)) 
+#' @param y time span for the data in line plots, default: y=c(seq(2005,2060,5),seq(2070,2100,10))
 #' @param y_hist time span for the historical data in the line plots, default: c(seq(1960,2015,1))
 #' @param y_bar time slides for bar plots, default: y_bar=c(2010,2030,2050,2100)
 #' @param reg region(s) in focus, reg ="all_regi" shows all regions if the mifs contain different regions
 #' @param mainReg region to be underlined
-#' @param fileName name of the pdf, default = "CompareScenarios.pdf" 
-#' 
+#' @param fileName name of the pdf, default = "CompareScenarios.pdf"
+#'
 #' @author Lavinia Baumstark
 #' @examples
-#' 
+#'
 #' \dontrun{compareScenarios(mif_path)}
 #'
 #' @export
@@ -29,8 +29,8 @@
 compareScenarios <- function(mif,hist,y=c(seq(2005,2060,5),seq(2070,2100,10)),y_hist=c(seq(1960,2015,1)),y_bar=c(2010,2030,2050,2100),reg=NULL,mainReg="GLO",fileName="CompareScenarios.pdf") {
 
 # ---- Read data ----
-  
-# read model results 
+
+# read model results
 data <- NULL
 for(i in 1:length(mif)){
   data_new <- read.report(mif[i],as.list=FALSE)
@@ -47,7 +47,7 @@ for(i in 1:length(mif)){
         dummy_data_new <- new.magpie(oldReg,getYears(data_new),getNames(data_new),fill=NA)
         data_new       <- mbind(data_new,dummy_data_new)
         # compine old and new data
-        data <- mbind(data,data_new) 
+        data <- mbind(data,data_new)
       } else {
         # expand data by new regions from data_new
         newReg     <- getRegions(data_new)[-which(getRegions(data_new) %in% getRegions(data))]
@@ -58,13 +58,13 @@ for(i in 1:length(mif)){
         dummy_data_new <- new.magpie(oldReg,getYears(data_new),getNames(data_new),fill=NA)
         data_new       <- mbind(data_new,dummy_data_new)
         # compine old and new data
-        data <- mbind(data,data_new) 
+        data <- mbind(data,data_new)
       }
-      
-    } else { 
+
+    } else {
       stop("the regional aggregation of the results are different, you might use reg='all_reg'")
     }
-  }  
+  }
 }
 
 if (!(is.null(reg))) {
@@ -72,7 +72,7 @@ if (!(is.null(reg))) {
      data <- data[reg,y,]
   } else {
      data <- data[,y,]
-  }  
+  }
 } else {
   data <- data[,y,]
 }
@@ -86,7 +86,7 @@ if(all(getRegions(data) %in% getRegions(hist))) {
   if ( any(grepl("EDGE_SSP2",getNames(hist)))){
     hist_edge = hist[,union(y_hist,y),]
     hist = hist[,,"EDGE_SSP2", invert = T]
-  } 
+  }
   hist <- hist[,y_hist,]
 } else {
   if(!is.null(reg)){
@@ -101,8 +101,8 @@ if(all(getRegions(data) %in% getRegions(hist))) {
       hist = hist[,,"EDGE_SSP2", invert = T]
     }
     hist <- hist[,y_hist,]
-    
-    
+
+
   } else {
     stop("historical data do not contain the choosen region")
   }
@@ -111,23 +111,23 @@ if(all(getRegions(data) %in% getRegions(hist))) {
 # ---- Open output-pdf ----
 
   template <-  c("\\documentclass[a4paper,landscape,twocolumn]{article}",
-                 "\\setlength{\\oddsidemargin}{-0.8in}",                                                                              
-                 "\\setlength{\\evensidemargin}{-0.5in}",                                                                             
-                 "\\setlength{\\topmargin}{-0.8in}",                                                                                  
-                 "\\setlength{\\parindent}{0in}",                                                                                     
-                 "\\setlength{\\headheight}{0in}",                                                                                    
-                 "\\setlength{\\topskip}{0in}",                                                                                       
-                 "\\setlength{\\headsep}{0in}",                                                                                       
-                 "\\setlength{\\footskip}{0.2in}",                                                                                    
-                 "\\setlength\\textheight{0.95\\paperheight}",                                                                        
-                 "\\setlength\\textwidth{0.95\\paperwidth}",                                                                          
+                 "\\setlength{\\oddsidemargin}{-0.8in}",
+                 "\\setlength{\\evensidemargin}{-0.5in}",
+                 "\\setlength{\\topmargin}{-0.8in}",
+                 "\\setlength{\\parindent}{0in}",
+                 "\\setlength{\\headheight}{0in}",
+                 "\\setlength{\\topskip}{0in}",
+                 "\\setlength{\\headsep}{0in}",
+                 "\\setlength{\\footskip}{0.2in}",
+                 "\\setlength\\textheight{0.95\\paperheight}",
+                 "\\setlength\\textwidth{0.95\\paperwidth}",
                  "\\setlength{\\parindent}{0in}",
                  "\\usepackage{float}",
                  "\\usepackage[bookmarksopenlevel=section,colorlinks=true,linkbordercolor={0.9882353 0.8352941 0.7098039}]{hyperref}",
                  "\\hypersetup{bookmarks=true,pdfauthor={GES group, PIK}}",
                  "\\usepackage{graphicx}",
                  "\\usepackage[strings]{underscore}",
-                 "\\usepackage{Sweave}",                                                                                              
+                 "\\usepackage{Sweave}",
                  "\\begin{document}",
                  "<<echo=false>>=",
                  "options(width=110)",
@@ -256,9 +256,9 @@ swfigure(sw,print,p,sw_option="height=8,width=16")
 swlatex(sw,"\\twocolumn")
 
 
-# ---- FE per capita by sector (time domain)----
+# ---- FE per capita by sector (time domain, area graph)----
 
-swlatex(sw,"\\subsection{FE per capita (by sector, time domain)}")
+swlatex(sw,"\\subsection{FE per capita (by sector, time domain, area plot)}")
 
 items<- c("FE|Transport (EJ/yr)",
           "FE|Buildings (EJ/yr)",
@@ -281,6 +281,69 @@ p <- mipArea(var["GLO",,,invert=TRUE],scales="free_y") + ylab("FE p. Cap. (GJ/yr
 swfigure(sw,print,p,sw_option="height=8,width=16")
 swlatex(sw,"\\twocolumn")
 
+# ---- FE per capita by sector (time domain, line graph)----
+
+swlatex(sw,"\\onecolumn")
+swlatex(sw,"\\subsection{FE per capita (by sector, time domain, line graph)}")
+
+items<- c(
+  "FE (EJ/yr)",
+  "FE|Transport (EJ/yr)",
+  "FE|Buildings (EJ/yr)",
+  "FE|Industry (EJ/yr)",
+  "Population (million)")
+qitem <- as.data.table(as.quitte(data[,, items]))
+hist_dt <- as.data.table(as.quitte(hist[,, items]))
+
+variable <- Population <- `FE|Transport` <- `FE|Buildings` <- `FE|Industry` <- `FE` <- NULL
+region <- model <- value <- scenario <- period <- NULL
+
+var <- qitem[, "unit" := NULL]
+varhist <- hist_dt[model != "EDGE_SSP1"][, c("unit", "model") := list(NULL, "REMIND")]
+var <- rbind(var, varhist)
+
+## calculations
+var <- data.table::dcast(var, ... ~ variable)
+
+var[, `FE|Transport` := `FE|Transport`/Population*1e3][
+, `FE|Buildings` := `FE|Buildings`/Population*1e3][
+, `FE|Industry` := `FE|Industry`/Population*1e3][
+, `FE` := `FE`/Population*1e3]
+
+var <- data.table::melt(var, id.vars=c("model", "scenario", "region", "period"))
+var <- var[variable != "Population"][
+, variable := factor(variable, levels=c("FE", "FE|Industry", "FE|Buildings", "FE|Transport"))]
+
+## First page, global plots
+p <- ggplot() +
+  geom_line(data=var[scenario != "historical" & region == "GLO"],
+            aes(x=period, y=value, linetype=scenario)) +
+  geom_point(data=var[scenario == "historical" & region == "GLO"],
+            aes(x=period, y=value), shape=4) +
+  facet_wrap(~ variable, scales="free_y") +
+  ylab("year") +
+  xlab("GDP PPP per Cap. (kUS$2005)") +
+  theme_minimal()
+swfigure(sw,print,p,sw_option="height=9,width=16")
+
+## Second page, with color coded regions
+var <- var[variable != "Population" & region != "GLO" & value > 0]
+reg_cols <- plotstyle(as.character(unique(var$region)))
+reg_labels <- plotstyle(as.character(unique(var$region)), out="legend")
+p <- ggplot() +
+  geom_line(data=var[scenario != "historical" & region != "GLO"],
+            aes(x=period, y=value, linetype=scenario, color=region)) +
+  geom_point(data=var[scenario == "historical" & region != "GLO"],
+            aes(x=period, y=value, color=region), shape=4) +
+  scale_color_manual(values = reg_cols,  labels = reg_labels) +
+  facet_wrap(~ variable, scales="free_y") +
+  ylab("FE per Cap. (GJ/yr)") +
+  xlab("year") +
+  theme_minimal()
+swfigure(sw,print,p,sw_option="height=9,width=16")
+
+swlatex(sw,"\\twocolumn")
+
 
 # ---- FE per capita by sector (GDP domain)----
 
@@ -294,14 +357,14 @@ items<- c("FE|Transport",
           "GDP|PPP")
 qitem <- as.data.table(as.quitte(data))
 hist_dt <- as.data.table(as.quitte(hist))
-  
+
 variable <- Population <- `FE|Transport` <- `FE|Buildings` <- `FE|Industry` <- `FE` <- NULL
-region <- `GDP|PPP` <- model <- value <- scenario <- NULL    
-    
+region <- `GDP|PPP` <- model <- value <- scenario <- NULL
+
 var <- qitem[variable %in% items][, "unit" := NULL]
-varhist <- hist_dt[variable %in% items & model != "EDGE_SSP1"][, c("unit", "model") := list(NULL, "REMIND")]  
+varhist <- hist_dt[variable %in% items & model != "EDGE_SSP1"][, c("unit", "model") := list(NULL, "REMIND")]
 var <- rbind(var, varhist)
-  
+
 var <- data.table::dcast(var, ... ~ variable)
 
 var[, `FE|Transport` := `FE|Transport`/Population*1e3][
@@ -332,7 +395,7 @@ p <- ggplot() +
             aes(x=`GDP|PPP`, y=value, linetype=scenario, color=region)) +
   geom_point(data=var[scenario == "historical" & region != "GLO"],
             aes(x=`GDP|PPP`, y=value, color=region), shape=4) +
-  scale_color_manual(values = reg_cols,  labels = reg_labels) + 
+  scale_color_manual(values = reg_cols,  labels = reg_labels) +
   facet_wrap(~ variable, scales="free_y") +
   ylab("FE per Cap. (GJ/yr)") +
   xlab("GDP PPP per Cap. (kUS$2005)") +
@@ -341,7 +404,7 @@ swfigure(sw,print,p,sw_option="height=9,width=16")
 
 swlatex(sw,"\\twocolumn")
 
-    
+
 # ---- FE by carrier ----
 
 swlatex(sw,"\\subsection{FE by carrier}")
@@ -604,9 +667,9 @@ if("Policy Cost|Consumption Loss (billion US$2005/yr)" %in% magclass::getNames(d
 #
 #if (all(varis%in%getNames(data,dim=3))) {  # only plot if the variables exist in the data
 #  swlatex(sw,"\\subsection{Mitigation Indicators of demand-side transformation in 2050}")
-#  
+#
 #  dataq50 <- as.quitte(data[mainReg,2050,intersect(varis,getNames(data,dim=3))]) # filter data for 2050 and GLO
-#  
+#
 #  # trick to make rows of the 4x4 grid have constant scaling in the sectoral plots (first 3 of each row)
 #  varis <- unlist(strsplit(varis,split = " \\("))[seq(1,2*length(varis),2)] # remove units from object varis for matching with column "variable" in quitte object
 #  dataq50$maxval <- dataq50$value
@@ -620,13 +683,13 @@ if("Policy Cost|Consumption Loss (billion US$2005/yr)" %in% magclass::getNames(d
 #  levels(dataq50$variable)[5:8] <- paste0(levels(dataq50$variable)[5:8],"\n",levels(dataq50$unit)[[2]])
 #  levels(dataq50$variable)[9:12] <- paste0(levels(dataq50$variable)[9:12],"\n",levels(dataq50$unit)[[3]])
 #  levels(dataq50$variable)[13:16] <- paste0(levels(dataq50$variable)[13:16],"\n",levels(dataq50$unit)[[4]])
-#  
+#
 #  # generate plot
 #  p <- ggplot(dataq50, aes_(x = ~scenario, y = ~value))
 #  p <- p + geom_col(aes_(fill=~scenario),width =0.5) +
 #     facet_wrap("variable",scales = "free_y") +
 #     geom_point(aes_(y=~maxval),alpha=0) # add invisible points to make first 3 items in each row have constant scaling
-#  
+#
 #  swfigure(sw,print,p,sw_option="height=16,width=16")
 #}
 
@@ -652,7 +715,7 @@ p <- mipLineHistorical(data[,,"Population (million)"][mainReg,,,invert=TRUE],x_h
                        ylab='Population [million]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
 swfigure(sw,print,p,sw_option="height=9,width=8")
 
-swlatex(sw,"\\subsection{GDP}")
+swlatex(sw,"\\subsection{GDP - MER}")
 p <- mipLineHistorical(data[mainReg,,"GDP|MER (billion US$2005/yr)"],x_hist=NULL,
                        ylab='GDP|MER [billion US$2005/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
 swfigure(sw,print,p,sw_option="height=8,width=8")
@@ -660,11 +723,23 @@ p <- mipLineHistorical(data[,,"GDP|MER (billion US$2005/yr)"][mainReg,,,invert=T
                        ylab='GDP|MER [billion US$2005/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
 swfigure(sw,print,p,sw_option="height=9,width=8")
 
+swlatex(sw,"\\subsection{GDP - PPP}")
 p <- mipLineHistorical(data[mainReg,,"GDP|PPP (billion US$2005/yr)"],x_hist=hist[mainReg,,"GDP|PPP (billion US$2005/yr)"],
                        ylab='GDP|PPP [billion US$2005/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
 swfigure(sw,print,p,sw_option="height=8,width=8")
 p <- mipLineHistorical(data[,,"GDP|PPP (billion US$2005/yr)"][mainReg,,,invert=TRUE],x_hist=hist[,,"GDP|PPP (billion US$2005/yr)"][mainReg,,,invert=TRUE],
                        ylab='GDP|PPP [billion US$2005/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
+swfigure(sw,print,p,sw_option="height=9,width=8")
+
+swlatex(sw,"\\subsection{GDP - PPP per Capita}")
+gdpcap <- data[,,"GDP|PPP (billion US$2005/yr)"]/data[,,"Population (million)"]*1e3
+gdpcap_hist <- collapseNames(hist[,,"GDP|PPP (billion US$2005/yr)"]/hist[,,"Population (million)"]*1e3, collapsedim=4)
+
+p <- mipLineHistorical(gdpcap[mainReg,,], x_hist=gdpcap_hist[mainReg,,],
+                       ylab='GDP|PPP per Cap. [US$2005/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
+swfigure(sw,print,p,sw_option="height=8,width=8")
+p <- mipLineHistorical(gdpcap[mainReg,,,invert=TRUE],x_hist=gdpcap_hist[mainReg,,,invert=TRUE],
+                       ylab='GDP|PPP per Cap. [US$2005/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
 swfigure(sw,print,p,sw_option="height=9,width=8")
 
 swlatex(sw,"\\subsection{Capital Stock}")
@@ -932,8 +1007,8 @@ swfigure(sw,print,p,sw_option="height=9,width=8")
 swlatex(sw,"\\onecolumn")
 p <- mipArea(var["GLO",,,invert=TRUE],scales="free_y") + ylab("FE int. of GDP (MJ/US$2005)")
 swfigure(sw,print,p,sw_option="height=8,width=16")
-swlatex(sw,"\\twocolumn")  
-  
+swlatex(sw,"\\twocolumn")
+
 # ---- Kaya decomposition ----
 
 swlatex(sw,"\\subsection{Kaya-Decomposition}")
@@ -1005,7 +1080,7 @@ swfigure(sw,print,p,sw_option="height=8,width=8")
 p <- mipLineHistorical(data[,,"Emi|CO2|Gross Fossil Fuels and Industry (Mt CO2/yr)"][mainReg,,,invert=TRUE],x_hist=hist[,,"Emi|CO2|Energy and Industrial Processes (Mt CO2/yr)"][mainReg,,,invert=TRUE],
                        ylab='Emi|CO2|Gross Fossil Fuels and Industry [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
 swfigure(sw,print,p,sw_option="height=9,width=8")
-                                   
+
 p <- mipLineHistorical(data[mainReg,,"Emi|CO2|Fossil Fuels and Industry (Mt CO2/yr)"],x_hist=hist[mainReg,,"Emi|CO2|Energy and Industrial Processes (Mt CO2/yr)"],
                        ylab='Emi|CO2|Fossil Fuels and Industry [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
 swfigure(sw,print,p,sw_option="height=8,width=8")
@@ -1865,7 +1940,7 @@ if (var %in% getNames(data,dim=3)) {
   p <- mipLineHistorical(data[mainReg,,var],x_hist=hist[mainReg,,var],
                          ylab=var,scales="free_y",plot.priority=c("x_hist","x","x_proj"))
   swfigure(sw,print,p,sw_option="height=8,width=8")
-  
+
   p <- mipLineHistorical(data[,,var][mainReg,,,invert=TRUE],x_hist=hist[,,var][mainReg,,,invert=TRUE],
                          ylab=var,scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
   swfigure(sw,print,p,sw_option="height=9,width=8")
@@ -1883,4 +1958,4 @@ swfigure(sw,mipLineHistorical,data[,,"Temperature|Global Mean (K)"],x_hist=NULL,
 
 # Close output-pdf
 swclose(sw)
-}  
+}
