@@ -321,8 +321,8 @@ p <- ggplot() +
   geom_point(data=var[scenario == "historical" & region == "GLO"],
             aes(x=period, y=value), shape=4) +
   facet_wrap(~ variable, scales="free_y") +
-  ylab("year") +
-  xlab("GDP PPP per Cap. (kUS$2005)") +
+  xlab("year") +
+  ylab("FE per Cap. (GJ/yr)") +
   theme_minimal()
 swfigure(sw,print,p,sw_option="height=9,width=16")
 
@@ -350,18 +350,18 @@ swlatex(sw,"\\twocolumn")
 swlatex(sw,"\\onecolumn")
 swlatex(sw,"\\subsection{FE per capita (by sector, GDP)}")
 
-items<- c("FE|Transport",
-          "FE|Buildings",
-          "FE|Industry",
-          "Population",
-          "GDP|PPP")
-qitem <- as.data.table(as.quitte(data))
+items<- c("FE|Transport (EJ/yr)",
+          "FE|Buildings (EJ/yr)",
+          "FE|Industry (EJ/yr)",
+          "Population (million)",
+          "GDP|PPP (billion US$2005/yr)")
+qitem <- as.data.table(as.quitte(data[,, items]))
 hist_dt <- as.data.table(as.quitte(hist))
 
 variable <- Population <- `FE|Transport` <- `FE|Buildings` <- `FE|Industry` <- `FE` <- NULL
 region <- `GDP|PPP` <- model <- value <- scenario <- NULL
 
-var <- qitem[variable %in% items][, "unit" := NULL]
+var <- qitem[, "unit" := NULL]
 varhist <- hist_dt[variable %in% items & model != "EDGE_SSP1"][, c("unit", "model") := list(NULL, "REMIND")]
 var <- rbind(var, varhist)
 
@@ -398,6 +398,120 @@ p <- ggplot() +
   scale_color_manual(values = reg_cols,  labels = reg_labels) +
   facet_wrap(~ variable, scales="free_y") +
   ylab("FE per Cap. (GJ/yr)") +
+  xlab("GDP PPP per Cap. (kUS$2005)") +
+  theme_minimal()
+swfigure(sw,print,p,sw_option="height=9,width=16")
+
+swlatex(sw,"\\twocolumn")
+
+
+# ---- UE transport per capita (time domain, line graph)----
+
+swlatex(sw,"\\onecolumn")
+swlatex(sw,"\\subsection{UE for Transport (per Capita, year)}")
+
+items<- c(
+  "UE|Transport|LDV (EJ/yr)",
+  "UE|Transport|Pass|non-LDV (EJ/yr)",
+  "UE|Transport|Freight (EJ/yr)",
+  "Population (million)")
+qitem <- as.data.table(as.quitte(data[,, items]))
+
+variable <- Population <- `UE|Transport` <- `UE|Transport|LDV` <- `UE|Transport|Pass|non-LDV` <- `UE|Transport|Freight` <- NULL
+region <- model <- value <- scenario <- period <- NULL
+
+var <- qitem[, "unit" := NULL]
+
+## calculations
+var <- data.table::dcast(var, ... ~ variable)
+
+var[, `UE|Transport` := (`UE|Transport|Pass|non-LDV` + `UE|Transport|LDV` + `UE|Transport|Freight`)/Population*1e3][
+, `UE|Transport|LDV` := `UE|Transport|LDV`/Population*1e3][
+, `UE|Transport|Pass|non-LDV` := `UE|Transport|Pass|non-LDV`/Population*1e3][
+, `UE|Transport|Freight` := `UE|Transport|Freight`/Population*1e3]
+
+var <- data.table::melt(var, id.vars=c("model", "scenario", "region", "period"))
+var <- var[variable != "Population"][
+, variable := factor(
+    variable, levels=c(
+                "UE|Transport", "UE|Transport|LDV",
+                "UE|Transport|Pass|non-LDV", "UE|Transport|Freight"))]
+
+## First page, global plots
+p <- ggplot() +
+  geom_line(data=var[region == "GLO"],
+            aes(x=period, y=value, linetype=scenario)) +
+  facet_wrap(~ variable, scales="free_y") +
+  ylab("UE per Cap. (GJ/yr)") +
+  xlab("year") +
+  theme_minimal()
+swfigure(sw,print,p,sw_option="height=9,width=16")
+
+## Second page, with color coded regions
+var <- var[variable != "Population" & region != "GLO" & value > 0]
+reg_cols <- plotstyle(as.character(unique(var$region)))
+reg_labels <- plotstyle(as.character(unique(var$region)), out="legend")
+p <- ggplot() +
+  geom_line(data=var[region != "GLO"],
+            aes(x=period, y=value, linetype=scenario, color=region)) +
+  scale_color_manual(values = reg_cols,  labels = reg_labels) +
+  facet_wrap(~ variable, scales="free_y") +
+  ylab("UE per Cap. (GJ/yr)") +
+  xlab("year") +
+  theme_minimal()
+swfigure(sw,print,p,sw_option="height=9,width=16")
+
+swlatex(sw,"\\twocolumn")
+
+
+# ---- UE per capita for transport (GDP domain)----
+
+swlatex(sw,"\\onecolumn")
+swlatex(sw,"\\subsection{UE for Transport (per Capita, GDP)}")
+
+items<- c(
+  "UE|Transport|LDV (EJ/yr)",
+  "UE|Transport|Pass|non-LDV (EJ/yr)",
+  "UE|Transport|Freight (EJ/yr)",
+  "Population (million)",
+  "GDP|PPP (billion US$2005/yr)")
+qitem <- as.data.table(as.quitte(data[,, items]))
+
+var <- qitem[, "unit" := NULL]
+
+var <- data.table::dcast(var, ... ~ variable)
+
+var[, `UE|Transport` := (`UE|Transport|LDV` + `UE|Transport|Pass|non-LDV` + `UE|Transport|Freight`)/Population*1e3][
+, `UE|Transport|LDV` := `UE|Transport|LDV`/Population*1e3][
+, `UE|Transport|Pass|non-LDV` := `UE|Transport|Pass|non-LDV`/Population*1e3][
+, `UE|Transport|Freight` := `UE|Transport|Freight`/Population*1e3][
+, `GDP|PPP` := `GDP|PPP`/Population]
+
+var <- data.table::melt(var, id.vars=c("model", "scenario", "region", "period", "GDP|PPP"))
+var <- var[variable != "Population"][
+, variable := factor(
+    variable, levels=c(
+                "UE|Transport", "UE|Transport|LDV",
+                "UE|Transport|Pass|non-LDV", "UE|Transport|Freight"))]
+
+p <- ggplot() +
+  geom_line(data=var[region == "GLO"],
+            aes(x=`GDP|PPP`, y=value, linetype=scenario)) +
+  facet_wrap(~ variable, scales="free_y") +
+  ylab("UE per Cap. (GJ/yr)") +
+  xlab("GDP PPP per Cap. (kUS$2005)") +
+  theme_minimal()
+swfigure(sw,print,p,sw_option="height=9,width=16")
+
+var <- var[variable != "Population" & region != "GLO" & value > 0]
+reg_cols <- plotstyle(as.character(unique(var$region)))
+reg_labels <- plotstyle(as.character(unique(var$region)), out="legend")
+p <- ggplot() +
+  geom_line(data=var[region != "GLO"],
+            aes(x=`GDP|PPP`, y=value, linetype=scenario, color=region)) +
+  scale_color_manual(values = reg_cols,  labels = reg_labels) +
+  facet_wrap(~ variable, scales="free_y") +
+  ylab("UE per Cap. (GJ/yr)") +
   xlab("GDP PPP per Cap. (kUS$2005)") +
   theme_minimal()
 swfigure(sw,print,p,sw_option="height=9,width=16")
