@@ -6,7 +6,8 @@
 \usage{
 compareScenarios(mif, hist, y = c(seq(2005, 2060, 5), seq(2070, 2100,
   10)), y_hist = c(seq(1960, 2015, 1)), y_bar = c(2010, 2030, 2050,
-  2100), reg = NULL, fileName = "CompareScenarios.pdf")
+  2100), reg = NULL, mainReg = "GLO",
+  fileName = "CompareScenarios.pdf")
 }
 \arguments{
 \item{mif}{a path to one or more mif-files (might be created by confGDX2MIF)}
@@ -20,6 +21,8 @@ compareScenarios(mif, hist, y = c(seq(2005, 2060, 5), seq(2070, 2100,
 \item{y_bar}{time slides for bar plots, default: y_bar=c(2010,2030,2050,2100)}
 
 \item{reg}{region(s) in focus, reg ="all_regi" shows all regions if the mifs contain different regions}
+
+\item{mainReg}{region to be underlined}
 
 \item{fileName}{name of the pdf, default = "CompareScenarios.pdf"}
 }
