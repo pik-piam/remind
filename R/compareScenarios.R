@@ -356,13 +356,13 @@ items<- c("FE|Transport (EJ/yr)",
           "Population (million)",
           "GDP|PPP (billion US$2005/yr)")
 qitem <- as.data.table(as.quitte(data[,, items]))
-hist_dt <- as.data.table(as.quitte(hist))
+hist_dt <- as.data.table(as.quitte(hist[,, items]))
 
 variable <- Population <- `FE|Transport` <- `FE|Buildings` <- `FE|Industry` <- `FE` <- NULL
 region <- `GDP|PPP` <- model <- value <- scenario <- NULL
 
 var <- qitem[, "unit" := NULL]
-varhist <- hist_dt[variable %in% items & model != "EDGE_SSP1"][, c("unit", "model") := list(NULL, "REMIND")]
+varhist <- hist_dt[model != "EDGE_SSP1"][, c("unit", "model") := list(NULL, "REMIND")]
 var <- rbind(var, varhist)
 
 var <- data.table::dcast(var, ... ~ variable)
@@ -376,11 +376,16 @@ var[, `FE|Transport` := `FE|Transport`/Population*1e3][
 var <- data.table::melt(var, id.vars=c("model", "scenario", "region", "period", "GDP|PPP"))
 var <- var[variable != "Population"][
 , variable := factor(variable, levels=c("FE", "FE|Industry", "FE|Buildings", "FE|Transport"))]
+
+highlight_yrs <- c(2030, 2050, 2070)
+highlights <- var[scenario != "historical" & period %in% highlight_yrs]
+
 p <- ggplot() +
   geom_line(data=var[scenario != "historical" & region == "GLO"],
             aes(x=`GDP|PPP`, y=value, linetype=scenario)) +
   geom_point(data=var[scenario == "historical" & region == "GLO"],
-            aes(x=`GDP|PPP`, y=value), shape=4) +
+             aes(x=`GDP|PPP`, y=value), shape=4) +
+  geom_point(data=highlights[region == "GLO"], aes(x=`GDP|PPP`, y=value), shape=1) +
   facet_wrap(~ variable, scales="free_y") +
   ylab("FE per Cap. (GJ/yr)") +
   xlab("GDP PPP per Cap. (kUS$2005)") +
@@ -395,6 +400,7 @@ p <- ggplot() +
             aes(x=`GDP|PPP`, y=value, linetype=scenario, color=region)) +
   geom_point(data=var[scenario == "historical" & region != "GLO"],
             aes(x=`GDP|PPP`, y=value, color=region), shape=4) +
+  geom_point(data=highlights[region != "GLO"], aes(x=`GDP|PPP`, y=value, color=region), shape=1) +
   scale_color_manual(values = reg_cols,  labels = reg_labels) +
   facet_wrap(~ variable, scales="free_y") +
   ylab("FE per Cap. (GJ/yr)") +
@@ -494,9 +500,12 @@ var <- var[variable != "Population"][
                 "UE|Transport", "UE|Transport|LDV",
                 "UE|Transport|Pass|non-LDV", "UE|Transport|Freight"))]
 
+highlights <- var[period %in% highlight_yrs]
+
 p <- ggplot() +
   geom_line(data=var[region == "GLO"],
             aes(x=`GDP|PPP`, y=value, linetype=scenario)) +
+  geom_point(data=highlights[region == "GLO"], aes(x=`GDP|PPP`, y=value), shape=1) +
   facet_wrap(~ variable, scales="free_y") +
   ylab("UE per Cap. (GJ/yr)") +
   xlab("GDP PPP per Cap. (kUS$2005)") +
@@ -509,6 +518,7 @@ reg_labels <- plotstyle(as.character(unique(var$region)), out="legend")
 p <- ggplot() +
   geom_line(data=var[region != "GLO"],
             aes(x=`GDP|PPP`, y=value, linetype=scenario, color=region)) +
+  geom_point(data=highlights[region != "GLO"], aes(x=`GDP|PPP`, y=value), shape=1) +
   scale_color_manual(values = reg_cols,  labels = reg_labels) +
   facet_wrap(~ variable, scales="free_y") +
   ylab("UE per Cap. (GJ/yr)") +
