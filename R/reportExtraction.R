@@ -194,13 +194,13 @@ reportExtraction <- function(gdx,regionSubsetList=NULL){
   tmp4 <- mbind(  
     setNames(dimSums(fuelex_bio[,,"pebiolc.1"], dim=3) * TWa_2_EJ, "Primary Energy Production|Biomass|Energy Crops (EJ/yr)"),
     
-    setNames(dimSums(fuelex_bio, dim=3) * TWa_2_EJ, "PE|Production|Biomass (EJ/yr)"),
-    setNames(dimSums(fuelex_bio[,,"pebiolc"], dim=3) * TWa_2_EJ, "PE|Production|Biomass|+|Lignocellulosic (EJ/yr)"),
-    setNames(dimSums(fuelex_bio[,,"pebiolc.1"], dim=3) * TWa_2_EJ, "PE|Production|Biomass|Lignocellulosic|+|Energy Crops (EJ/yr)"),
-    setNames(dimSums(fuelex_bio[,,"pebiolc.2"], dim=3) * TWa_2_EJ, "PE|Production|Biomass|Lignocellulosic|+|Residues (EJ/yr)"), 
+    setNames(dimSums(fuelex_bio,                          dim=3) * TWa_2_EJ, "PE|Production|Biomass (EJ/yr)"),
+    setNames(dimSums(fuelex_bio[,,"pebiolc"],             dim=3) * TWa_2_EJ, "PE|Production|Biomass|+|Lignocellulosic (EJ/yr)"),
+    setNames(dimSums(fuelex_bio[,,"pebiolc.1"],           dim=3) * TWa_2_EJ, "PE|Production|Biomass|Lignocellulosic|+|Energy Crops (EJ/yr)"),
+    setNames(dimSums(fuelex_bio[,,"pebiolc.2"],           dim=3) * TWa_2_EJ, "PE|Production|Biomass|Lignocellulosic|+|Residues (EJ/yr)"), 
     setNames(dimSums(fuelex_bio[,,c("pebios","pebioil")], dim=3) * TWa_2_EJ, "PE|Production|Biomass|+|1st Generation (EJ/yr)"),
-    setNames(dimSums(fuelex_bio[,,"pebios"], dim=3) * TWa_2_EJ, "PE|Production|Biomass|1st Generation|+|SugarAndStarch (EJ/yr)"),
-    setNames(dimSums(fuelex_bio[,,"pebioil"], dim=3) * TWa_2_EJ, "PE|Production|Biomass|1st Generation|+|Sunflowers_PalmOil_others (EJ/yr)")
+    setNames(dimSums(fuelex_bio[,,"pebios"],              dim=3) * TWa_2_EJ, "PE|Production|Biomass|1st Generation|+|SugarAndStarch (EJ/yr)"),
+    setNames(dimSums(fuelex_bio[,,"pebioil"],             dim=3) * TWa_2_EJ, "PE|Production|Biomass|1st Generation|+|Sunflowers_PalmOil_others (EJ/yr)")
   )
   
   # Biomass prod. (Energy crops - MAgPIE)

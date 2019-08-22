@@ -177,7 +177,7 @@ reportPE <- function(gdx,regionSubsetList=NULL){
                               + dimSums(demPE[,,c("pebiolc","pebios","pebioil")],dim=3)   
                               + dimSums(prodSE[,,c("pegeo","pehyd","pewin","pesol","peur")],dim=3),"PE (EJ/yr)"))
   tmp4 <- mbind(tmp4,setNames(fuelex[,,"pebiolc.2"],"PE|Biomass|Residues (EJ/yr)"))
-  tmp4 <- mbind(tmp4,setNames(dimSums(fuelex[,,c("pebioil","pebios")][enty2rlf],dim=3),"PE|Production|Biomass|1st Generation (EJ/yr)"))
+# Moved to reportExtraction tmp4 <- mbind(tmp4,setNames(dimSums(fuelex[,,c("pebioil","pebios")][enty2rlf],dim=3),"PE|Production|Biomass|1st Generation (EJ/yr)")) 
   tmp4 <- mbind(tmp4,setNames(( fuelex[,,"pebiolc.1"]
                              + (1-p_costsPEtradeMp[,,"pebiolc"]) * Mport[,,"pebiolc"] - Xport[,,"pebiolc"]
                              ),"PE|Biomass|Energy Crops (EJ/yr)"))
