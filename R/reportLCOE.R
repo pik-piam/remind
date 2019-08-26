@@ -6,7 +6,7 @@
 #' 
 #' @param gdx a GDX object as created by readGDX, or the path to a gdx
 #' @return MAgPIE object - contains LCOE cost parts per pe2se technology
-#' @author Robert Pietzcker, Lavinia Baumstark, Felix Schreyer
+#' @author Felix Schreyer, Robert Pietzcker, Lavinia Baumstark
 #' @seealso \code{\link{convGDX2MIF}}
 #' @examples
 #' 
@@ -90,6 +90,10 @@ reportLCOE <- function(gdx){
   # direct investment cost = directteinv or for past values (before 2005) (v_investcost * deltaCap) 
   # annuity represents (total investment cost + interest over lifetime) distributed equally over all years of lifetime
   
+  # to avoid error for runs wit h22ch4 error, fixed after May 19, I think
+  p_omeg <- p_omeg[,,"h22ch4", invert=TRUE]
+  te <- te[te!="h22ch4"]
+  
   te_annuity <- new.magpie("GLO",names=magclass::getNames(p_omeg,dim=2))
   for(a in magclass::getNames(p_omeg["EUR",,],dim=2)){
    te_annuity[,,a] <- 1/dimSums(p_omeg["EUR",,a]/1.06**as.numeric(magclass::getNames(p_omeg["EUR",,a],dim=1)),dim=3.1)    
@@ -100,11 +104,13 @@ reportLCOE <- function(gdx){
       v_investcost[,ttot_before2005,te] * dimSums(vm_deltaCap[teall2rlf][,ttot_before2005,te],dim=3.2),
       v_directteinv[,ttot_from2005,te]
     )
+  
+  
+  ########## calculation of LCOE of standing system #######
+  ######## (old annuities included) ######################
 
   
-  #####################################################
-  ####### calculate sub-parts of "COSTS" ##############
-  #####################################################
+ #  calculate sub-parts of "COSTS" 
   
   # LCOE calculation only for pe2se technologies so far!
   
@@ -118,8 +124,8 @@ reportLCOE <- function(gdx){
   # annuity cost = discounted investment cost spread over lifetime
   
   
-  # here: static LCOE
-  # in future posssibly: forward-looking (dynamic) LCOE
+  # here: static LCOE (standing system)
+  # in future posssibly: forward-looking (dynamic) LCOE (see new plant LCOE as approximation below)
   # in future posssibly: discounting engogenous from REMIND?
   
   
@@ -285,25 +291,24 @@ reportLCOE <- function(gdx){
   LCOE.mag <- mbind(
                 setNames(te_annual_inv_cost[,getYears(te_annual_fuel_cost),pe2se$all_te]/
                            total_te_energy[,,pe2se$all_te], 
-                         paste0("LCOE|",pe2se$all_te, "|Investment Cost (US$2005/MWh)")),
+                         paste0("LCOE|StandingSystem|",pe2se$all_te, "|Investment Cost (US$2005/MWh)")),
                 setNames(te_annual_fuel_cost[,,pe2se$all_te]/total_te_energy[,,pe2se$all_te], 
-                         paste0("LCOE|",pe2se$all_te, "|Fuel Cost (US$2005/MWh)")),
+                         paste0("LCOE|StandingSystem|",pe2se$all_te, "|Fuel Cost (US$2005/MWh)")),
                 setNames(te_annual_OMF_cost[,,pe2se$all_te]/total_te_energy[,,pe2se$all_te], 
-                         paste0("LCOE|",pe2se$all_te, "|OMF Cost (US$2005/MWh)")),
+                         paste0("LCOE|StandingSystem|",pe2se$all_te, "|OMF Cost (US$2005/MWh)")),
                 setNames(te_annual_OMV_cost[,,pe2se$all_te]/total_te_energy[,,pe2se$all_te], 
-                         paste0("LCOE|",pe2se$all_te, "|OMV Cost (US$2005/MWh)")),
+                         paste0("LCOE|StandingSystem|",pe2se$all_te, "|OMV Cost (US$2005/MWh)")),
                 setNames(te_annual_stor_cost[,,pe2se$all_te]/total_te_energy[,,pe2se$all_te], 
-                         paste0("LCOE|",pe2se$all_te, "|Storage Cost (US$2005/MWh)")),
+                         paste0("LCOE|StandingSystem|",pe2se$all_te, "|Storage Cost (US$2005/MWh)")),
                 setNames(te_annual_grid_cost[,,pe2se$all_te]/total_te_energy[,,pe2se$all_te], 
-                         paste0("LCOE|",pe2se$all_te, "|Grid Cost (US$2005/MWh)")),
+                         paste0("LCOE|StandingSystem|",pe2se$all_te, "|Grid Cost (US$2005/MWh)")),
                 setNames(te_annual_ccsInj_cost[,,pe2se$all_te]/total_te_energy[,,pe2se$all_te], 
-                         paste0("LCOE|",pe2se$all_te, "|CCS Cost (US$2005/MWh)")),
+                         paste0("LCOE|StandingSystem|",pe2se$all_te, "|CCS Cost (US$2005/MWh)")),
                 setNames(te_annual_co2_cost[,,pe2se$all_te]/total_te_energy[,,pe2se$all_te], 
-                         paste0("LCOE|",pe2se$all_te, "|CO2 Cost (US$2005/MWh)")),
+                         paste0("LCOE|StandingSystem|",pe2se$all_te, "|CO2 Cost (US$2005/MWh)")),
                 setNames(te_curt_cost[,,pe2se$all_te],
-                         paste0("LCOE|",pe2se$all_te, "|Curtailment Cost (US$2005/MWh)"))
+                         paste0("LCOE|StandingSystem|",pe2se$all_te, "|Curtailment Cost (US$2005/MWh)"))
   )
-                
   
   # # check whether sum over all cost (without curtailment cost) equals total lcoe above
   # CheckSum <- dimSums(LCOE.mag, , dim = 3.2) - LCOE.mag[,,"Curtailment Cost (US$2005/MWh)"]
@@ -312,6 +317,64 @@ reportLCOE <- function(gdx){
   # CheckSum["USA",,c("spv")]
   # # correct!
   
-  return(LCOE.mag)
+  ################ calculation of LCOE of new plants #########################################
+  
+  # discount rate
+  r <- 0.06
+  # lifetime
+  lt <- readGDX(gdx, name="fm_dataglob", restore_zeros = F)[,,"lifetime"][,,pe2se$all_te]
+  
+  # discout factor
+  disc <- collapseNames(r * (1+r)^lt/(-1+(1+r)^lt))
+  
+  # capacity factor
+  # load capacity factor
+  vm_capFac <- readGDX(gdx, name="vm_capFac", field="l", restore_zeros = F)[,,pe2se$all_te]
+  pm_dataren <- readGDX(gdx, name="pm_dataren", restore_zeros = F)[,,"nur"][,,pe2se$all_te]
+  
+  # extract capacity factor of last grade deployed
+  df.CapFac <- as.quitte(pm_dataren) %>% 
+                select(region, rlf, all_te, value) %>% 
+                rename( CapFac = value) %>%
+                right_join(as.quitte(vm_capDistr)) %>% 
+                filter( value > 1e-4) %>% 
+                group_by(region, period, all_te) %>% 
+                mutate( max.rlf = max(as.numeric(rlf)))  %>% 
+                ungroup() %>% 
+                filter( rlf == max.rlf) %>% 
+                select( region, period, all_te, CapFac)
+  
+  CapFac.ren <- as.magpie(df.CapFac, spatial = 1, temporal = 2, datacol=4)
+  
+  CapFac <- vm_capFac[,ttot_from2005,]
+  CapFac[,,getNames(CapFac.ren)] <- CapFac.ren[,ttot_from2005,]
+  
+  # investment cost
+  CAPEX <- v_investcost[,ttot_from2005,pe2se$all_te]
+  
+  # OMF cost
+  OMF <- pm_data[,,"omf"][,,pe2se$all_te]
+  
+  # OMV Cost 
+  OMV <- collapseNames(pm_data[,,"omv"][,,pe2se$all_te])
+  
+  # SE generation
+  Gen <- setNames(vm_prodSe[,,paste0(pe2se$all_enty,".",pe2se$all_enty1,".", pe2se$all_te)],pe2se$all_te)
+  
+  LCOE.new <- NULL
+  LCOE.new <- mbind(
+                setNames(CAPEX * disc/(CapFac*8760)*1e6, 
+                         paste0("LCOE|NewPlant|",pe2se$all_te, "|Investment Cost (US$2005/MWh)")),
+                setNames(CAPEX * OMF /(CapFac*8760)*1e6, 
+                         paste0("LCOE|NewPlant|",pe2se$all_te, "|OMF Cost (US$2005/MWh)")),
+                setNames(magpie_expand(OMV * 1e3, CAPEX) , 
+                         paste0("LCOE|NewPlant|",pe2se$all_te, "|OMV Cost (US$2005/MWh)")))
+  
+  
+ # bind LCOE of standing system and LCOE of new plants together in one magpie object
+ LCOE.out <- mbind(LCOE.mag, LCOE.new)
+
+  
+  return(LCOE.out)
 }
 
