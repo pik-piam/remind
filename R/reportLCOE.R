@@ -14,9 +14,11 @@
 #' 
 #' @export
 #' @importFrom gdx readGDX
-#' @importFrom magclass new.magpie dimSums getRegions getYears getNames setNames clean_magpie dimReduce
-#' @importFrom dplyr %>% mutate select rename
+#' @importFrom magclass new.magpie dimSums getRegions getYears getNames setNames clean_magpie dimReduce as.magpie magpie_expand
+#' @importFrom dplyr %>% mutate select rename group_by ungroup right_join filter
 #' @importFrom quitte as.quitte overwrite
+#' 
+
 
 reportLCOE <- function(gdx){
 
@@ -319,6 +321,17 @@ reportLCOE <- function(gdx){
   
   ################ calculation of LCOE of new plants #########################################
   
+  
+  ### define variables formally needed for dplyr operations
+  region <- NULL
+  rlf <- NULL
+  all_te <- NULL
+  value <- NULL
+  max.rlf <- NULL
+  CapFac <- NULL
+  period <- NULL
+  
+  
   # discount rate
   r <- 0.06
   # lifetime
@@ -331,6 +344,7 @@ reportLCOE <- function(gdx){
   # load capacity factor
   vm_capFac <- readGDX(gdx, name="vm_capFac", field="l", restore_zeros = F)[,,pe2se$all_te]
   pm_dataren <- readGDX(gdx, name="pm_dataren", restore_zeros = F)[,,"nur"][,,pe2se$all_te]
+  vm_capDistr <- readGDX(gdx, name="vm_capDistr", field="l",restore_zeros = F)
   
   # extract capacity factor of last grade deployed
   df.CapFac <- as.quitte(pm_dataren) %>% 
