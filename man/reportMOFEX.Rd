@@ -11,17 +11,12 @@ reportMOFEX(gdx, gdx_ref = NULL, file = NULL, scenario = "default")
 
 \item{gdx_ref}{reference-gdx for policy costs, a GDX as created by readGDX, or the file name of a gdx}
 
+\item{file}{path to output .mif file}
+
 \item{scenario}{scenario name that is used in the *.mif reporting}
-
-\item{regionSubsetList}{a list containing regions to create report variables region
-aggregations. If NULL (default value) only the global region aggregation "GLO" will
-be created.}
-
-\item{t}{temporal resolution of the reporting, default:
-t=c(seq(2005,2060,5),seq(2070,2110,10),2030,2050)}
 }
 \value{
-MAgPIE object - contains the cost variables
+MAgPIE object - contains the output from a MOFEX standalone run
 }
 \description{
 Calculate and report relevant fossil fuel cost and quantity variables from MOFEX standalone model.
