@@ -7,7 +7,7 @@
 compareScenarios(mif, hist, y = c(seq(2005, 2060, 5), seq(2070, 2100,
   10)), y_hist = c(seq(1960, 2015, 1)), y_bar = c(2010, 2030, 2050,
   2100), reg = NULL, mainReg = "GLO",
-  fileName = "CompareScenarios.pdf")
+  fileName = "CompareScenarios.pdf", sr15marker_RCP = NULL)
 }
 \arguments{
 \item{mif}{a path to one or more mif-files (might be created by confGDX2MIF)}
@@ -25,6 +25,8 @@ compareScenarios(mif, hist, y = c(seq(2005, 2060, 5), seq(2070, 2100,
 \item{mainReg}{region to be underlined}
 
 \item{fileName}{name of the pdf, default = "CompareScenarios.pdf"}
+
+\item{sr15marker_RCP}{if given, show the corresponding marker scenarios (SSP1-5) from the SR15 database in some plots.}
 }
 \description{
 Read in all information from mif file and create
