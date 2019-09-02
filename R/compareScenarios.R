@@ -11,6 +11,7 @@
 #' @param reg region(s) in focus, reg ="all_regi" shows all regions if the mifs contain different regions
 #' @param mainReg region to be underlined
 #' @param fileName name of the pdf, default = "CompareScenarios.pdf"
+#' @param sr15marker_RCP if given, show the corresponding marker scenarios (SSP1-5) from the SR15 database in some plots.
 #'
 #' @author Lavinia Baumstark
 #' @examples
@@ -22,11 +23,17 @@
 #' @importFrom lusweave swopen swlatex swfigure swclose
 #' @importFrom mip mipLineHistorical mipBarYearData plotstyle
 #' @importFrom luplot magpie2ggplot2
-#' @importFrom ggplot2 facet_grid ggplot geom_col facet_wrap geom_point aes_
+#' @importFrom ggplot2 facet_grid ggplot geom_col facet_wrap geom_point aes_ geom_ribbon
 #' @importFrom quitte as.quitte
-#' @importFrom data.table as.data.table setnames :=
+#' @importFrom data.table as.data.table setnames := data.table
+#' @importFrom utils installed.packages
 
-compareScenarios <- function(mif,hist,y=c(seq(2005,2060,5),seq(2070,2100,10)),y_hist=c(seq(1960,2015,1)),y_bar=c(2010,2030,2050,2100),reg=NULL,mainReg="GLO",fileName="CompareScenarios.pdf") {
+compareScenarios <- function(mif, hist,
+                             y=c(seq(2005,2060,5),seq(2070,2100,10)),
+                             y_hist=c(seq(1960,2015,1)),
+                             y_bar=c(2010,2030,2050,2100),
+                             reg=NULL, mainReg="GLO", fileName="CompareScenarios.pdf",
+                             sr15marker_RCP=NULL) {
 
 # ---- Read data ----
 
@@ -296,7 +303,7 @@ qitem <- as.data.table(as.quitte(data[,, items]))
 hist_dt <- as.data.table(as.quitte(hist[,, items]))
 
 variable <- Population <- `FE|Transport` <- `FE|Buildings` <- `FE|Industry` <- `FE` <- NULL
-region <- model <- value <- scenario <- period <- NULL
+region <- model <- value <- scenario <- period <- indicator <- min_value <- max_value <- NULL
 
 var <- qitem[, "unit" := NULL]
 varhist <- hist_dt[model != "EDGE_SSP1"][, c("unit", "model") := list(NULL, "REMIND")]
@@ -314,16 +321,53 @@ var <- data.table::melt(var, id.vars=c("model", "scenario", "region", "period"))
 var <- var[variable != "Population"][
 , variable := factor(variable, levels=c("FE", "FE|Industry", "FE|Buildings", "FE|Transport"))]
 
+  
 ## First page, global plots
 p <- ggplot() +
   geom_line(data=var[scenario != "historical" & region == "GLO"],
             aes(x=period, y=value, linetype=scenario)) +
   geom_point(data=var[scenario == "historical" & region == "GLO"],
-            aes(x=period, y=value), shape=4) +
+             aes(x=period, y=value), shape=4) +
   facet_wrap(~ variable, scales="free_y") +
   xlab("year") +
   ylab("FE per Cap. (GJ/yr)") +
   theme_minimal()
+
+if("sr15data" %in% rownames(installed.packages()) & is.character(sr15marker_RCP)){
+  ## get marker scenario data
+  marker_items <- c(
+    "Final Energy",
+    paste0("Final Energy|", c("Industry", "Residential and Commercial", "Transportation")),
+    "Population")
+  sr15dt <- as.data.table(sr15data::sr15data)[region == "World"][, region := "GLO"]
+  sr15scens <- data.table(scenario=paste0("SSP", 1:5, "-", sr15marker_RCP),
+                          model=c("IMAGE 3.0.1",
+                                  "MESSAGE-GLOBIOM 1.0",
+                                  "AIM/CGE 2.0",
+                                  "GCAM 4.2",
+                                  "REMIND-MAgPIE 1.5"))
+  markers <- sr15dt[sr15scens, on=c("model", "scenario")][
+    variable %in% marker_items][
+  , variable := gsub("Final Energy", "FE", variable)][
+  , variable := gsub("Transportation", "Transport", variable)][
+  , variable := gsub("Residential and Commercial", "Buildings", variable)][
+  , scenario := gsub("Baseline", "Base", scenario)][, unit := NULL]
+
+  markers_wide <- data.table::dcast(markers, ... ~ variable)
+
+  markers_wide[, `:=`("FE|Transport" = `FE|Transport`/Population*1e3,
+                "FE|Buildings" = `FE|Buildings`/Population*1e3,
+                "FE|Industry" = `FE|Industry`/Population*1e3,
+                "FE" = `FE`/Population*1e3), by=c("model")]
+
+  markers <- data.table::melt(markers_wide, id.vars=c("model", "scenario", "region", "period"))[
+                           variable != "Population"]
+  
+  p <- p + geom_line(data=markers, aes(x=period, y=value, group=scenario, color=scenario),
+                     size=2, alpha=1/4)
+
+}
+  
 swfigure(sw,print,p,sw_option="height=9,width=16")
 
 ## Second page, with color coded regions
@@ -356,13 +400,13 @@ items<- c("FE|Transport (EJ/yr)",
           "Population (million)",
           "GDP|PPP (billion US$2005/yr)")
 qitem <- as.data.table(as.quitte(data[,, items]))
-hist_dt <- as.data.table(as.quitte(hist))
+hist_dt <- as.data.table(as.quitte(hist[,, items]))
 
 variable <- Population <- `FE|Transport` <- `FE|Buildings` <- `FE|Industry` <- `FE` <- NULL
 region <- `GDP|PPP` <- model <- value <- scenario <- NULL
 
 var <- qitem[, "unit" := NULL]
-varhist <- hist_dt[variable %in% items & model != "EDGE_SSP1"][, c("unit", "model") := list(NULL, "REMIND")]
+varhist <- hist_dt[model != "EDGE_SSP1"][, c("unit", "model") := list(NULL, "REMIND")]
 var <- rbind(var, varhist)
 
 var <- data.table::dcast(var, ... ~ variable)
@@ -376,11 +420,16 @@ var[, `FE|Transport` := `FE|Transport`/Population*1e3][
 var <- data.table::melt(var, id.vars=c("model", "scenario", "region", "period", "GDP|PPP"))
 var <- var[variable != "Population"][
 , variable := factor(variable, levels=c("FE", "FE|Industry", "FE|Buildings", "FE|Transport"))]
+
+highlight_yrs <- c(2030, 2050, 2070)
+highlights <- var[scenario != "historical" & period %in% highlight_yrs]
+
 p <- ggplot() +
   geom_line(data=var[scenario != "historical" & region == "GLO"],
             aes(x=`GDP|PPP`, y=value, linetype=scenario)) +
   geom_point(data=var[scenario == "historical" & region == "GLO"],
-            aes(x=`GDP|PPP`, y=value), shape=4) +
+             aes(x=`GDP|PPP`, y=value), shape=4) +
+  geom_point(data=highlights[region == "GLO"], aes(x=`GDP|PPP`, y=value), shape=1) +
   facet_wrap(~ variable, scales="free_y") +
   ylab("FE per Cap. (GJ/yr)") +
   xlab("GDP PPP per Cap. (kUS$2005)") +
@@ -395,6 +444,7 @@ p <- ggplot() +
             aes(x=`GDP|PPP`, y=value, linetype=scenario, color=region)) +
   geom_point(data=var[scenario == "historical" & region != "GLO"],
             aes(x=`GDP|PPP`, y=value, color=region), shape=4) +
+  geom_point(data=highlights[region != "GLO"], aes(x=`GDP|PPP`, y=value, color=region), shape=1) +
   scale_color_manual(values = reg_cols,  labels = reg_labels) +
   facet_wrap(~ variable, scales="free_y") +
   ylab("FE per Cap. (GJ/yr)") +
@@ -494,9 +544,12 @@ var <- var[variable != "Population"][
                 "UE|Transport", "UE|Transport|LDV",
                 "UE|Transport|Pass|non-LDV", "UE|Transport|Freight"))]
 
+highlights <- var[period %in% highlight_yrs]
+
 p <- ggplot() +
   geom_line(data=var[region == "GLO"],
             aes(x=`GDP|PPP`, y=value, linetype=scenario)) +
+  geom_point(data=highlights[region == "GLO"], aes(x=`GDP|PPP`, y=value), shape=1) +
   facet_wrap(~ variable, scales="free_y") +
   ylab("UE per Cap. (GJ/yr)") +
   xlab("GDP PPP per Cap. (kUS$2005)") +
@@ -509,6 +562,7 @@ reg_labels <- plotstyle(as.character(unique(var$region)), out="legend")
 p <- ggplot() +
   geom_line(data=var[region != "GLO"],
             aes(x=`GDP|PPP`, y=value, linetype=scenario, color=region)) +
+  geom_point(data=highlights[region != "GLO"], aes(x=`GDP|PPP`, y=value, color=region), shape=1) +
   scale_color_manual(values = reg_cols,  labels = reg_labels) +
   facet_wrap(~ variable, scales="free_y") +
   ylab("UE per Cap. (GJ/yr)") +
