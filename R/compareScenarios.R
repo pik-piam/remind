@@ -11,7 +11,7 @@
 #' @param reg region(s) in focus, reg ="all_regi" shows all regions if the mifs contain different regions
 #' @param mainReg region to be underlined
 #' @param fileName name of the pdf, default = "CompareScenarios.pdf"
-#' @param sr15marker_RCP if given, show the corresponding marker scenarios (SSP1-5) from the SR15 database in some plots.
+#' @param sr15marker_RCP if given, show the corresponding marker scenarios (SSP1-5) from the SR15 database in some plots. Requires the sr15data package.
 #'
 #' @author Lavinia Baumstark
 #' @examples
