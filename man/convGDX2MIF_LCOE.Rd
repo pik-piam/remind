@@ -4,11 +4,13 @@
 \alias{convGDX2MIF_LCOE}
 \title{Read in GDX and write LCOE .mif reporting}
 \usage{
-convGDX2MIF_LCOE(gdx, file = NULL, scenario = "default",
+convGDX2MIF_LCOE(gdx, gdx_ref, file = NULL, scenario = "default",
   t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150))
 }
 \arguments{
 \item{gdx}{a GDX as created by readGDX, or the file name of a gdx}
+
+\item{gdx_ref}{a GDX as created by readGDX of the reference run}
 
 \item{file}{name of the mif file which will be written, if no name is
 provided a magpie object containing all the reporting information is
