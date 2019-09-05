@@ -25,5 +25,5 @@ for the reporting
 \code{\link{convGDX2MIF}}
 }
 \author{
-Robert Pietzcker, Lavinia Baumstark, Felix Schreyer
+Felix Schreyer, Robert Pietzcker, Lavinia Baumstark
 }

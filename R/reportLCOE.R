@@ -17,7 +17,7 @@
 #' @importFrom magclass new.magpie dimSums getRegions getYears getNames setNames clean_magpie dimReduce as.magpie magpie_expand
 #' @importFrom dplyr %>% mutate select rename group_by ungroup right_join filter
 #' @importFrom quitte as.quitte overwrite
-#' 
+#' @importFrom tidyr spread
 
 
 reportLCOE <- function(gdx){
@@ -330,7 +330,16 @@ reportLCOE <- function(gdx){
   max.rlf <- NULL
   CapFac <- NULL
   period <- NULL
+  best.rlf <- NULL
+  Year <- NULL
+  Region <- NULL
+  Data2 <- NULL
+  Data1 <- NULL
+  Cell <- NULL
+  Type <- NULL
   
+  # RE techs
+  teRe2rlfDetail <- c("spv","csp","hydro", "geohe","geohdr")
   
   # discount rate
   r <- 0.06
@@ -346,17 +355,34 @@ reportLCOE <- function(gdx){
   pm_dataren <- readGDX(gdx, name="pm_dataren", restore_zeros = F)[,,"nur"][,,pe2se$all_te]
   vm_capDistr <- readGDX(gdx, name="vm_capDistr", field="l",restore_zeros = F)
   
-  # extract capacity factor of last grade deployed
+  # load marginal of RE cosntraints (maxprod constraint and area constraint)
+  q_limitGeopot <- readGDX(gdx, "q_limitGeopot", field="m")[,ttot_from2005,"pesol"]
+  q_limitProd <- readGDX(gdx, "q_limitProd", field="m")[,ttot_from2005,teRe2rlfDetail]
+  
+  
+  # create dataframe ith marginal of maxprod and area constraint
+  df.RE.limits <- as.data.frame(q_limitGeopot) %>% 
+                    mutate( Type = "Geopot", Data1 = "spv") %>% 
+                    rbind(as.data.frame(q_limitProd) %>%  mutate(Type = "Maxprod")) %>% 
+                    rename( all_te = Data1, rlf = Data2, region = Region, period = Year) %>% 
+                    select(-Cell) %>% 
+                    spread(Type, Value)
+  
+
+  
+  # calculate capacity factor of new capacity added in a specific region, period, tech
+  # take capacity factor of best grade that is still not full (i.e. where marginals of area and maxprod constraint are 0)
   df.CapFac <- as.quitte(pm_dataren) %>% 
-                select(region, rlf, all_te, value) %>% 
-                rename( CapFac = value) %>%
-                right_join(as.quitte(vm_capDistr)) %>% 
-                filter( value > 1e-4) %>% 
-                group_by(region, period, all_te) %>% 
-                mutate( max.rlf = max(as.numeric(rlf)))  %>% 
-                ungroup() %>% 
-                filter( rlf == max.rlf) %>% 
-                select( region, period, all_te, CapFac)
+               select(region, rlf, all_te, value) %>% 
+               right_join(df.RE.limits)  %>% 
+              # marginals must be zero, or area marginal NA because area constraint only for spv
+               filter( Maxprod == 0 & (Geopot == 0 | is.na(Geopot))) %>%     
+               group_by(region, period, all_te) %>% 
+               mutate( best.rlf = min(as.numeric(rlf))) %>%   
+               ungroup() %>%
+               # filter for capacity factor of best, not fully deployed grade
+               filter( rlf == best.rlf) %>% 
+               select( region, period, all_te, value)
   
   CapFac.ren <- as.magpie(df.CapFac, spatial = 1, temporal = 2, datacol=4)
   
@@ -373,7 +399,7 @@ reportLCOE <- function(gdx){
   OMV <- collapseNames(pm_data[,,"omv"][,,pe2se$all_te])
   
   # SE generation
-  Gen <- setNames(vm_prodSe[,,paste0(pe2se$all_enty,".",pe2se$all_enty1,".", pe2se$all_te)],pe2se$all_te)
+  #Gen <- setNames(vm_prodSe[,,paste0(pe2se$all_enty,".",pe2se$all_enty1,".", pe2se$all_te)],pe2se$all_te)
   
   LCOE.new <- NULL
   LCOE.new <- mbind(
