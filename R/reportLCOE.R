@@ -337,6 +337,9 @@ reportLCOE <- function(gdx){
   Data1 <- NULL
   Cell <- NULL
   Type <- NULL
+  Value <- NULL
+  Maxprod <- NULL
+  Geopot <- NULL
   
   # RE techs
   teRe2rlfDetail <- c("spv","csp","hydro", "geohe","geohdr")
