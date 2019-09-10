@@ -5,6 +5,7 @@
 #' 
 #' 
 #' @param gdx a GDX as created by readGDX, or the file name of a gdx
+#' @param gdx_ref a GDX as created by readGDX of the reference run
 #' @param file name of the mif file which will be written, if no name is
 #' provided a magpie object containing all the reporting information is
 #' returned
@@ -20,7 +21,7 @@
 #' @importFrom gdx readGDX
 #' @importFrom magclass mbind write.report
 
-convGDX2MIF_LCOE <- function(gdx,file=NULL,scenario="default",t=c(seq(2005,2060,5),seq(2070,2110,10),2130,2150)) {
+convGDX2MIF_LCOE <- function(gdx,gdx_ref,file=NULL,scenario="default",t=c(seq(2005,2060,5),seq(2070,2110,10),2130,2150)) {
  
 
   # make the reporting

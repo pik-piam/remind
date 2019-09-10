@@ -99,6 +99,7 @@ plotLCOE <- function(mif,y=c(2015,2020,2030,2040,2050,2060),reg=NULL,fileName="L
   variable <- NULL
   value <- NULL
   Total <- NULL
+  Type <- NULL
   
   aes <- NULL
   element_text <- NULL
@@ -123,16 +124,24 @@ plotLCOE <- function(mif,y=c(2015,2020,2030,2040,2050,2060),reg=NULL,fileName="L
       df.LCOE <- as.quitte(data[reg,,])
       
       # extract tech and cost dimensions from LCOE|Tech|Cost character strucutre
+
+      
+      df.LCOE$Type <- strsplit(as.character(df.LCOE$variable), "\\|") 
+      df.LCOE$Type <- sapply(df.LCOE$Type, "[[", 2)
+      
       df.LCOE$tech <- strsplit(as.character(df.LCOE$variable), "\\|") 
-      df.LCOE$tech <- sapply(df.LCOE$tech, "[[", 2)
+      df.LCOE$tech <- sapply(df.LCOE$tech, "[[", 3)
       
       df.LCOE$variable <- strsplit(as.character(df.LCOE$variable), "\\|") 
-      df.LCOE$variable <- sapply(df.LCOE$variable, "[[", 3)
+      df.LCOE$variable <- sapply(df.LCOE$variable, "[[", 4)
       
+      # filter for scenario, tech etc. and plot only "standing system" LCOE, maybe add "new plant" LCOE later
       df.LCOE <- df.LCOE %>%
-        filter( scenario %in% plot.scen & tech %in% techs) %>% 
+        filter( scenario %in% plot.scen & tech %in% techs, Type=="StandingSystem") %>% 
         order.levels(variable = c("Curtailment Cost","CCS Cost","CO2 Cost","Grid Cost","Storage Cost",
                                   "OMV Cost", "OMF Cost", "Fuel Cost",  "Investment Cost"))
+      
+      
       
       df.LCOE.total <- df.LCOE %>%
         sum_total(variable, value) %>%
@@ -158,7 +167,7 @@ plotLCOE <- function(mif,y=c(2015,2020,2030,2040,2050,2060),reg=NULL,fileName="L
         theme(text = element_text(size=50), 
               axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.3), 
               legend.position="bottom" , legend.key.size = unit(2, "cm")) +
-        ggtitle(paste0("Region: ",reg,", Scenario: ", plot.scen))
+        ggtitle(paste0("Standing System LCOE, Region: ",reg,", Scenario: ", plot.scen))
      
       #swfigure(sw,print,p,sw_option="height=20,width=35", dpi=1800) 
       swfigure(sw,print,p, sw_option="height=25,width=40") 

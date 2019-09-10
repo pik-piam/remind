@@ -23,7 +23,6 @@
 reportMOFEX <- function(gdx,gdx_ref=NULL,file=NULL,scenario='default') {
   
   if (is.null(gdx))  stop("GDX file is missing!")
-  igdx(gamsSysDir = "C:/Program Files/GAMS/26.1")
 
   ####### conversion factors ##########
   TWa_2_EJ     <- 31.536
@@ -212,9 +211,9 @@ reportMOFEX <- function(gdx,gdx_ref=NULL,file=NULL,scenario='default') {
   
   # Fossil Fuel Prices
   peFossilPrices <- NULL
-  peFossilPrices <- mbind(peFossilPrices,setNames(fuel2pe.m[,,"pecoal"]/(budget.m+1e-10) * tdptwyr2dpgj,   "Price|Coal|Primary Level (US$2005/GJ)"))
-  peFossilPrices <- mbind(peFossilPrices,setNames(fuel2pe.m[,,"peoil"]/(budget.m+1e-10) * tdptwyr2dpgj,    "Price|Crude Oil|Primary Level (US$2005/GJ)"))
-  peFossilPrices <- mbind(peFossilPrices,setNames(fuel2pe.m[,,"pegas"]/(budget.m+1e-10) * tdptwyr2dpgj,    "Price|Natural Gas|Primary Level (US$2005/GJ)"))
+  peFossilPrices <- mbind(peFossilPrices,setNames(fuel2pe.m[,,"pecoal"]/ts * tdptwyr2dpgj,   "Price|Coal|Primary Level (US$2005/GJ)"))
+  peFossilPrices <- mbind(peFossilPrices,setNames(fuel2pe.m[,,"peoil"]/ts * tdptwyr2dpgj,    "Price|Crude Oil|Primary Level (US$2005/GJ)"))
+  peFossilPrices <- mbind(peFossilPrices,setNames(fuel2pe.m[,,"pegas"]/ts * tdptwyr2dpgj,    "Price|Natural Gas|Primary Level (US$2005/GJ)"))
 #  peFossilPrices <- mbind(peFossilPrices,setNames(lowpass(fuel2pe.m[,,"pegas"]/(budget.m+1e-10), fix="both", altFilter=match(2010,t)) * tdptwyr2dpgj,    "Price|Natural Gas|Primary Level|Moving Avg (US$2005/GJ)"))
   # mapping of weights for the variables for global aggregation
   int2ext <- c(
@@ -258,39 +257,6 @@ reportMOFEX <- function(gdx,gdx_ref=NULL,file=NULL,scenario='default') {
   getSets(output)[3] <- "variable"
   output <- add_dimension(output,dim=3.1,add = "model",nm = "REMIND")
   output <- add_dimension(output,dim=3.1,add = "scenario",nm = scenario)
-  
-  ##-----------------------------------------------PLOTTING ROUTINES-----------------------------------------------##
-  
-  ## Convert to quitte objects
-  fuExtrCum <- as.quitte(fuExtrCum)
-  fuExtr <- as.quitte(fuExtr)
-  costFuEx <- as.quitte(costFuEx)
-  prodPe <- as.quitte(prodPe)
-  
-  ## Generate ggplot objects
-  glo_extr_grade <-
-    ggplot(fuExtr%>%filter(rlf %in% 1:6),aes(x=period,y=value,fill=rlf,group=interaction(region,rlf))) + 
-    labs(y="Extraction (EJ)",x="year",title="Global Fossil Extraction by Cost Grade") +
-    geom_area(position=position_stack(reverse = TRUE)) + 
-    scale_fill_brewer(palette = "Dark2",name="grade") + 
-    facet_grid(all_enty ~ .)
-  
-  cost_enty_regi <- 
-    ggplot(costFuEx, aes(x=period,y=value,fill=all_enty,color=all_enty,group=region)) +
-    geom_line() + 
-    facet_grid(region ~ all_enty) + 
-    theme_minimal()
-  
-  extr_enty_regi <-
-    ggplot(fuExtr,aes(x=period, y = value, group=rlf, fill=rlf)) + 
-    geom_col(position = "stack") + 
-    facet_grid(region ~ all_enty)
-  
-  cumExtr_enty_regi <- 
-    ggplot(fuExtrCum%>%filter(period>2000,period <= 2100),aes(x=region,y=value,group=rlf,fill=rlf)) +
-    geom_col() + 
-    facet_grid(all_enty ~ .)
-  
   
   
   if(!is.null(file)) {

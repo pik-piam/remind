@@ -26,7 +26,7 @@ compareScenarios(mif, hist, y = c(seq(2005, 2060, 5), seq(2070, 2100,
 
 \item{fileName}{name of the pdf, default = "CompareScenarios.pdf"}
 
-\item{sr15marker_RCP}{if given, show the corresponding marker scenarios (SSP1-5) from the SR15 database in some plots.}
+\item{sr15marker_RCP}{if given, show the corresponding marker scenarios (SSP1-5) from the SR15 database in some plots. Requires the sr15data package.}
 }
 \description{
 Read in all information from mif file and create
