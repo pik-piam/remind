@@ -92,10 +92,7 @@ reportLCOE <- function(gdx){
   # direct investment cost = directteinv or for past values (before 2005) (v_investcost * deltaCap) 
   # annuity represents (total investment cost + interest over lifetime) distributed equally over all years of lifetime
   
-  # to avoid error for runs wit h22ch4 error, fixed after May 19, I think
-  p_omeg <- p_omeg[,,"h22ch4", invert=TRUE]
-  te <- te[te!="h22ch4"]
-  
+
   te_annuity <- new.magpie("GLO",names=magclass::getNames(p_omeg,dim=2))
   for(a in magclass::getNames(p_omeg["EUR",,],dim=2)){
    te_annuity[,,a] <- 1/dimSums(p_omeg["EUR",,a]/1.06**as.numeric(magclass::getNames(p_omeg["EUR",,a],dim=1)),dim=3.1)    
@@ -342,7 +339,7 @@ reportLCOE <- function(gdx){
   Geopot <- NULL
   
   # RE techs
-  teRe2rlfDetail <- c("spv","csp","hydro", "geohe","geohdr")
+  teRe2rlfDetail <- c("spv","csp","hydro", "geohe","geohdr","wind")
   
   # discount rate
   r <- 0.06
