@@ -70,7 +70,7 @@ reportLCOE <- function(gdx){
   v_investcost  <- readGDX(gdx,name=c("vm_costTeCapital","v_costTeCapital","v_investcost"),field="l",format="first_found")[,ttot,] 
   vm_cap        <- readGDX(gdx,name=c("vm_cap"),field="l",format="first_found")  
   vm_prodFe     <- readGDX(gdx,name=c("vm_prodFe"),field="l",restore_zeros=FALSE,format="first_found")
-  v_emiTeDetail <- readGDX(gdx,name=c("v_emiTeDetail"),field="l",restore_zeros=FALSE,format="first_found")
+  v_emiTeDetail <- readGDX(gdx,name=c("vm_emiTeDetail","v_emiTeDetail"),field="l",restore_zeros=FALSE,format="first_found")
   
   ## equations
   qm_pebal  <- readGDX(gdx,name=c("q_balPe"),field="m",format="first_found")
