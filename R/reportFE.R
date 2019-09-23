@@ -85,6 +85,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   vm_cesIO <- readGDX(gdx, name=c("vm_cesIO"), field="l", restore_zeros=FALSE,format= "first_found")*TWa_2_EJ
   vm_otherFEdemand  <- readGDX(gdx,name=c("vm_otherFEdemand"),field="l",format="first_found")*TWa_2_EJ
   vm_demFeForEs <- readGDX(gdx,name = c("vm_demFeForEs"), field="l", restore_zeros=FALSE,format= "first_found",react = "silent")*TWa_2_EJ
+  v_prodEs <- readGDX(gdx,name = c("v_prodEs"), field="l",restore_zeros = F, format = "first_found", react = "silent") * TWa_2_EJ
 
   v33_grindrock_onfield  <- readGDX(gdx,name=c("v33_grindrock_onfield"),field="l",format="first_found",react = "silent")
   if (is.null(v33_grindrock_onfield)){
@@ -169,6 +170,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     putty_ue = c("uescb","ueshb","uealb","uecwb")
     
     tmp0 <- mbind(tmp0,
+                  # Useful Energy
                   setNames(dimSums(vm_cesIO[,,"uealb"],dim=3),        "UE|Buildings|Appliances and Light (EJ/yr)"),
                   setNames(dimSums(vm_cesIO[,,"uecwb"],dim=3),        "UE|Buildings|Cooking and Water (EJ/yr)"),
                   setNames(dimSums(vm_cesIO[,,"ueshb"],dim=3),        "UE|Buildings|Space Heating (EJ/yr)"),
@@ -176,6 +178,34 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                   
                   setNames(dimSums(vm_cesIO[,,putty_ue],dim=3),       "UE|Buildings (EJ/yr)"),
                   
+                  setNames(dimSums(vm_cesIO[,,"uescb"],dim=3),        "UE|Buildings|Space Cooling|Electricity (EJ/yr)"),
+                  
+                  setNames(dimSums(vm_cesIO[,,"uealb"],dim=3),        "UE|Buildings|Appliances and Light|Electricity (EJ/yr)"),
+                  
+                  setNames(dimSums(v_prodEs[,,c("uecwsob","uecwstb")],dim=3),        "UE|Buildings|Cooking and Water|Solids (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,"uecwsob"],dim=3),        "UE|Buildings|Cooking and Water|Solids|Modern (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,"uecwstb"],dim=3),        "UE|Buildings|Cooking and Water|Solids|Traditional (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,"uecwelb"],dim=3),        "UE|Buildings|Cooking and Water|Electricity|Resistance (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,"uecwheb"],dim=3),        "UE|Buildings|Cooking and Water|Heat (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,"uecwgab"],dim=3),        "UE|Buildings|Cooking and Water|Gases (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,"uecwhob"],dim=3),        "UE|Buildings|Cooking and Water|Liquids (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,"uecwh2b"],dim=3),        "UE|Buildings|Cooking and Water|Hydrogen (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,"uecwhpb"],dim=3),        "UE|Buildings|Cooking and Water|Electricity|Heat pumps (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,c("uecwelb","uecwhpb")],dim=3), "UE|Buildings|Cooking and Water|Electricity (EJ/yr)"),
+                  
+                  
+                  setNames(dimSums(v_prodEs[,,c("ueshsob","ueshstb")],dim=3),        "UE|Buildings|Space Heating|Solids (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,"ueshsob"],dim=3),        "UE|Buildings|Space Heating|Solids|Modern (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,"ueshstb"],dim=3),        "UE|Buildings|Space Heating|Solids|Traditional (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,"ueshelb"],dim=3),        "UE|Buildings|Space Heating|Electricity|Resistance (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,"ueshheb"],dim=3),        "UE|Buildings|Space Heating|Heat (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,"ueshgab"],dim=3),        "UE|Buildings|Space Heating|Gases (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,"ueshhob"],dim=3),        "UE|Buildings|Space Heating|Liquids (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,"ueshh2b"],dim=3),        "UE|Buildings|Space Heating|Hydrogen (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,"ueshhpb"],dim=3),        "UE|Buildings|Space Heating|Electricity|Heat pumps (EJ/yr)"),
+                  setNames(dimSums(v_prodEs[,,c("ueshelb","ueshhpb")],dim=3), "UE|Buildings|Space Heating|Electricity (EJ/yr)"),
+                  
+                  # Final Energy
                   setNames(dimSums(vm_cesIO[,,"fealelb"],dim=3),        "FE|Buildings|Appliances and Light|Electricity (EJ/yr)"),
                   
                   setNames(dimSums(vm_demFeForEs[,,c("uecwsob","uecwstb")],dim=3),        "FE|Buildings|Cooking and Water|Solids (EJ/yr)"),
