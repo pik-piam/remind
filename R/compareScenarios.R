@@ -2124,10 +2124,10 @@ swfigure(sw,print,p,sw_option="height=9,width=16")
 swlatex(sw,"\\twocolumn")
 
   
-# ---- ES transport per capita (time domain, line graph)----
+# ---- ES passenger transport per capita (time domain, line graph)----
 
 swlatex(sw,"\\onecolumn")
-swlatex(sw,"\\subsubsection{Energy Services for Transport (per Capita, year)}")
+swlatex(sw,"\\subsubsection{Energy Services for Passenger Transport (per Capita, year)}")
 
 items<- c(
   "ES|Transport|Pass (bn pkm/yr)",
@@ -2233,6 +2233,104 @@ p <- ggplot() +
   scale_color_manual(values = reg_cols,  labels = reg_labels) +
   facet_wrap(~ variable, scales="free_y") +
   ylab("Mobility Demand per Cap. (km/yr)") +
+  xlab("GDP PPP per Cap. (kUS$2005)") +
+  theme_minimal()
+swfigure(sw,print,p,sw_option="height=9,width=16")
+
+swlatex(sw,"\\twocolumn")
+
+# ---- ES freight transport per capita (time domain, line graph)----
+
+swlatex(sw,"\\onecolumn")
+swlatex(sw,"\\subsubsection{Energy Services for Freight Transport (per Capita, year)}")
+
+items<- c(
+  "ES|Transport|Freight (bn tkm/yr)",
+  "Population (million)")
+qitem <- as.data.table(as.quitte(data[,, items]))
+
+`ES|Transport|Freight` <- NULL
+
+var <- qitem[, "unit" := NULL]
+
+## calculations
+var <- data.table::dcast(var, ... ~ variable)
+
+var[, `ES|Transport|Freight` := `ES|Transport|Freight`/Population*1e3]
+
+var <- data.table::melt(var, id.vars=c("model", "scenario", "region", "period"))
+var <- var[variable != "Population"]
+
+## First page, global plots
+p <- ggplot() +
+  geom_line(data=var[region == "GLO"],
+            aes(x=period, y=value, linetype=scenario)) +
+  facet_wrap(~ variable, scales="free_y") +
+  ylab("Freight Demand per Cap. (tkm/yr)") +
+  xlab("year") +
+  theme_minimal()
+swfigure(sw,print,p,sw_option="height=9,width=16")
+
+## Second page, with color coded regions
+var <- var[variable != "Population" & region != "GLO" & value > 0]
+reg_cols <- plotstyle(as.character(unique(var$region)))
+reg_labels <- plotstyle(as.character(unique(var$region)), out="legend")
+p <- ggplot() +
+  geom_line(data=var[region != "GLO"],
+            aes(x=period, y=value, linetype=scenario, color=region)) +
+  scale_color_manual(values = reg_cols,  labels = reg_labels) +
+  facet_wrap(~ variable, scales="free_y") +
+  ylab("Freight Demand per Cap. (tkm/yr)") +
+  xlab("year") +
+  theme_minimal()
+swfigure(sw,print,p,sw_option="height=9,width=16")
+
+swlatex(sw,"\\twocolumn")
+
+
+# ---- ES per capita for transport (GDP domain)----
+
+swlatex(sw,"\\onecolumn")
+swlatex(sw,"\\subsubsection{Energy Services for Freight Transport (per Capita, GDP)}")
+
+items<- c(
+  "ES|Transport|Freight (bn tkm/yr)",
+  "Population (million)",
+  "GDP|PPP (billion US$2005/yr)")
+qitem <- as.data.table(as.quitte(data[,, items]))
+
+var <- qitem[, "unit" := NULL]
+
+var <- data.table::dcast(var, ... ~ variable)
+
+var[, `ES|Transport|Freight` := `ES|Transport|Freight`/Population*1e3][
+, `GDP|PPP` := `GDP|PPP`/Population]
+
+var <- data.table::melt(var, id.vars=c("model", "scenario", "region", "period", "GDP|PPP"))
+var <- var[variable != "Population"]
+  
+highlights <- var[period %in% highlight_yrs]
+
+p <- ggplot() +
+  geom_line(data=var[region == "GLO"],
+            aes(x=`GDP|PPP`, y=value, linetype=scenario)) +
+  geom_point(data=highlights[region == "GLO"], aes(x=`GDP|PPP`, y=value), shape=1) +
+  facet_wrap(~ variable, scales="free_y") +
+  ylab("Freight Demand per Cap. (tkm/yr)") +
+  xlab("GDP PPP per Cap. (kUS$2005)") +
+  theme_minimal()
+swfigure(sw,print,p,sw_option="height=9,width=16")
+
+var <- var[variable != "Population" & region != "GLO" & value > 0]
+reg_cols <- plotstyle(as.character(unique(var$region)))
+reg_labels <- plotstyle(as.character(unique(var$region)), out="legend")
+p <- ggplot() +
+  geom_line(data=var[region != "GLO"],
+            aes(x=`GDP|PPP`, y=value, linetype=scenario, color=region)) +
+  geom_point(data=highlights[region != "GLO"], aes(x=`GDP|PPP`, y=value, color=region), shape=1) +
+  scale_color_manual(values = reg_cols,  labels = reg_labels) +
+  facet_wrap(~ variable, scales="free_y") +
+  ylab("Freight Demand per Cap. (km/yr)") +
   xlab("GDP PPP per Cap. (kUS$2005)") +
   theme_minimal()
 swfigure(sw,print,p,sw_option="height=9,width=16")
