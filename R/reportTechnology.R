@@ -118,6 +118,8 @@ reportTechnology <- function(gdx,output=NULL,regionSubsetList=NULL) {
       "gash2"="Hydrogen|Gas|w/o CCS",
       "bioftcrec"="Liquids|Biomass|Biofuel|BioFTRC|w/ CCS",
       "bioftrec"="Liquids|Biomass|Biofuel|BioFTR|w/o CCS",
+      "bioethl"="Liquids|Biomass|Biofuel|Ethanol|Cellulosic|w/o CCS",
+      "bioeths"="Liquids|Biomass|Biofuel|Ethanol|Conventional|w/o CCS",
       "biodiesel"="Liquids|Biomass|Biofuel|Biodiesel|w/o CCS",
       "coalftcrec"="Liquids|Coal|w/ CCS",
       "coalftrec"="Liquids|Coal|w/o CCS")
