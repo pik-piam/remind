@@ -704,13 +704,43 @@ compareScenarios <- function(mif, hist,
   if("Policy Cost|Consumption Loss (billion US$2005/yr)" %in% magclass::getNames(data,dim=3)) {
     ## ---- Policy Cost|Consumption Loss ----
     swlatex(sw,"\\subsection{Policy Costs}")
-    p <- mipLineHistorical(data[mainReg,,"Policy Cost|Consumption Loss (billion US$2005/yr)"],x_hist=NULL,
-                           ylab='Policy Cost|Consumption Loss [billion US$2005/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
+
+    p <- mipLineHistorical(
+      data[mainReg,,"Policy Cost|Consumption Loss (billion US$2005/yr)"],
+      x_hist=NULL,
+      ylab='Policy Cost|Consumption Loss [billion US$2005/yr]',
+      scales="free_y",
+      plot.priority=c("x_hist","x","x_proj"))
     swfigure(sw,print,p,sw_option="height=8,width=8")
-    p <- mipLineHistorical(data[,,"Policy Cost|Consumption Loss (billion US$2005/yr)"][mainReg,,,invert=TRUE],x_hist=NULL,
-                           ylab='Policy Cost|Consumption Loss [billion US$2005/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
+
+    p <- mipLineHistorical(
+      data[,,"Policy Cost|Consumption Loss (billion US$2005/yr)"][
+        mainReg,,,invert=TRUE],
+      x_hist=NULL,
+      ylab='Policy Cost|Consumption Loss [billion US$2005/yr]',
+      scales="free_y",
+      plot.priority=c("x_hist","x","x_proj"),
+      facet.ncol=3)
     swfigure(sw,print,p,sw_option="height=9,width=8")
-  }
+
+    p <- mipLineHistorical(
+      data[mainReg,,"Policy Cost|Consumption Loss|Relative to Reference Consumption (percent)"],
+      x_hist=NULL,
+      ylab='Policy Cost|Consumption Loss|Relative to Reference Consumption [%]',
+      scales="free_y",
+      plot.priority=c("x_hist","x","x_proj"))
+    swfigure(sw,print,p,sw_option="height=9,width=8")
+
+    p <- mipLineHistorical(
+      data[,,"Policy Cost|Consumption Loss|Relative to Reference Consumption (percent)"][
+        mainReg,,,invert=TRUE],
+      x_hist=NULL,
+      ylab='Policy Cost|Consumption Loss|Relative to Reference Consumption [%]',
+      scales="free_y",
+      plot.priority=c("x_hist","x","x_proj"),
+      facet.ncol=3)
+    swfigure(sw,print,p,sw_option="height=9,width=8")
+}
 
   ## ---- Mitigation Indicators of demand-side transformation in 2050 ----
   ##varis <- c("FE|Industry (EJ/yr)",
