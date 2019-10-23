@@ -80,6 +80,7 @@ reportPolicyCosts <- function(gdx,gdx_ref,regionSubsetList=NULL){
   ####### calculate reporting parameters ############
   tmp <- NULL 
   tmp <- mbind(tmp,setNames((cons_bau - cons) * 1000, "Policy Cost|Consumption Loss (billion US$2005/yr)" ))
+  tmp <- mbind(tmp,setNames((cons_bau - cons)/(cons_bau + 1e-10) * 100, "Policy Cost|Consumption Loss|Relative to Reference Consumption (percent)")) 
   tmp <- mbind(tmp,setNames((gdp_bau - gdp) * 1000, "Policy Cost|GDP Loss (billion US$2005/yr)" ))
   tmp <- mbind(tmp,setNames((v_costfu +v_costin + v_costom  - (v_costfu_bau + v_costin_bau + v_costom_bau)) * 1000, "Policy Cost|Additional Total Energy System Cost (billion US$2005/yr)" ))
   # Policy costs calculated as consumption losses net the effect of climate-policy induced changes in the current account  
