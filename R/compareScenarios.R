@@ -19,7 +19,7 @@
 #' \dontrun{compareScenarios(mif_path)}
 #'
 #' @export
-#' @importFrom magclass read.report mbind getRegions new.magpie getYears add_dimension setNames getNames<-
+#' @importFrom magclass read.report mbind getRegions new.magpie getYears add_dimension setNames getNames<- time_interpolate
 #' @importFrom lusweave swopen swlatex swfigure swclose
 #' @importFrom mip mipLineHistorical mipBarYearData plotstyle
 #' @importFrom luplot magpie2ggplot2
@@ -1274,6 +1274,24 @@ compareScenarios <- function(mif, hist,
 
   ## ---- Emissions CO2 cumulated ----
 
+  swlatex(sw,"\\subsubsection{Cumulated}")
+
+  toplot <- time_interpolate(
+    data[,,"Emi|CO2|Cumulated (Mt CO2/yr)"],
+    2011, integrate_interpolated_years = T)
+  getSets(toplot) <- getSets(data)
+  toplot2011 <- toplot[,2011,]
+  getYears(toplot2011) <- NULL
+  toplot <- toplot - toplot2011
+
+  p <- mipLineHistorical(toplot[mainReg,,"Emi|CO2|Cumulated (Mt CO2/yr)"],x_hist=NULL,
+                         ylab='Emi|CO2|Cumulated [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
+  swfigure(sw,print,p,sw_option="height=8,width=8")
+
+  p <- mipLineHistorical(toplot[mainReg,,,invert=TRUE],x_hist=NULL,
+                         ylab='Emi|CO2|Cumulated [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
+  swfigure(sw,print,p,sw_option="height=9,width=8")
+
   p <- mipLineHistorical(data[mainReg,,"Emi|CO2|CDR|Land-Use Change|Cumulated (Mt CO2/yr)"],x_hist=NULL,
                          ylab='Emi|CO2|CDR|Land-Use Change|Cumulated [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
   swfigure(sw,print,p,sw_option="height=8,width=8")
@@ -1313,12 +1331,6 @@ compareScenarios <- function(mif, hist,
                          ylab='Emi|CO2|CDR|Cumulated [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
   swfigure(sw,print,p,sw_option="height=9,width=8")
 
-  p <- mipLineHistorical(data[mainReg,,"Emi|CO2|Cumulated (Mt CO2/yr)"],x_hist=NULL,
-                         ylab='Emi|CO2|Cumulated [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
-  swfigure(sw,print,p,sw_option="height=8,width=8")
-  p <- mipLineHistorical(data[,,"Emi|CO2|Cumulated (Mt CO2/yr)"][mainReg,,,invert=TRUE],x_hist=NULL,
-                         ylab='Emi|CO2|Cumulated [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
-  swfigure(sw,print,p,sw_option="height=9,width=8")
 
   ## ---- Emissions CDR by sector cumulated
 
