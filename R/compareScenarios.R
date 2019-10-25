@@ -359,7 +359,6 @@ compareScenarios <- function(mif, hist,
   swfigure(sw,print,p,sw_option="height=8,width=16")
   swlatex(sw,"\\twocolumn")
 
-
   ## ---- FE per capita by sector (time domain, area graph)----
 
   swlatex(sw,"\\subsection{FE per capita (by sector, time domain, area plot)}")
@@ -700,6 +699,22 @@ compareScenarios <- function(mif, hist,
   p <- mipLineHistorical(data[,,"Price|Carbon (US$2005/t CO2)"][mainReg,,,invert=TRUE],x_hist=NULL,
                          ylab='Price|Carbon [US$2005/t CO2]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
   swfigure(sw,print,p,sw_option="height=9,width=8")
+
+  swlatex(sw,"\\onecolumn")
+
+  p <- mipLineHistorical(
+    data[,,"Price|Carbon (US$2005/t CO2)"][
+      mainReg,,,invert=TRUE],
+    ylab='Price|Carbon [US$2005/t CO2]',
+    scales="free_y",
+    plot.priority=c("x_hist","x","x_proj"),
+    color.dim="region",
+    facet.dim="scenario",
+    facet.ncol=2) +
+    theme(legend.position="right")
+
+  swfigure(sw,print,p,sw_option="height=9,width=16")
+  swlatex(sw,"\\twocolumn")
 
   if("Policy Cost|Consumption Loss (billion US$2005/yr)" %in% magclass::getNames(data,dim=3)) {
     ## ---- Policy Cost|Consumption Loss ----
