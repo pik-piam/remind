@@ -1291,13 +1291,10 @@ compareScenarios <- function(mif, hist,
 
   swlatex(sw,"\\subsubsection{Cumulated}")
 
-  toplot <- time_interpolate(
-    data[,,"Emi|CO2|Cumulated (Mt CO2/yr)"],
-    2011, integrate_interpolated_years = T)
-  getSets(toplot) <- getSets(data)
-  toplot2011 <- toplot[,2011,]
-  getYears(toplot2011) <- NULL
-  toplot <- toplot - toplot2011
+  toplot <- data[,,"Emi|CO2|Cumulated (Mt CO2/yr)"]
+
+  toplot2010 <- setYears(toplot[,2010,], NULL)
+  toplot <- toplot - toplot2010
 
   p <- mipLineHistorical(toplot[mainReg,,"Emi|CO2|Cumulated (Mt CO2/yr)"],x_hist=NULL,
                          ylab='Emi|CO2|Cumulated [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
