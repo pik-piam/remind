@@ -351,7 +351,16 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
       'Electricity' = c('feel_cement', 'feelhth_chemicals', 
                         'feelwlth_chemicals', 'feel_steel_primary',
                         'feel_steel_secondary', 'feelhth_otherInd',
-                        'feelwlth_otherInd')
+                        'feelwlth_otherInd'),
+      
+      'Electricity|High-Temperature Heat' = c('feelhth_chemicals', 
+                                              'feelhth_otherInd'),
+      
+      'Electricity|Work and Low-Temperature Heat' = c('feel_cement',
+                                                      'feelwlth_chemicals',
+                                                      'feel_steel_primary',
+                                                      'feel_steel_secondary',
+                                                      'feelwlth_otherInd')
     )
 
     # list of UE items to calculate, including factor for unit conversion
