@@ -11,7 +11,7 @@
 #' returned
 #' @param scenario scenario name that is used in the *.mif reporting
 #' @param t temporal resolution of the reporting, default:
-#' t=c(seq(2005,2060,5),seq(2070,2110,10),2030,2050)
+#' t=c(seq(2005,2060,5),seq(2070,2110,10),2130,2150)
 #' @author Lavinia Baumstark
 #' @examples
 #' 
