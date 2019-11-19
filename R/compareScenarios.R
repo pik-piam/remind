@@ -293,7 +293,7 @@ compareScenarios <- function(mif, hist,
              "Emi|CO2|Buildings|Direct (Mt CO2/yr)",
              "Emi|CO2|Transport|Demand (Mt CO2/yr)",
              "Emi|CO2|Carbon Capture and Storage|Biomass|Neg (Mt CO2/yr)",
-             "Emi|CO2|CDR|DAC (Mt CO2/yr)",
+             "Emi|CO2|CDR|DACCS (Mt CO2/yr)",
              "Emi|CO2|CDR|EW (Mt CO2/yr)")
   var <- data[,,intersect(items,getNames(data,dim=3))]
 
@@ -323,7 +323,7 @@ compareScenarios <- function(mif, hist,
              "Emi|CO2|Buildings|Direct|Cumulated (Mt CO2/yr)",
              "Emi|CO2|Transport|Demand|Cumulated (Mt CO2/yr)",
              "Emi|CO2|CDR|BECCS|Cumulated (Mt CO2/yr)",
-             "Emi|CO2|CDR|DAC|Cumulated (Mt CO2/yr)",
+             "Emi|CO2|CDR|DACCS|Cumulated (Mt CO2/yr)",
              "Emi|CO2|CDR|EW|Cumulated (Mt CO2/yr)")
   var <- data[,,intersect(items,getNames(data,dim=3))]
 
@@ -1235,12 +1235,12 @@ compareScenarios <- function(mif, hist,
                          ylab='Emi|CO2|CDR|BECCS [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
   swfigure(sw,print,p,sw_option="height=9,width=8")
 
-  if("Emi|CO2|CDR|DAC (Mt CO2/yr)" %in% magclass::getNames(data,dim=3)) {
-    p <- mipLineHistorical(data[mainReg,,"Emi|CO2|CDR|DAC (Mt CO2/yr)"],x_hist=NULL,
-                           ylab='Emi|CO2|CDR|DAC [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
+  if("Emi|CO2|CDR|DACCS (Mt CO2/yr)" %in% magclass::getNames(data,dim=3)) {
+    p <- mipLineHistorical(data[mainReg,,"Emi|CO2|CDR|DACCS (Mt CO2/yr)"],x_hist=NULL,
+                           ylab='Emi|CO2|CDR|DACCS [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
     swfigure(sw,print,p,sw_option="height=8,width=8")
-    p <- mipLineHistorical(data[,,"Emi|CO2|CDR|DAC (Mt CO2/yr)"][mainReg,,,invert=TRUE],x_hist=NULL,
-                           ylab='Emi|CO2|CDR|DAC [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
+    p <- mipLineHistorical(data[,,"Emi|CO2|CDR|DACCS (Mt CO2/yr)"][mainReg,,,invert=TRUE],x_hist=NULL,
+                           ylab='Emi|CO2|CDR|DACCS [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
     swfigure(sw,print,p,sw_option="height=9,width=8")
   }
 
@@ -1267,7 +1267,7 @@ compareScenarios <- function(mif, hist,
              "Emi|CO2|Carbon Capture and Storage|Fossil (Mt CO2/yr)",
              "Emi|CO2|Land-Use Change (Mt CO2/yr)",
              "Emi|CO2|CDR|BECCS (Mt CO2/yr)",
-             "Emi|CO2|CDR|DAC (Mt CO2/yr)",
+             "Emi|CO2|CDR|DACCS (Mt CO2/yr)",
              "Emi|CO2|CDR|EW (Mt CO2/yr)")
   var <- data[,,intersect(items,getNames(data,dim=3))]
 
@@ -1318,12 +1318,12 @@ compareScenarios <- function(mif, hist,
                          ylab='Emi|CO2|CDR|BECCS|Cumulated [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
   swfigure(sw,print,p,sw_option="height=9,width=8")
 
-  if("Emi|CO2|CDR|DAC (Mt CO2/yr)" %in% magclass::getNames(data,dim=3)) {
-    p <- mipLineHistorical(data[mainReg,,"Emi|CO2|CDR|DAC|Cumulated (Mt CO2/yr)"],x_hist=NULL,
-                           ylab='Emi|CO2|CDR|DAC|Cumulated [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
+  if("Emi|CO2|CDR|DACCS (Mt CO2/yr)" %in% magclass::getNames(data,dim=3)) {
+    p <- mipLineHistorical(data[mainReg,,"Emi|CO2|CDR|DACCS|Cumulated (Mt CO2/yr)"],x_hist=NULL,
+                           ylab='Emi|CO2|CDR|DACCS|Cumulated [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
     swfigure(sw,print,p,sw_option="height=8,width=8")
-    p <- mipLineHistorical(data[,,"Emi|CO2|CDR|DAC|Cumulated (Mt CO2/yr)"][mainReg,,,invert=TRUE],x_hist=NULL,
-                           ylab='Emi|CO2|CDR|DAC|Cumulated [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
+    p <- mipLineHistorical(data[,,"Emi|CO2|CDR|DACCS|Cumulated (Mt CO2/yr)"][mainReg,,,invert=TRUE],x_hist=NULL,
+                           ylab='Emi|CO2|CDR|DACCS|Cumulated [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
     swfigure(sw,print,p,sw_option="height=9,width=8")
   }
 
@@ -1351,7 +1351,7 @@ compareScenarios <- function(mif, hist,
              "Emi|CO2|Carbon Capture and Storage|Fossil|Cumulated (Mt CO2/yr)",
              "Emi|CO2|Land-Use Change|Cumulated (Mt CO2/yr)",
              "Emi|CO2|CDR|BECCS|Cumulated (Mt CO2/yr)",
-             "Emi|CO2|CDR|DAC|Cumulated (Mt CO2/yr)",
+             "Emi|CO2|CDR|DACCS|Cumulated (Mt CO2/yr)",
              "Emi|CO2|CDR|EW|Cumulated (Mt CO2/yr)")
   var <- data[,,intersect(items,getNames(data,dim=3))]
 
