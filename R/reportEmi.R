@@ -105,6 +105,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   emismacmagpiech4 <- readGDX(gdx,c("emiMacMagpieCH4","emismacmagpiech4"),format="first_found")
   emismacmagpien2o <- readGDX(gdx,c("emiMacMagpieN2O","emismacmagpien2o"),format="first_found")
   emiMacExoCH4 <- readGDX(gdx,c("emiMacExoCH4"),format="first_found")
+  emiMacExoN2O <- readGDX(gdx,c("emiMacExoN2O"),format="first_found")
   ## parameter or variable - see next lines
   p_emi_fgas <- readGDX(gdx,c("pm_emiFgas","p_emiFgas","p_emi_fgas"),format="first_found", react = "silent")
   #LB# if old names are used rename set elements
@@ -1046,6 +1047,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   tmp3 <- mbind(tmp3,setNames( dimSums(vm_eminegregi[,,emismacmagpien2o],dim=3) * MtN2_to_ktN2O,       "Emi|N2O|Land Use (kt N2O/yr)"))
   tmp3 <- mbind(tmp3,setNames((vm_eminegregi[,,"n2owaste"]) * MtN2_to_ktN2O,                           "Emi|N2O|Waste (kt N2O/yr)"))
   tmp3 <- mbind(tmp3,setNames((vm_eminegregi[,,"n2oadac"] + vm_eminegregi[,,"n2onitac"] ) * MtN2_to_ktN2O, "Emi|N2O|Industry (kt N2O/yr)"))
+  tmp3 <- mbind(tmp3,setNames( dimSums(vm_macBase[,,emiMacExoN2O],dim=3) * MtN2_to_ktN2O,              "Emi|N2O|Other (kt N2O/yr)"))
                                
   ### Other ###############################################################################
   tmp4 <- NULL
