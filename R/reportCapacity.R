@@ -173,7 +173,7 @@ reportCapacity <- function(gdx,regionSubsetList=NULL) {
   
   tmp6 <- do.call('rbind', mylist)
   tmp6 <- as.magpie(quitte::as.quitte(tmp6))
-  magclass::getNames(tmp6) <- paste0(magclass::getNames(tmp6)," (NA)")
+  magclass::getNames(tmp6) <- paste0(magclass::getNames(tmp6)," (GW)")
  
   tmp <- mbind(tmp[,t2005,],tmp6)
   # add global values
