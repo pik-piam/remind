@@ -92,6 +92,9 @@ reportLCOE <- function(gdx){
   # direct investment cost = directteinv or for past values (before 2005) (v_investcost * deltaCap) 
   # annuity represents (total investment cost + interest over lifetime) distributed equally over all years of lifetime
   
+  # quick fix for h22ch4 problem
+  te <- te[te!="h22ch4"]
+  
 
   te_annuity <- new.magpie("GLO",names=magclass::getNames(p_omeg,dim=2))
   for(a in magclass::getNames(p_omeg["EUR",,],dim=2)){
