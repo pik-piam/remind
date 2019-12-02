@@ -37,6 +37,9 @@ reportMacroEconomy <- function(gdx,regionSubsetList=NULL){
   vm_invMacro <- readGDX(gdx,c("vm_invMacro","v_invest"),field="l",format="first_found")
   pm_pvp     <- readGDX(gdx,name=c("pm_pvp","p80_pvp"),format="first_found")[,,"good"]
   ppfen_stat <- readGDX(gdx,c("ppfen_stationary_dyn38","ppfen_stationary_dyn28","ppfen_stationary"),format="first_found", react = "silent")
+  
+  p36_floorspace <- readGDX(gdx, c("p36_floorspace"), react = "silent")
+
   if (length(ppfen_stat) == 0) ppfen_stat = NULL
   ppfen_build <- readGDX(gdx,c("ppfen_buildings_dyn36","ppfen_buildings_dyn28","ppfen_buildings"),format="first_found", react = "silent")
   ppfen_ind <- readGDX(gdx,c("ppfen_industry_dyn37","ppfen_industry_dyn28","ppfen_industry"),format="first_found", react = "silent")
@@ -137,10 +140,16 @@ reportMacroEconomy <- function(gdx,regionSubsetList=NULL){
                           +invM[,,"Investments|Non-ESM|Macro (billion US$2005/yr)"],
                           "Investments|Non-ESM (billion US$2005/yr)"))
     
+    #add floorspace
+    invM <- mbind(invM,
+                  setNames(p36_floorspace[,getYears(invM),] * 1000, "Floorspace demand (million m2)") 
+            )
+    
   } else {
     cap      <- setNames(vm_cesIO[ , ,"kap"]*1000,        "Capital Stock|Non-ESM (billion US$2005)")
     invM     <- setNames(vm_invMacro[ , ,"kap"]*1000,
                          "Investments|Non-ESM (billion US$2005/yr)")
+    
   }
     
   inv      <- setNames(invM[,,"Investments|Non-ESM (billion US$2005/yr)"] + invE, "Investments (billion US$2005/yr)")
@@ -150,6 +159,7 @@ reportMacroEconomy <- function(gdx,regionSubsetList=NULL){
   if(!is.null(vm_welfare)) setNames(vm_welfare,"Welfare|Real (1)")
   
   ces <- NULL
+
   
   #macro 
   ces <- mbind(ces,setNames(vm_cesIO[,,"kap"] * 1000,"CES_input|kap (billion US$2005)"))

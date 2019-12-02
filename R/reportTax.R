@@ -109,7 +109,7 @@ reportTax <- function(gdx,regionSubsetList=NULL){
   if(!is.null(fuEx_sub)){fuExtr <- readGDX(gdx, c("vm_fuExtr"),field="l", format="first_found",restore_zeros=FALSE,react="silent")}
   vm_cesIO <- readGDX(gdx, name=c("vm_cesIO"), field="l", restore_zeros=FALSE,format= "first_found")
   vm_demFeForEs <- readGDX(gdx, name=c("vm_demFeForEs"), field="l", restore_zeros=FALSE,format= "first_found", react = "silent")
-  vm_co2capture  <- readGDX(gdx,name=c("vm_co2capture","vm_co2CCS","v_co2CCS","v_ccs"),field="l",restore_zeros=FALSE,format="first_found", react = "silent")
+  vm_co2CCS  <- readGDX(gdx,name=c("vm_co2CCS","v_co2CCS","v_ccs"),field="l",restore_zeros=FALSE,format="first_found", react = "silent")
   vm_emicdrregi  <- readGDX(gdx,name=c("vm_emiCdr","vm_emicdrregi"),field="l",format="first_found")
   vm_emiengregi  <- readGDX(gdx,name=c("vm_emiTe","vm_emiengregi"),field="l",format="first_found")
   vm_sumeminegregi  <- readGDX(gdx,name=c("vm_emiMac","vm_sumeminegregi"),field="l",format="first_found")
@@ -139,7 +139,7 @@ reportTax <- function(gdx,regionSubsetList=NULL){
   p21_taxrevXport0 <- p21_taxrevXport0[,y,]
   p21_taxrevSO20 <- p21_taxrevSO20[,y,]
   p21_taxrevBio0 <- p21_taxrevBio0[,y,]
-  vm_co2capture <- vm_co2capture[,y,]
+  vm_co2CCS <- vm_co2CCS[,y,]
   vm_emicdrregi <- vm_emicdrregi[,y,]
   vm_emiengregi <- vm_emiengregi[,y,]
   vm_sumeminegregi <- vm_sumeminegregi[,y,]
@@ -551,7 +551,7 @@ reportTax <- function(gdx,regionSubsetList=NULL){
                  setNames(p21_taxrevBio0*1000,"Taxes|Bioenergy|GAMS calculated (billion US$2005/yr)")
     )
     out <- mbind(out,
-                 setNames(out[,,"Taxes|CCS|GAMS calculated (billion US$2005/yr)"]/vm_co2capture[,,"cco2.ico2.ccsinje.1"]*12/44,"Tax rate|CCS|GAMS calculated (US$2005/t CO2)"),
+                 setNames(out[,,"Taxes|CCS|GAMS calculated (billion US$2005/yr)"]/vm_co2CCS[,,"cco2.ico2.ccsinje.1"]*12/44,"Tax rate|CCS|GAMS calculated (US$2005/t CO2)"),
                  setNames(out[,,"Taxes|Net-negative emissions|GAMS calculated (billion US$2005/yr)"]/(vm_emiengregi[,,"co2"] + vm_sumeminegregi[,,"co2"] + vm_emicdrregi[,,"co2"])*12/44*(-1),"Tax rate|Net-negative emissions|GAMS calculated (US$2005/t CO2)")
     )
   }

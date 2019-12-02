@@ -49,6 +49,10 @@ reportSE <- function(gdx,regionSubsetList=NULL){
   se_Gas    <- intersect(c("segafos", "segabio", "sega"),sety)
   se_Solids <- intersect(c("sesofos", "sesobio", "seso"),sety)
   
+  # Gases and Liquids can also be made from H2 via CCU
+  input_gas <- c(pety,"seh2")
+  input_liquids <- c(pety,"seh2")
+  
   ## parameter
   dataoc_tmp    <- readGDX(gdx,c("pm_prodCouple","p_prodCouple","p_dataoc"),restore_zeros=FALSE,format="first_found")
   dataoc_tmp[is.na(dataoc_tmp)] <- 0
@@ -195,7 +199,7 @@ reportSE <- function(gdx,regionSubsetList=NULL){
     se.prodLoss(prodSe,dataoc,oc2te,sety,"pesol","seel", te = "spv",     name = "SE|Electricity|Curtailment|Solar|PV (EJ/yr)"),
     se.prodLoss(prodSe,dataoc,oc2te,sety,"pewin","seel",                 name = "SE|Electricity|Curtailment|Wind (EJ/yr)"),
     se.prodLoss(prodSe,dataoc,oc2te,sety,c("pewin","pesol"),"seel",      name = "SE|Electricity|Curtailment|WindSolar (EJ/yr)"),
-    se.prod(prodSe,dataoc,oc2te,sety,pety,se_Gas,                        name = "SE|Gases (EJ/yr)"),
+    se.prod(prodSe,dataoc,oc2te,sety,input_gas,se_Gas,                   name = "SE|Gases (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,pebio,se_Gas,                       name = "SE|Gases|Biomass (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,"pegas",se_Gas,                     name = "SE|Gases|Natural Gas (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,"pecoal",se_Gas,                    name = "SE|Gases|Coal (EJ/yr)"),
@@ -203,6 +207,7 @@ reportSE <- function(gdx,regionSubsetList=NULL){
     se.prod(prodSe,dataoc,oc2te,sety,pebio,se_Gas, te = tenoccs,         name = "SE|Gases|Biomass|w/o CCS (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,"pecoal",se_Gas, te = teccs,        name = "SE|Gases|Coal|w/ CCS (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,"pecoal",se_Gas, te = tenoccs,      name = "SE|Gases|Coal|w/o CCS (EJ/yr)"),
+    se.prod(prodSe,dataoc,oc2te,sety,"seh2",se_Gas,                      name = "SE|Gases|Hydrogen (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,pety,"sehe",                        name = "SE|Heat (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,pebio,"sehe",                       name = "SE|Heat|Biomass (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,"pecoal","sehe",                    name = "SE|Heat|Coal (EJ/yr)"),
@@ -226,7 +231,7 @@ reportSE <- function(gdx,regionSubsetList=NULL){
     se.prod(prodSe,dataoc,oc2te,sety,c("pegas","pecoal","peoil") ,"seh2",               name = "SE|Hydrogen|Fossil (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,c("pegas","pecoal","peoil"),"seh2", te = teccs,    name = "SE|Hydrogen|Fossil|w/ CCS (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,c("pegas","pecoal","peoil"),"seh2", te = tenoccs,  name = "SE|Hydrogen|Fossil|w/o CCS (EJ/yr)"),
-    se.prod(prodSe,dataoc,oc2te,sety,pety,se_Liq,                           name = "SE|Liquids (EJ/yr)"),
+    se.prod(prodSe,dataoc,oc2te,sety,input_liquids,se_Liq,                  name = "SE|Liquids (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,pebio,se_Liq,                          name = "SE|Liquids|Biomass (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,pebio,se_Liq, te = teccs,              name = "SE|Liquids|Biomass|w/ CCS (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,pebio,se_Liq, te = tenoccs,            name = "SE|Liquids|Biomass|w/o CCS (EJ/yr)"),
@@ -235,6 +240,8 @@ reportSE <- function(gdx,regionSubsetList=NULL){
     se.prod(prodSe,dataoc,oc2te,sety,"pebiolc",se_Liq ,tenoccs,        name="SE|Liquids|Biomass|Cellulosic|w/o CCS (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,c("pebioil", "pebios"), se_Liq ,  name="SE|Liquids|Biomass|Non-Cellulosic (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,"pebios",se_Liq ,                 name="SE|Liquids|Biomass|Conventional Ethanol (EJ/yr)"),
+    se.prod(prodSe,dataoc,oc2te,sety,"pebiolc",se_Liq, "bioethl",        name="SE|Liquids|Biomass|Biofuel|Ethanol|Cellulosic|w/o CCS (EJ/yr)"),
+    se.prod(prodSe,dataoc,oc2te,sety,"pebios",se_Liq, "bioeths",        name="SE|Liquids|Biomass|Biofuel|Ethanol|Conventional|w/o CCS (EJ/yr)"),    
     se.prod(prodSe,dataoc,oc2te,sety,pebio,se_Liq , c("bioftrec", "bioftcrec","biodiesel"),                                                            name="SE|Liquids|Biomass|Biofuel (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,pebio,se_Liq , c("bioftrec","biodiesel"),name="SE|Liquids|Biomass|Biofuel|w/o CCS (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,pebio,se_Liq , "bioftcrec",    name="SE|Liquids|Biomass|Biofuel|BioFTRC|w/ CCS (EJ/yr)"),
@@ -252,6 +259,7 @@ reportSE <- function(gdx,regionSubsetList=NULL){
     se.prod(prodSe,dataoc,oc2te,sety,c("pegas","pecoal","peoil"),se_Liq,               name = "SE|Liquids|Fossil|w/ oil (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,c("pegas","pecoal","peoil"),se_Liq, te = tenoccs, name = "SE|Liquids|Fossil|w/ oil|w/o CCS (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,"peoil" ,se_Liq,                       name = "SE|Liquids|Oil (EJ/yr)"),
+    se.prod(prodSe,dataoc,oc2te,sety,"seh2" ,se_Liq,                       name = "SE|Liquids|Hydrogen (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,pety,se_Solids,                        name = "SE|Solids (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,"pecoal" ,se_Solids,                   name = "SE|Solids|Coal (EJ/yr)"),
    # SE|Solids|Biomass is supposed to exclude traditional biomass
