@@ -83,6 +83,15 @@ reportLCOE <- function(gdx){
     } else {
     v32_curt <- 0
     }
+  
+  # sensitivites (only for investment cost sensitivity runs)
+  p_costFac  <- readGDX(gdx,name=c("p_costFac"),react = "silent") # sensitivity factor
+  if (is.null(p_costFac)) {
+    p_costFac <- new.magpie(getRegions(v_directteinv),getYears(v_directteinv),getNames(p_omeg,dim=2), fill=1)
+  }
+  
+
+
 
   ####### calculate needed parameters ###############
   
@@ -104,7 +113,7 @@ reportLCOE <- function(gdx){
   te_inv_annuity <- 1e+12 * te_annuity[,,te] * 
     mbind( 
       v_investcost[,ttot_before2005,te] * dimSums(vm_deltaCap[teall2rlf][,ttot_before2005,te],dim=3.2),
-      v_directteinv[,ttot_from2005,te]
+      v_directteinv[,ttot_from2005,te] * p_costFac[,,te]
     )
   
   
