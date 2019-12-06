@@ -4,10 +4,17 @@
 \alias{compareScenarios}
 \title{Read in mif and write comparison.pdf}
 \usage{
-compareScenarios(mif, hist, y = c(seq(2005, 2060, 5), seq(2070, 2100,
-  10)), y_hist = c(seq(1960, 2015, 1)), y_bar = c(2010, 2030, 2050,
-  2100), reg = NULL, mainReg = "GLO",
-  fileName = "CompareScenarios.pdf", sr15marker_RCP = NULL)
+compareScenarios(
+  mif,
+  hist,
+  y = c(seq(2005, 2060, 5), seq(2070, 2100, 10)),
+  y_hist = c(seq(1960, 2015, 1)),
+  y_bar = c(2010, 2030, 2050, 2100),
+  reg = NULL,
+  mainReg = "GLO",
+  fileName = "CompareScenarios.pdf",
+  sr15marker_RCP = NULL
+)
 }
 \arguments{
 \item{mif}{a path to one or more mif-files (might be created by confGDX2MIF)}

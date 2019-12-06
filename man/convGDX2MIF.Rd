@@ -4,8 +4,13 @@
 \alias{convGDX2MIF}
 \title{Read in GDX and write *.mif reporting}
 \usage{
-convGDX2MIF(gdx, gdx_ref = NULL, file = NULL, scenario = "default",
-  t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150))
+convGDX2MIF(
+  gdx,
+  gdx_ref = NULL,
+  file = NULL,
+  scenario = "default",
+  t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150)
+)
 }
 \arguments{
 \item{gdx}{a GDX as created by readGDX, or the file name of a gdx}
@@ -19,7 +24,7 @@ returned}
 \item{scenario}{scenario name that is used in the *.mif reporting}
 
 \item{t}{temporal resolution of the reporting, default:
-t=c(seq(2005,2060,5),seq(2070,2110,10),2030,2050)}
+t=c(seq(2005,2060,5),seq(2070,2110,10),2130,2150)}
 }
 \description{
 Read in all information from GDX file and create

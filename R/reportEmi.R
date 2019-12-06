@@ -920,9 +920,22 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
         * dimSums(mselect(vm_prodFe, all_enty1 = FE_Stat_fety), dim = c(3.1, 3.3)), dim = 3)
         - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS (Mt CO2/yr)"]), "Emi|CO2|Industry|Direct|BeforeTradBiomassCorr (Mt CO2/yr)")
     )
-
+    
     tmp <- mbind(
       tmp, 
+      setNames(collapseNames(p_share_feels_b * p_share_seel_s  * tmp[,,"Emi|CO2|Energy|Supply|Electricity|w/ couple prod (Mt CO2/yr)"]) ,
+               "Emi|CO2|Buildings|Electricity (Mt CO2/yr)"),
+      setNames(collapseNames(p_share_feh2s_b * p_share_seh2_s  * tmp[,,"Emi|CO2|Energy|Supply|Hydrogen|w/ couple prod (Mt CO2/yr)"]),
+               "Emi|CO2|Buildings|Hydrogen (Mt CO2/yr)"),
+      setNames(collapseNames(p_share_fehos_b * p_share_seliq_s * tmp[,,"Emi|CO2|Energy|SupplyandDemand|Liquids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"]),
+               "Emi|CO2|Buildings|Liquids (Mt CO2/yr)"),
+      setNames(collapseNames(p_share_fegas_b * tmp[,,"Emi|CO2|Energy|SupplyandDemand|Gases|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"]),
+               "Emi|CO2|Buildings|Gases (Mt CO2/yr)"),
+      setNames(collapseNames(p_share_fesos_b * tmp[,,"Emi|CO2|Energy|SupplyandDemand|Solids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"]),
+               "Emi|CO2|Buildings|Solids|BeforeTradBiomassCorr (Mt CO2/yr)"),
+      setNames(collapseNames(p_share_fehes_b * tmp[,,"Emi|CO2|Energy|Supply|Heat|w/ couple prod (Mt CO2/yr)"]),
+               "Emi|CO2|Buildings|Heat (Mt CO2/yr)"),
+      
       setNames(( collapseNames(p_share_feels_b * p_share_seel_s  * tmp[,,"Emi|CO2|Energy|Supply|Electricity|w/ couple prod (Mt CO2/yr)"])
                + collapseNames(p_share_feh2s_b * p_share_seh2_s  * tmp[,,"Emi|CO2|Energy|Supply|Hydrogen|w/ couple prod (Mt CO2/yr)"])
                + collapseNames(p_share_fehos_b * p_share_seliq_s * tmp[,,"Emi|CO2|Energy|SupplyandDemand|Liquids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"])
@@ -930,7 +943,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                + collapseNames(p_share_fesos_b * tmp[,,"Emi|CO2|Energy|SupplyandDemand|Solids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"])
                + collapseNames(p_share_fehes_b * tmp[,,"Emi|CO2|Energy|Supply|Heat|w/ couple prod (Mt CO2/yr)"])
                ),        "Emi|CO2|Buildings|Direct and Indirect|BeforeTradBiomassCorr (Mt CO2/yr)"),
-      
+ 
       setNames(dimSums( ( p_ef_dem[,,FE_Stat_fety]
                         * (1 - p_bioshare[,,FE_Stat_fety])
                         * p_share_fety_b[,,FE_Stat_fety]
@@ -938,6 +951,19 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                       * dimSums(mselect(vm_prodFe, all_enty1 = FE_Stat_fety), dim = c(3.1, 3.3)),
                       dim = 3) ,
                "Emi|CO2|Buildings|Direct|BeforeTradBiomassCorr (Mt CO2/yr)"),
+      
+      setNames(collapseNames(p_share_feels_b * p_share_seel_s  * tmp[,,"Emi|CO2|Energy|Supply|Electricity|Gross|w/ couple prod (Mt CO2/yr)"]),
+               "Emi|CO2|Buildings|Electricity|Gross (Mt CO2/yr)"),
+      setNames(collapseNames(p_share_feh2s_b * p_share_seh2_s  * tmp[,,"Emi|CO2|Energy|Supply|Hydrogen|Gross|w/ couple prod (Mt CO2/yr)"]),
+               "Emi|CO2|Buildings|Hydrogen|Gross (Mt CO2/yr)"),
+      setNames(collapseNames(p_share_fehos_b * p_share_seliq_s * tmp[,,"Emi|CO2|Energy|SupplyandDemand|Liquids|Gross|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"]),
+               "Emi|CO2|Buildings|Liquids|Gross (Mt CO2/yr)"),
+      setNames(collapseNames(p_share_fegas_b * tmp[,,"Emi|CO2|Energy|SupplyandDemand|Gases|Gross|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"]),
+               "Emi|CO2|Buildings|Gases|Gross (Mt CO2/yr)"),
+      setNames(collapseNames(p_share_fesos_b * tmp[,,"Emi|CO2|Energy|SupplyandDemand|Solids|Gross|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"]),
+               "Emi|CO2|Buildings|Solids|Gross|BeforeTradBiomassCorr (Mt CO2/yr)"),
+      setNames(collapseNames(p_share_fehes_b * tmp[,,"Emi|CO2|Energy|Supply|Heat|Gross|w/ couple prod (Mt CO2/yr)"]),
+               "Emi|CO2|Buildings|Heat|Gross (Mt CO2/yr)"),
       
       setNames(( collapseNames(p_share_feels_b * p_share_seel_s  * tmp[,,"Emi|CO2|Energy|Supply|Electricity|Gross|w/ couple prod (Mt CO2/yr)"])
                  + collapseNames(p_share_feh2s_b * p_share_seh2_s  * tmp[,,"Emi|CO2|Energy|Supply|Hydrogen|Gross|w/ couple prod (Mt CO2/yr)"])

@@ -4,9 +4,12 @@
 \alias{convGDX2MIF_fallback_for_coupling}
 \title{Read in GDX and calculate only coupling variables}
 \usage{
-convGDX2MIF_fallback_for_coupling(gdx, file = NULL,
-  scenario = "default", t = c(seq(2005, 2060, 5), seq(2070, 2110, 10),
-  2130, 2150))
+convGDX2MIF_fallback_for_coupling(
+  gdx,
+  file = NULL,
+  scenario = "default",
+  t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150)
+)
 }
 \arguments{
 \item{gdx}{a GDX object as created by readGDX, or the path to a gdx}

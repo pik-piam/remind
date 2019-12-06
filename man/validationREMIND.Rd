@@ -4,8 +4,7 @@
 \alias{validationREMIND}
 \title{validation}
 \usage{
-validationREMIND(gdx, hist, file = "validation.pdf", reportfile = NULL,
-  ...)
+validationREMIND(gdx, hist, file = "validation.pdf", reportfile = NULL, ...)
 }
 \arguments{
 \item{gdx}{GDX file}

@@ -72,11 +72,14 @@ reportSE <- function(gdx,regionSubsetList=NULL){
     storLoss <- NULL
     y <- getYears(prodSe)
   }
+  
+  vm_macBase <- readGDX(gdx,name=c("vm_macBase"),field="l",restore_zeros=FALSE,format="first_found")*pm_conv_TWa_EJ
+  vm_macBase <- vm_macBase[,y,]
+  vm_emiMacSector <- readGDX(gdx,name=c("vm_emiMacSector"),field="l",restore_zeros=FALSE,format="first_found")*pm_conv_TWa_EJ
+  vm_emiMacSector <-   vm_emiMacSector[,y,]
   ####### set temporal resolution #####
   prodSe    <- prodSe[,y,]
   storLoss  <- storLoss[,y,]
-  p_macBase <- p_macBase[,y,]
-  #  p_macEmi  <- p_macEmi[,y,]
   ####### fix negative values to 0 ##################
   #### adjust regional dimension of dataoc
   dataoc <- new.magpie(getRegions(prodSe),getYears(dataoc_tmp),magclass::getNames(dataoc_tmp),fill=0)
@@ -276,9 +279,12 @@ reportSE <- function(gdx,regionSubsetList=NULL){
 #    tmp1 <- mbind(tmp1, setNames(se.prod(prodSe,dataoc,oc2te,sety,pebio ,se_Solids, name = NULL)
 #                                 - tmp1[,,"SE|Solids|Traditional Biomass (EJ/yr)"],"SE|Solids|Biomass (EJ/yr)"))
 
-#   tmp1 <- mbind(tmp1,setNames( dimSums(mselect(prodSe,all_enty1=se_Gas),dim=3) +
-#                                 0.001638 * (p_macBase[,,"ch4wstl"]-p_macEmi[,,"ch4wstl"]) * pm_conv_TWa_EJ,"SE|Gases (EJ/yr)"))
-
+  if (!(is.null(vm_macBase) & is.null(vm_emiMacSector))){
+    #correction for the reused gas from waste landfills
+  tmp1[,,"SE|Gases (EJ/yr)"] <- tmp1[,,"SE|Gases (EJ/yr)"] +
+                                0.001638 * (vm_macBase[,,"ch4wstl"] 
+                                            -vm_emiMacSector[,,"ch4wstl"]) 
+  }
   # add global values
   out <- mbind(tmp1,dimSums(tmp1,dim=1))
   # add other region aggregations

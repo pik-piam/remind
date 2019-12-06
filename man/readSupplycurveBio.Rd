@@ -4,8 +4,11 @@
 \alias{readSupplycurveBio}
 \title{Read bioenergy supplycurve from GDX}
 \usage{
-readSupplycurveBio(outputdirs, userfun = function(param, x) {    
-  return(param[[1]] + param[[2]] * x) }, mult_on = "all")
+readSupplycurveBio(
+  outputdirs,
+  userfun = function(param, x) {     return(param[[1]] + param[[2]] * x) },
+  mult_on = "all"
+)
 }
 \arguments{
 \item{outputdirs}{Vector providing the folders that contain the gdx files}
