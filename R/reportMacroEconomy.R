@@ -84,7 +84,7 @@ reportMacroEconomy <- function(gdx,regionSubsetList=NULL){
   
   ies                     <- readGDX(gdx,c("pm_ies","p_ies"),format="first_found")
   prtp                    <- readGDX(gdx,"pm_prtp")
-  c_damage                <- readGDX(gdx,"c_damage")
+  c_damage                <- readGDX(gdx,"cm_damage","c_damage",format="first_found")
   forcOs                  <- readGDX(gdx,"vm_forcOs",field="l")[,t2005to2150,]
   inconvPen               <- readGDX(gdx,"v_inconvPen",field="l")[,t2005to2150,]
   inconvPenCoalSolids     <- readGDX(gdx,"v_inconvPenCoalSolids",field="l")[,t2005to2150,]

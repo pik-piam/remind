@@ -25,5 +25,5 @@ convGDX2MIF.R for the reporting
   \dontrun{reportEmi(gdx)}
 }
 \author{
-Jessica Streffler, Lavinia Baumstark, Michaja Pehl
+Jessica Strefler, Lavinia Baumstark, Michaja Pehl
 }

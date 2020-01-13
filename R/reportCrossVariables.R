@@ -374,13 +374,23 @@ reportCrossVariables <- function(gdx,output=NULL,regionSubsetList=NULL){
                  setNames(output[,,"Emi|CO2|Buildings|Direct|BeforeTradBiomassCorr (Mt CO2/yr)"]
                           - delta_Solids_emissions[,,"Emi|CO2|Buildings|Direct|BiomassCorrection  (Mt CO2/yr)"],
                           "Emi|CO2|Buildings|Direct (Mt CO2/yr)"),
+                 setNames(output[,,"Emi|CO2|Buildings|Solids|BeforeTradBiomassCorr (Mt CO2/yr)"]
+                          - delta_Solids_emissions[,,"Emi|CO2|Buildings|Direct|BiomassCorrection  (Mt CO2/yr)"],
+                          "Emi|CO2|Buildings|Solids (Mt CO2/yr)"),
+                 
+                 
                  
                  setNames(output[,,"Emi|CO2|Industry|Direct and Indirect|Gross|BeforeTradBiomassCorr (Mt CO2/yr)"]
                           + delta_Solids_emissions[,,"Emi|CO2|Buildings|Direct|BiomassCorrection  (Mt CO2/yr)"],
                           "Emi|CO2|Industry|Direct and Indirect|Gross (Mt CO2/yr)"),
                  setNames(output[,,"Emi|CO2|Buildings|Direct and Indirect|Gross|BeforeTradBiomassCorr (Mt CO2/yr)"]
                           - delta_Solids_emissions[,,"Emi|CO2|Buildings|Direct|BiomassCorrection  (Mt CO2/yr)"],
-                          "Emi|CO2|Buildings|Direct and Indirect|Gross (Mt CO2/yr)")
+                          "Emi|CO2|Buildings|Direct and Indirect|Gross (Mt CO2/yr)"),
+                 setNames(output[,,"Emi|CO2|Buildings|Solids|Gross|BeforeTradBiomassCorr (Mt CO2/yr)"]
+                          - delta_Solids_emissions[,,"Emi|CO2|Buildings|Direct|BiomassCorrection  (Mt CO2/yr)"],
+                          "Emi|CO2|Buildings|Solids|Gross (Mt CO2/yr)")
+                 
+                 
     )
     
   }
