@@ -391,7 +391,8 @@ reportLCOE <- function(gdx, extended.output = F){
   teReNoBio <- readGDX(gdx, "teReNoBio") # renewable technologies without biomass
   
   
-  se_gen_mapping <- rbind(pe2se, se2se, se2se_ccu39)
+  se_gen_mapping <- rbind(pe2se, se2se, se2se_ccu39) 
+  colnames(se_gen_mapping) <- c("fuel", "output", "tech")
   # se_gen_mapping <- rbind(se_gen_mapping, 
   #                         c("seh2","segafos", "h22ch4"), c("seh2", "seliqfos", "MeOH")) %>% 
   #   rename( fuel = all_enty, output = all_enty1, tech = all_te)
@@ -548,8 +549,8 @@ reportLCOE <- function(gdx, extended.output = F){
   # period will be year of building the plant, 
   # opTimeYr will be year within lifetime of plant (where only a certain fraction, pomeg, of capacit is still standing)
   df.pomeg.expand <- df.pomeg %>% 
-    expand(opTimeYr, period = seq(2005,2150,5)) %>%  
-    full_join(df.pomeg) %>%
+    expand(opTimeYr, period = seq(2005,2150,5)) %>%   
+    full_join(df.pomeg) %>% 
     mutate( opTimeYr = as.numeric(opTimeYr)) %>% 
     mutate( opTimeYr = ifelse(opTimeYr > 1, opTimeYr + period, period)) %>% 
     left_join(se_gen_mapping) %>% 
