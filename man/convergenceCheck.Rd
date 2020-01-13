@@ -4,11 +4,8 @@
 \alias{convergenceCheck}
 \title{Read in information form gdx and write convergenceCheck.pdf}
 \usage{
-convergenceCheck(
-  gdx,
-  y = c(seq(2005, 2060, 5), seq(2070, 2100, 10)),
-  file = "convergenceCheck.pdf"
-)
+convergenceCheck(gdx, y = c(seq(2005, 2060, 5), seq(2070, 2100, 10)),
+  file = "convergenceCheck.pdf")
 }
 \arguments{
 \item{gdx}{GDX file}

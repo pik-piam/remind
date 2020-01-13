@@ -198,7 +198,6 @@ reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
   if(is.null(getNames(pm_delta_kap))) pm_delta_kap = setNames(pm_delta_kap,"kap")
   ## variables
   pric_emu       <- readGDX(gdx,name="vm_pebiolc_price",field="l",format="first_found")
-  pric_emu_base  <- readGDX(gdx,name=c("vm_pebiolc_price_shifted","vm_pebiolc_price_base"),field="l",format="first_found")
   prodFE         <- readGDX(gdx,name='vm_prodFe',field="l",format="first_found",restore_zeros = FALSE)
   prodSE         <- readGDX(gdx,name='vm_prodSe',field="l",format="first_found",restore_zeros = FALSE)
   demSe          <- readGDX(gdx,name=c("vm_demSe","v_demSe"),types="variables",field="l",format="first_found",restore_zeros=FALSE)
@@ -263,7 +262,6 @@ reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
   pric_emu_pre   <- pric_emu_pre[,y,]
   pric_emu_pre_shifted <- pric_emu_pre_shifted[,y,]
   pric_emu       <- pric_emu[,y,]
-  pric_emu_base  <- pric_emu_base[,y,]
   bio_tax_factor <- bio_tax_factor[,y,]
   esm2macro.m    <- esm2macro.m[,y,]
   pm_dataemi     <- pm_dataemi[,y,]
@@ -309,7 +307,7 @@ reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
   tmp <- mbind(tmp,setNames(pric_emu_pre * tdptwyr2dpgj,                               "Price|Biomass|Emulator presolve (US$2005/GJ)"))
   tmp <- mbind(tmp,setNames(pric_emu_pre_shifted * tdptwyr2dpgj,                       "Price|Biomass|Emulator presolve shifted (US$2005/GJ)"))
   tmp <- mbind(tmp,setNames(pric_emu * tdptwyr2dpgj,                                   "Price|Biomass|Emulator shifted (US$2005/GJ)"))
-  tmp <- mbind(tmp,setNames(pric_emu_base * bio_tax_factor * tdptwyr2dpgj,             "Price|Biomass|Bioenergy tax (US$2005/GJ)"))
+  tmp <- mbind(tmp,setNames(pric_emu * bio_tax_factor * tdptwyr2dpgj,             "Price|Biomass|Bioenergy tax (US$2005/GJ)"))
   
   tmp <- mbind(tmp,setNames(pebal.m[,,"peoil"]/(budget.m+1e-10) * tdptwyr2dpgj,    "Price|Crude Oil|Primary Level (US$2005/GJ)"))
   tmp <- mbind(tmp,setNames(pebal.m[,,"pegas"]/(budget.m+1e-10) * tdptwyr2dpgj,    "Price|Natural Gas|Primary Level (US$2005/GJ)"))

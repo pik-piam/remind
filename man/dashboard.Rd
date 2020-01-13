@@ -4,14 +4,8 @@
 \alias{dashboard}
 \title{REMIND dashboard}
 \usage{
-dashboard(
-  gdx = NULL,
-  statsFile = NULL,
-  regionMapping = NULL,
-  hist = NULL,
-  reportfile = NULL,
-  output_file = NULL
-)
+dashboard(gdx = NULL, statsFile = NULL, regionMapping = NULL,
+  hist = NULL, reportfile = NULL, output_file = NULL)
 }
 \arguments{
 \item{gdx}{GDX (fulldata.gdx) file path}

@@ -5,15 +5,9 @@
 \title{toolRegionSubsets
 Returns a list of parent regions that are equal to a child mapping union of region mappings.}
 \usage{
-toolRegionSubsets(
-  gdx = NULL,
-  map = NULL,
-  parentMapping = NULL,
-  singleMatches = FALSE,
-  removeDuplicates = TRUE,
-  regionIndex = NULL,
-  countryIndex = NULL
-)
+toolRegionSubsets(gdx = NULL, map = NULL, parentMapping = NULL,
+  singleMatches = FALSE, removeDuplicates = TRUE, regionIndex = NULL,
+  countryIndex = NULL)
 }
 \arguments{
 \item{gdx}{a GDX as created by readGDX, or the file name of a gdx.
