@@ -86,8 +86,8 @@ reportMacroEconomy <- function(gdx,regionSubsetList=NULL){
   prtp                    <- readGDX(gdx,"pm_prtp")
   c_damage                <- readGDX(gdx,"cm_damage","c_damage",format="first_found")
   forcOs                  <- readGDX(gdx,"vm_forcOs",field="l")[,t2005to2150,]
-  inconvPen               <- readGDX(gdx,"v_inconvPen",field="l")[,t2005to2150,]
-  inconvPenCoalSolids     <- readGDX(gdx,"v_inconvPenCoalSolids",field="l")[,t2005to2150,]
+  inconvPen               <- readGDX(gdx,c("v02_inconvPen","v_inconvPen"),field="l")[,t2005to2150,]
+  inconvPenCoalSolids     <- readGDX(gdx,c("v02_inconvPenCoalSolids","v_inconvPenCoalSolids"),field="l")[,t2005to2150,]
   
   welf <- cons
   getNames(welf) <- "Welfare|Real and undiscounted|Yearly (arbitrary unit/yr)"
@@ -155,7 +155,7 @@ reportMacroEconomy <- function(gdx,regionSubsetList=NULL){
   inv      <- setNames(invM[,,"Investments|Non-ESM (billion US$2005/yr)"] + invE, "Investments (billion US$2005/yr)")
   # TODO: add p80_curracc
   #curracc <- setNames(readGDX(gdx,'p80_curracc',field='l',format='first_found') * 1000,"Current Account (billion US$2005/yr)")
-  vm_welfare <- readGDX(gdx,c('v_welfare','vm_welfare'),field='l',format='first_found',react = 'warning') 
+  vm_welfare <- readGDX(gdx,c('v02_welfare','v_welfare','vm_welfare'),field='l',format='first_found',react = 'warning') 
   if(!is.null(vm_welfare)) setNames(vm_welfare,"Welfare|Real (1)")
   
   ces <- NULL
