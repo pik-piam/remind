@@ -4,12 +4,8 @@
 \alias{reportDiagnosis}
 \title{Create REMIND Diagnosis variables and plots}
 \usage{
-reportDiagnosis(
-  gdx = NULL,
-  statsFile = NULL,
-  chartType = "ggplot",
-  includeData = FALSE
-)
+reportDiagnosis(gdx = NULL, statsFile = NULL, chartType = "ggplot",
+  includeData = FALSE)
 }
 \arguments{
 \item{gdx}{GDX file}

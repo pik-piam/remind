@@ -4,13 +4,8 @@
 \alias{validationSummary}
 \title{validationSummary}
 \usage{
-validationSummary(
-  gdx,
-  hist,
-  reportfile = NULL,
-  outfile = "validationSummary.pdf",
-  ...
-)
+validationSummary(gdx, hist, reportfile = NULL,
+  outfile = "validationSummary.pdf", ...)
 }
 \arguments{
 \item{gdx}{GDX file}

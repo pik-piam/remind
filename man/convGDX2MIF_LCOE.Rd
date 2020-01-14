@@ -4,13 +4,8 @@
 \alias{convGDX2MIF_LCOE}
 \title{Read in GDX and write LCOE .mif reporting}
 \usage{
-convGDX2MIF_LCOE(
-  gdx,
-  gdx_ref,
-  file = NULL,
-  scenario = "default",
-  t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150)
-)
+convGDX2MIF_LCOE(gdx, gdx_ref, file = NULL, scenario = "default",
+  t = c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150))
 }
 \arguments{
 \item{gdx}{a GDX as created by readGDX, or the file name of a gdx}

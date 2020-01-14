@@ -4,13 +4,8 @@
 \alias{reportCharts}
 \title{Create REMIND reporting charts}
 \usage{
-reportCharts(
-  gdx = NULL,
-  regionMapping = NULL,
-  hist = NULL,
-  reportfile = NULL,
-  chartType = "ggplot"
-)
+reportCharts(gdx = NULL, regionMapping = NULL, hist = NULL,
+  reportfile = NULL, chartType = "ggplot")
 }
 \arguments{
 \item{gdx}{GDX file path}
