@@ -25,7 +25,7 @@ reportTrade <- function(gdx,regionSubsetList=NULL) {
   sm_tdptwyr2dpgj <- 31.71   #TerraDollar per TWyear to Dollar per GJ
   
   p_eta_conv       <- readGDX(gdx,name=c("pm_dataeta","p_eta_conv"),format = "first_found")
-  p_costsPEtradeMp <- readGDX(gdx,name=c("p_costsPEtradeMp"),format = "first_found")
+  p_costsPEtradeMp <- readGDX(gdx,name=c("pm_costsPEtradeMp","p_costsPEtradeMp"),format = "first_found")
   pm_pvp       <- readGDX(gdx,name=c("pm_pvp"),format = "first_found")
   Xport        <- readGDX(gdx,name=c("vm_Xport"),field = "l",format = "first_found")
   Mport        <- readGDX(gdx,name=c("vm_Mport"),field = "l",format = "first_found")
