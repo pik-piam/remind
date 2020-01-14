@@ -1,4 +1,4 @@
-#' Computes the employment values (jobs) across different sectors
+#' Computes the employment values (jobs) across different sectors 
 #' @param gdx A gdx object
 #' @description This function returns a magpie object containing the reporting the jobs for different technologies
 #' @return A magpie object 
@@ -12,13 +12,21 @@
 #' @importFrom madrat calcOutput
 #' @importFrom magclass getNames add_columns
 
-
 reportEmployment <- function(gdx){
   ###### input data
-  techs <- c("Solar|PV","Solar|CSP","Wind","Hydro","Biomass","Coal","Gas","Nuclear","Oil")
+  techs <- c("Solar|PV","Solar|CSP","Wind","Hydro","Biomass","Coal","Gas",
+             "Nuclear","Oil")
+  techs_exp <-  c("Solar|PV","Solar|CSP","Wind") # technologies with export component
   # employment factors
   x <- calcOutput(type = "Employmentfactors")
   
+  # share of exports to world installed capacity. using gdp as a proxy
+  gdp <-   calcOutput("GDPppp")
+  gdp <- gdp[,,"gdp_SSP2"]
+  gdp_sum <- dimSums(gdp,dim = 1)
+  gdp_share <- gdp/gdp_sum
+  
+  ## gdx from REMIND
   # filtering required capacity variables i.e., only new and existing coal capacities
   remind_output <- remind::reportCapacity(gdx)
   vars <- "\\Cap\\|Electricity|New Cap\\|Electricity" # only interested in new and current capacities for different techs
@@ -40,13 +48,14 @@ reportEmployment <- function(gdx){
   rem_filter <- rem_filter[,,c("Cumulative","Idle"),pmatch=T,invert=T]# removing cumulative and idle variables in capaicty
   
   
-  # added capacity
+  # added capacity from REMIND
   added_cap <- rem_filter[regions,,"New Cap",pmatch=T]# only new capacities
   added_cap <- add_columns(added_cap,addnm = "New Cap|Electricity|Oil (GW)",dim = 3.1) # adding Oil variable as it doesn't exist
   added_cap[,,"Oil",pmatch=T] <- 0
   added_cap <- added_cap[,getYears(rem_filter)[getYears(rem_filter,as.integer = T)>2010],]
+  added_cap_sum <- dimSums(added_cap,dim = 1) # world added capacity
   
-  # existing capacity 
+  # existing capacity from REMIND
   cap_tot <- rem_filter[,,"New",invert=T,pmatch=T]# only existing capacities
   cap_tot <- cap_tot[,getYears(rem_filter)[getYears(rem_filter,as.integer = T)>2010],]
   
@@ -66,15 +75,26 @@ reportEmployment <- function(gdx){
   getNames(remind_prod) <- gsub(pattern = "Uranium",replacement = "Nuclear",x = getNames(remind_prod))# removing space
   
   ## calculating jobs
-  
-  # manufacturing jobs
-  jobs_manf <- new.magpie(regions,getYears(added_cap),techs)
-  for (i in techs){
-    inst <- paste0(i,".","Manf")
-    jobs_manf[,,i] <- added_cap[,,i,pmatch=T]*1000 
-    jobs_manf[,,i] <-  jobs_manf[,,i] *  x[,,inst]
+
+  # manufacturing jobs for techs with export component
+  jobs_manf_exp <- new.magpie(regions,getYears(added_cap),techs,fill=0)
+  for (i in techs_exp){
+    manf <- paste0(i,".","Manf")
+    jobs_manf_exp[,,i] <- added_cap_sum[,,i,pmatch=T]*1000 
+    jobs_manf_exp[,,i] <-  jobs_manf_exp[,,i] *  gdp_share[,getYears(added_cap),]
   }
   
+  
+  # manufacturing jobs for techs with only domestic manufacture. These are
+  # fossil fuel, biomass, hydro and nuclear. 
+  jobs_manf <- new.magpie(regions,getYears(added_cap),techs,fill=0)
+  for (i in setdiff(techs,techs_exp)){
+    manf <- paste0(i,".","Manf")
+    jobs_manf[,,i] <- added_cap[,,i,pmatch=T]*1000 
+    jobs_manf[,,i] <-  jobs_manf[,,i] *  x[,,manf]
+  }
+  
+
   # installation jobs
   jobs_inst <- new.magpie(regions,getYears(added_cap),techs)
   for (i in techs){
@@ -83,8 +103,6 @@ reportEmployment <- function(gdx){
       jobs_inst[,,i] <-  jobs_inst[,,i] *  x[,,inst]
     }
    
-  
-  
   ## . Jobs in O & M
   # jobs = existing capacity per tech * emp factor per tech
   jobs_om <- new.magpie(regions,getYears(added_cap),techs)
@@ -105,7 +123,8 @@ reportEmployment <- function(gdx){
     }
   
   ####### put all together #############
-  jobs <- jobs_inst + jobs_om +  jobs_prod +  jobs_manf
+  jobs <- new.magpie(getRegions(added_cap),getYears(added_cap),techs)
+  jobs <- jobs_inst + jobs_om +  jobs_prod +  jobs_manf + jobs_manf_exp
   getSets(jobs) <- c("region","year","variable")
 
   return (jobs)
@@ -113,5 +132,4 @@ reportEmployment <- function(gdx){
   }
  
   
-    
-
+  
