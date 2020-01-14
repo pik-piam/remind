@@ -40,7 +40,7 @@ reportPE <- function(gdx,regionSubsetList=NULL){
   ## parameter
   dataoc_tmp       <- readGDX(gdx,c("pm_prodCouple","p_prodCouple","p_dataoc"),restore_zeros=FALSE,format="first_found") 
   dataoc_tmp[is.na(dataoc_tmp)] <- 0
-  p_costsPEtradeMp <- readGDX(gdx,"p_costsPEtradeMp",restore_zeros=FALSE)
+  p_costsPEtradeMp <- readGDX(gdx,c("pm_costsPEtradeMp","p_costsPEtradeMp"),restore_zeros=FALSE)
   p_macBase        <- readGDX(gdx,c("p_macBaseMagpie","p_macBase"),format="first_found")*TWa_2_EJ
 #  p_macEmi         <- readGDX(gdx,c("p_macEmi"),format="first_found")*TWa_2_EJ
   ## variables

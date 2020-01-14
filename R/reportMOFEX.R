@@ -44,7 +44,7 @@ reportMOFEX <- function(gdx,gdx_ref=NULL,file=NULL,scenario='default') {
   p_cint            <- readGDX(gdx,name=c("pm_cint","p_cint"), format="first_found", react = "silent")
   pm_fuExtrOwnCons <- readGDX(gdx,"pm_fuExtrOwnCons",field="l",format="first_found")*TWa_2_EJ
   pm_pvp        <- readGDX(gdx,name=c("pm_pvp","p80_pvp"),format="first_found")
-  p_costsPEtradeMp <- readGDX(gdx,"p_costsPEtradeMp",field="l",format="first_found")*TWa_2_EJ
+  p_costsPEtradeMp <- readGDX(gdx,c("pm_costsPEtradeMp","p_costsPEtradeMp"),field="l",format="first_found")*TWa_2_EJ
   
   ## sets
   t <- as.numeric(readGDX(gdx,"ttot"))
