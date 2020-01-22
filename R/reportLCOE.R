@@ -517,9 +517,9 @@ reportLCOE <- function(gdx, extended.output = F){
   
   # Primary Energy Price, convert from tr USD 2005/TWa to USD2015/MWh
   Pe.Price <- qm_pebal[,ttot_from2005,unique(pe2se$all_enty)] / qm_budget*1e12/s_twa2mwh*1.2
-  # Secondary Energy Electricity Price (for se2se conversions), convert from tr USD 2005/TWa to USD2915/MWh
+  # Secondary Energy Electricity Price (for se2se conversions), convert from tr USD 2005/TWa to USD2015/MWh
   Se.Seel.Price <- qm_sebal.seel[,,"seel"]/(qm_budget+1e-10)*1e12/s_twa2mwh*1.2
-  # Secondary Energy Hydrogen Price (for se2se conversions), convert from tr USD 2005/TWa to USD2915/MWh
+  # Secondary Energy Hydrogen Price (for se2se conversions), convert from tr USD 2005/TWa to USD2015/MWh
   Se.H2.Price <- qm_sebal[,,"seh2"]/(qm_budget+1e-10)*1e12/s_twa2mwh*1.2
   
   Fuel.Price <- mbind(Pe.Price,Se.Seel.Price, Se.H2.Price )
