@@ -2,19 +2,24 @@
 % Please edit documentation in R/reportLCOE.R
 \name{reportLCOE}
 \alias{reportLCOE}
-\title{Read in GDX and LCOE, used in convGDX2MIF.R for the reporting}
+\title{Read in GDX and calculate LCOE reporting used in convGDX2MIF_LCOE.}
 \usage{
-reportLCOE(gdx)
+reportLCOE(gdx, extended.output = F)
 }
 \arguments{
 \item{gdx}{a GDX object as created by readGDX, or the path to a gdx}
+
+\item{extended.output, }{if TRUE the function returns a dataframe with the detailed calculation of the
+new plant LCOE, useful to check how new plant LCOE were calculated}
 }
 \value{
-MAgPIE object - contains LCOE cost parts per pe2se technology
+MAgPIE object - LCOE calculated by model post-processing. Two types a) standing system LCOE b) new plant LCOE.
 }
 \description{
-Read in LCOE information from GDX file, information used in convGDX2MIF.R
-for the reporting
+This function provides a post-processing calculation of LCOE based on REMIND modeling output for 
+secondary energy generating technologies. It calculates two different types of LCOE: standing system LCOE and new plant LCOE. 
+While the standing system LCOE reflect the total cost incurred by the technology deployment in a specific time step divided by its output,
+the new plant LCOE represent the per-unit lifetime cost of a new plant built in that time step.
 }
 \examples{
 
@@ -22,7 +27,7 @@ for the reporting
 
 }
 \seealso{
-\code{\link{convGDX2MIF}}
+\code{\link{convGDX2MIF_LCOE}}
 }
 \author{
 Felix Schreyer, Robert Pietzcker, Lavinia Baumstark
