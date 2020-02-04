@@ -320,7 +320,13 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                                           output[,y,"FE|+|Gases (EJ/yr)"])
   }
   
-  p_share_carbonCapture_stor <- vm_co2CCS[,,"cco2.ico2.ccsinje.1"]/dimSums(mselect(vm_co2capture,all_enty="cco2"),dim=3)
+  # Share of captured carbon, that is actually sequestered.  The introduction 
+  # of CCU made it necessary to add the "slack" variable v_co2capturevalve, 
+  # that allows for immediate releasing
+  p_share_carbonCapture_stor <- (
+      vm_co2CCS[,,"cco2.ico2.ccsinje.1"]
+    / dimSums(mselect(vm_co2capture, all_enty = "cco2"), dim = 3)
+  )
   p_share_carbonCapture_stor[is.na(p_share_carbonCapture_stor)] <- 1
   
   ####### internal function for cumulated values ############
@@ -747,6 +753,26 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
       + tmp2[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|fehos (Mt CO2/yr)"]
       + tmp2[,,'Emi|CO2|Carbon Capture and Storage|IndustryCCS|Process (Mt CO2/yr)'],
       "Emi|CO2|Carbon Capture and Storage|IndustryCCS (Mt CO2/yr)")
+  )
+  
+  # Rename all "Carbon Capture and Storage|IndustryCCS" to just 
+  # "Carbon Capture|IndustryCCS" and calculate actual 
+  # "Carbon Capture and Storage|IndustryCCS" by taking account of carbon 
+  # captured, but not sequestered, through v_co2capturevalve
+  mbind(
+    lapply(
+      sub(paste0('^Emi\\|CO2\\|Carbon Capture and Storage\\|IndustryCCS',
+                 '(\\|?.*) \\(Mt CO2/yr\\)$'), '\\1', getNames(tmp2)),
+      function(x) {
+        a <- paste0('Emi|CO2|Carbon Capture and Storage|IndustryCCS', x, 
+                    ' (Mt CO2/yr)')
+        b <- paste0('Emi|CO2|Carbon Capture|IndustryCCS', x, ' (Mt CO2/yr)')
+        mbind(
+          setNames(tmp2[,,a] * dimSums(p_share_carbonCapture_stor, dim = 3), a),
+          setNames(tmp2[,,a], b)
+        )
+      }
+    )
   )
 
   tmp <- mbind(tmp, tmp2)
