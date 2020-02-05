@@ -1276,6 +1276,14 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
       list(name = "Emi|CO2|FFaI|Industry|other|Fuel (Mt CO2/yr)",
            code = list(secInd37 = "otherInd", all_enty1 = "co2")),
       
+      list(name = "Emi|CO2|FFaI|Industry|Coal (Mt CO2/yr)",
+           code = list(all_enty = "pecoal", all_enty1 = "co2")),
+      list(name = "Emi|CO2|FFaI|Industry|Oil (Mt CO2/yr)",
+           code = list(all_enty = "peoil", all_enty1 = "co2")),
+      list(name = "Emi|CO2|FFaI|Industry|Gas (Mt CO2/yr)",
+           code = list(all_enty = "pegas", all_enty1 = "co2")),
+      
+      # captured CO2
       list(name = "Emi|CCO2|FFaI|Industry|Cement|Fuel|Coal (Mt CO2/yr)",
            code = list(all_enty = "pecoal", secInd37 = "cement",
                        all_enty1 = "cco2")),
@@ -1350,7 +1358,33 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
              }
       )
     )
+    
+    
+    # Adjust Emi|C?CO2|FFaI|Industry variables by the share of sequestered 
+    # carbon (out of captured carbon).
 
+    # for all CO2 variables that have a corresponding CCO2 variable
+    names_CO2 <- getNames(fuel.emissions)[rev(duplicated(
+      sub('\\|CCO2', '|CO2', rev(getNames(fuel.emissions)))))]
+    for (x_CO2 in names_CO2) {
+      
+      x_CCO2 <- sub('\\|CO2', '|CCO2', x_CO2)
+      
+      # CO2' = CO2 + CCO2 * (1 - storage_share)
+      fuel.emissions[,,x_CO2] <- ( 
+          fuel.emissions[,,x_CO2] 
+        + fuel.emissions[,,x_CCO2] * (1 - p_share_carbonCapture_stor)
+      )
+    }
+    
+    # for all CCO2 variables
+    names_CCO2 <- grep('\\|CCO2', getNames(fuel.emissions), value = TRUE)
+    # CCO2' = CCO2 * storage_share
+    fuel.emissions[,,names_CCO2] <- (
+      fuel.emissions[,,names_CCO2] * p_share_carbonCapture_stor
+    )
+    
+    
     # compute industry process emissions
     var <- list(
       list(name = "Emi|CO2|FFaI|Industry|Cement (Mt CO2/yr)",
@@ -1366,7 +1400,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
       list(name = "Emi|CCO2|FFaI|Industry|Process (Mt CO2/yr)",
            code = list(all_enty = "cco2"))
     )
-
+    
     ife <- which(
       grepl("Emi\\|C?CO2\\|FFaI\\|Industry\\|Cement \\(Mt CO2/yr\\)",
             magclass::getNames(fuel.emissions)))
@@ -1386,6 +1420,32 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                }
         )
       )
+      
+      
+      # Adjust Emi|C?CO2|FFaI|Industry variables by the share of sequestered 
+      # carbon (out of captured carbon).
+      
+      # for all CO2 variables that have a corresponding CCO2 variable
+      names_CO2 <- getNames(process.emissions)[rev(duplicated(
+        sub('\\|CCO2', '|CO2', rev(getNames(process.emissions)))))]
+      for (x_CO2 in names_CO2) {
+        
+        x_CCO2 <- sub('\\|CO2', '|CCO2', x_CO2)
+        
+        # CO2' = CO2 + CCO2 * (1 - storage_share)
+        process.emissions[,,x_CO2] <- ( 
+            process.emissions[,,x_CO2] 
+          + process.emissions[,,x_CCO2] * (1 - p_share_carbonCapture_stor)
+        )
+      }
+      
+      # for all CCO2 variables
+      names_CCO2 <- grep('\\|CCO2', getNames(process.emissions), value = TRUE)
+      # CCO2' = CCO2 * storage_share
+      process.emissions[,,names_CCO2] <- (
+        process.emissions[,,names_CCO2] * p_share_carbonCapture_stor
+      )
+      
       
       ipe <- which(
         grepl("Emi\\|C?CO2\\|FFaI\\|Industry\\|Cement \\(Mt CO2/yr\\)",
