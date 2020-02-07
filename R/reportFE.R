@@ -363,14 +363,14 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                                                       'feelwlth_otherInd')
     )
 
-    # list of UE items to calculate, including factor for unit conversion
+    # list of production items to calculate, including factor for unit conversion
     var_UE_Industry <- inline.data.frame(
-      'item;                                   pf;                   factor',
-      'UE|Industry|Cement (useless unit);      ue_cement;            1',
-      'UE|Industry|Chemicals (useless unit);   ue_chemicals;         1',
-      'UE|Industry|Steel|Primary (Mt/yr);      ue_steel_primary;     1e3',
-      'UE|Industry|Steel|Secondary (Mt/yr);    ue_steel_secondary;   1e3',
-      'UE|Industry|other (useless unit);       ue_otherInd;          1'
+      'item;                                                  pf;                   factor',
+      'Production|Industry|Cement (Mt/yr);                    ue_cement;            1e3',
+      'Production|Industry|Steel|Primary (Mt/yr);             ue_steel_primary;     1e3',
+      'Production|Industry|Steel|Secondary (Mt/yr);           ue_steel_secondary;   1e3',
+      'Value Added|Industry|Chemicals (billion US$2005/yr);   ue_chemicals;         1e3',
+      'Value Added|Industry|other (billion US$2005/yr);       ue_otherInd;          1e3'
     )
     
     tmp0 <- mbind(
