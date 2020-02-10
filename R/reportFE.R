@@ -408,9 +408,9 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     tmp0 <- mbind(
       tmp0,
       setNames(
-        tmp0[,,'UE|Industry|Steel|Primary (Mt/yr)']
-        + tmp0[,,'UE|Industry|Steel|Secondary (Mt/yr)'],
-        'UE|Industry|Steel (Mt/yr)')
+        tmp0[,,'Production|Industry|Steel|Primary (Mt/yr)']
+        + tmp0[,,'Production|Industry|Steel|Secondary (Mt/yr)'],
+        'Production|Industry|Steel (Mt/yr)')
     )
     
   }
