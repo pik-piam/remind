@@ -119,7 +119,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   v33_grindrock_onfield<- v33_grindrock_onfield[,y,]
   
   ######## compute sets for summation below ######
-  setSolBio <- dplyr::filter_(pe2se, ~all_enty %in% pebio, ~all_enty1 == se_Solids)
+  setSolBio <- dplyr::filter_(pe2se, ~all_enty %in% pebio, ~all_enty1 %in% se_Solids)
 
   ####### calculate reporting parameters ############
   tmp0 <- NULL
@@ -643,7 +643,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   
   #--- Disaggregate solids between coal, modern biomass and traditional biomass
   if (stat_mod == "off"){
-    
+
     tmp4 <-  mbind(tmp4,  setNames(asS4(pmin(tmp4[,,"FE|Solids|Biomass|Traditional (EJ/yr)"],tmp4[,,"FE|Buildings|Solids (EJ/yr)"]))  ,"FE|Buildings|Solids|Biomass|Traditional (EJ/yr)"))
     
     tmp4 <-  mbind(tmp4,  setNames(tmp4[,,"FE|Solids|Biomass|Traditional (EJ/yr)"] - tmp4[,,"FE|Buildings|Solids|Biomass|Traditional (EJ/yr)"],"FE|Industry|Solids|Biomass|Traditional (EJ/yr)" ))
