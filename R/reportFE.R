@@ -119,7 +119,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   v33_grindrock_onfield<- v33_grindrock_onfield[,y,]
   
   ######## compute sets for summation below ######
-  setSolBio <- dplyr::filter_(pe2se, ~all_enty %in% pebio, ~all_enty1 == se_Solids)
+  setSolBio <- dplyr::filter_(pe2se, ~all_enty %in% pebio, ~all_enty1 %in% se_Solids)
 
   ####### calculate reporting parameters ############
   tmp0 <- NULL
@@ -363,14 +363,14 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                                                       'feelwlth_otherInd')
     )
 
-    # list of UE items to calculate, including factor for unit conversion
+    # list of production items to calculate, including factor for unit conversion
     var_UE_Industry <- inline.data.frame(
-      'item;                                   pf;                   factor',
-      'UE|Industry|Cement (useless unit);      ue_cement;            1',
-      'UE|Industry|Chemicals (useless unit);   ue_chemicals;         1',
-      'UE|Industry|Steel|Primary (Mt/yr);      ue_steel_primary;     1e3',
-      'UE|Industry|Steel|Secondary (Mt/yr);    ue_steel_secondary;   1e3',
-      'UE|Industry|other (useless unit);       ue_otherInd;          1'
+      'item;                                                  pf;                   factor',
+      'Production|Industry|Cement (Mt/yr);                    ue_cement;            1e3',
+      'Production|Industry|Steel|Primary (Mt/yr);             ue_steel_primary;     1e3',
+      'Production|Industry|Steel|Secondary (Mt/yr);           ue_steel_secondary;   1e3',
+      'Value Added|Industry|Chemicals (billion US$2005/yr);   ue_chemicals;         1e3',
+      'Value Added|Industry|other (billion US$2005/yr);       ue_otherInd;          1e3'
     )
     
     tmp0 <- mbind(
@@ -408,9 +408,9 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     tmp0 <- mbind(
       tmp0,
       setNames(
-        tmp0[,,'UE|Industry|Steel|Primary (Mt/yr)']
-        + tmp0[,,'UE|Industry|Steel|Secondary (Mt/yr)'],
-        'UE|Industry|Steel (Mt/yr)')
+        tmp0[,,'Production|Industry|Steel|Primary (Mt/yr)']
+        + tmp0[,,'Production|Industry|Steel|Secondary (Mt/yr)'],
+        'Production|Industry|Steel (Mt/yr)')
     )
     
   }
@@ -643,7 +643,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   
   #--- Disaggregate solids between coal, modern biomass and traditional biomass
   if (stat_mod == "off"){
-    
+
     tmp4 <-  mbind(tmp4,  setNames(asS4(pmin(tmp4[,,"FE|Solids|Biomass|Traditional (EJ/yr)"],tmp4[,,"FE|Buildings|Solids (EJ/yr)"]))  ,"FE|Buildings|Solids|Biomass|Traditional (EJ/yr)"))
     
     tmp4 <-  mbind(tmp4,  setNames(tmp4[,,"FE|Solids|Biomass|Traditional (EJ/yr)"] - tmp4[,,"FE|Buildings|Solids|Biomass|Traditional (EJ/yr)"],"FE|Industry|Solids|Biomass|Traditional (EJ/yr)" ))
