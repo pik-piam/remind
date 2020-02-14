@@ -883,7 +883,10 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     ### please note: at the end of this file, regional transport emissions are reduced by bunker emission values
     setNames( dimSums( (p_ef_dem[,,FE_Transp_fety35]*(1-p_bioshare[,,FE_Transp_fety35]))
                        * dimSums(mselect(vm_prodFe,all_enty1=FE_Transp_fety35),dim=c(3.1,3.3))
-                       ,dim=3) ,                                          "Emi|CO2|Transport|Demand (Mt CO2/yr)")    
+                       ,dim=3) ,                                          "Emi|CO2|Transport|Demand (Mt CO2/yr)"),    
+    setNames( dimSums( p_ef_dem[,,FE_Transp_fety35]
+                       * dimSums(mselect(vm_prodFe,all_enty1=FE_Transp_fety35),dim=c(3.1,3.3))
+                       ,dim=3) ,                                          "Emi|CO2|Transport|Tailpipe (Mt CO2/yr)")    
   )
 
   ## Add some LDV specific emission reporting (complex module only)
