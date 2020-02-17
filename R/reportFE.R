@@ -370,7 +370,8 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
       'Production|Industry|Steel|Primary (Mt/yr);             ue_steel_primary;     1e3',
       'Production|Industry|Steel|Secondary (Mt/yr);           ue_steel_secondary;   1e3',
       'Value Added|Industry|Chemicals (billion US$2005/yr);   ue_chemicals;         1e3',
-      'Value Added|Industry|other (billion US$2005/yr);       ue_otherInd;          1e3'
+      'Value Added|Industry|other (billion US$2005/yr);       ue_otherInd;          1e3',
+      'Activity|Industry (arbitrary unit/yr);                 ue_industry;          1'
     )
     
     tmp0 <- mbind(
