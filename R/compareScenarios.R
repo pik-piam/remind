@@ -755,7 +755,30 @@ compareScenarios <- function(mif, hist,
       plot.priority=c("x_hist","x","x_proj"),
       facet.ncol=3)
     swfigure(sw,print,p,sw_option="height=9,width=8")
-}
+  }
+  
+  if("Policy Cost|GDP Loss (billion US$2005/yr)" %in% magclass::getNames(data,dim=3)) {
+    ## ---- Policy Cost|GDP Loss ----
+    swlatex(sw,"\\subsection{Policy Costs}")
+    
+    p <- mipLineHistorical(
+      data[mainReg,,"Policy Cost|GDP Loss (billion US$2005/yr)"],
+      x_hist=NULL,
+      ylab='Policy Cost|GDP Loss [billion US$2005/yr]',
+      scales="free_y",
+      plot.priority=c("x_hist","x","x_proj"))
+    swfigure(sw,print,p,sw_option="height=8,width=8")
+    
+    p <- mipLineHistorical(
+      data[,,"Policy Cost|GDP Loss (billion US$2005/yr)"][
+        mainReg,,,invert=TRUE],
+      x_hist=NULL,
+      ylab='Policy Cost|GDP Loss [billion US$2005/yr]',
+      scales="free_y",
+      plot.priority=c("x_hist","x","x_proj"),
+      facet.ncol=3)
+    swfigure(sw,print,p,sw_option="height=9,width=8")
+  }
 
   ## ---- Mitigation Indicators of demand-side transformation in 2050 ----
   ##varis <- c("FE|Industry (EJ/yr)",
