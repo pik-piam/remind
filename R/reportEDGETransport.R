@@ -109,7 +109,7 @@ reportEDGETransport <- function(output_folder=".",
                                         unit=remind_unit, period=year,
                                         value=get(valcol))]
 
-      toadd <- approx_dt(toadd, yrs, xcol="period",
+      toadd <- approx_dt(toadd, yrs, xcol="period", ycol = "value",
                          idxcols=colnames(toadd)[1:5],
                          extrapolate=T)
       return(toadd)
