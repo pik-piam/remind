@@ -35,7 +35,8 @@ Imports:
     highcharter,
     lubridate,
     plotly,
-    data.table
+    data.table,
+    rmndt
 Encoding: UTF-8
 License: LGPL-3
 RoxygenNote: 7.0.2

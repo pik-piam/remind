@@ -16,7 +16,6 @@
 #'
 #' @export
 #' @importFrom rmndt approx_dt
-#' @import data.table
 
 reportEDGETransport <- function(output_folder=".",
                                 remind_root=NULL) {
