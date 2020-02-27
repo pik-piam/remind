@@ -45,8 +45,10 @@ reportEDGETransport <- function(output_folder=".",
   demand_km <- readRDS(datapath(fname = "demandF_plot_pkm.RDS")) ## detailed energy services demand, million km
   demand_ej <- readRDS(datapath(fname = "demandF_plot_EJ.RDS")) ## detailed final energy demand, EJ
 
-  name_mif = list.files(pattern = "REMIND_generic", full.names = F)
-  name_mif = name_mif[!grepl("withoutPlu", name_mif)]
+  name_mif = list.files(output_folder, pattern = "REMIND_generic", full.names = F)
+  name_mif = file.path(output_folder, name_mif[!grepl("withoutPlu", name_mif)])
+
+  stopifnot(typeof(name_mif) == "character")
   miffile <- fread(name_mif, sep=";", header=T)
 
   ## ES Demand
