@@ -14,8 +14,9 @@
 #' @param remind_root path to the REMIND root directory, defaults to two levels up from output_folder.
 #' @author Alois Dirnaichner
 #'
-#' @export
 #' @importFrom rmndt approx_dt
+#' @importFrom data.table fread fwrite rbindlist
+#' @export
 
 reportEDGETransport <- function(output_folder=".",
                                 remind_root=NULL) {
@@ -28,14 +29,15 @@ reportEDGETransport <- function(output_folder=".",
   regionSubsetList <- toolRegionSubsets(gdx)
   sub_folder = "EDGE-T/"
 
+  ## NULL Definitons for codeCheck compliance
+  RegionCode <- CountryCode <- cfg <- `.` <- sector <- subsector_L3 <- region <- year <- NULL
+  subsector_L2 <- subsector_L1 <- aggr_mode <- vehicle_type <- det_veh <- aggr_nonmot <- NULL
+  demand_F <- demand_EJ <- remind_rep <- V25 <- aggr_veh <- NULL
+
   load(file.path(output_folder, "config.Rdata"))
 
   datapath <- function(fname){
     file.path(output_folder, sub_folder, fname)
-  }
-
-  maps_path <- function(fname, scenariopath=""){
-    file.path(maps_folder, fname)
   }
 
   REMIND2ISO_MAPPING <- fread(file.path(remind_root, cfg$regionmapping))[, .(iso = CountryCode, region = RegionCode)]
