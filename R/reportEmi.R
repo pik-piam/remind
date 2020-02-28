@@ -296,9 +296,9 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     p35_share_seliq_t_ldv <- collapseNames(output[,y,"FE|Transport|Pass|Road|LDV|Liquids (EJ/yr)"] / output[,y,"FE|+|Liquids (EJ/yr)"])
   }else if(tran_mod == "edge_esm"){
     ## Liquids
-    p35_share_seliq_lo  <- collapseNames((output[,y,"FE|Transport|Freight|Long distance|Diesel Liquids (EJ/yr)"] +
+    p35_share_feliq_lo  <- collapseNames((output[,y,"FE|Transport|Freight|Long distance|Diesel Liquids (EJ/yr)"] +
                                           output[,y,"FE|Transport|Pass|Long distance|Diesel Liquids (EJ/yr)"]) /
-                                         output[,y,"FE|+|Liquids (EJ/yr)"])
+                                         output[,y,"FE|Transport|Liquids (EJ/yr)"])
     p35_share_seliq_psm  <- collapseNames((output[,y,"FE|Transport|Pass|Short-Medium distance|Diesel Liquids (EJ/yr)"] +
                                            output[,y,"FE|Transport|Pass|Short-Medium distance|Petrol Liquids (EJ/yr)"]) /
                                           output[,y,"FE|+|Liquids (EJ/yr)"])
@@ -314,9 +314,9 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     p35_share_seh2_fsm  <- collapseNames(output[,y,"FE|Transport|Freight|Short-Medium distance|Hydrogen (EJ/yr)"] /
                                           output[,y,"FE|+|Hydrogen (EJ/yr)"])
     ## Nat. Gas
-    p35_share_sega_psm  <- collapseNames(output[,y,"FE|Transport|Pass|Short-Medium distance|NG (EJ/yr)"] /
+    p35_share_sega_psm  <- collapseNames(output[,y,"FE|Transport|Pass|Short-Medium distance|Gases (EJ/yr)"] /
                                           output[,y,"FE|+|Gases (EJ/yr)"])
-    p35_share_sega_fsm  <- collapseNames(output[,y,"FE|Transport|Freight|Short-Medium distance|NG (EJ/yr)"] /
+    p35_share_sega_fsm  <- collapseNames(output[,y,"FE|Transport|Freight|Short-Medium distance|Gases (EJ/yr)"] /
                                           output[,y,"FE|+|Gases (EJ/yr)"])
   }
   
@@ -922,7 +922,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
       setNames(p35_share_seliq_psm  * dimSums(mselect(v_emi,all_enty1=se_Liq,all_enty2="co2")[pe2se],dim=3)
                * GtC_2_MtCO2, "Emi|CO2|Transport|Pass|Short-Medium Distance|Liquids (Mt CO2/yr)"),
       setNames(p35_share_sega_psm  * dimSums(mselect(v_emi,all_enty1=se_Gas,all_enty2="co2")[pe2se],dim=3)
-               * GtC_2_MtCO2, "Emi|CO2|Transport|Pass|Short-Medium Distance|NG (Mt CO2/yr)"),
+               * GtC_2_MtCO2, "Emi|CO2|Transport|Pass|Short-Medium Distance|Gases (Mt CO2/yr)"),
       setNames((p35_share_seel_psm  * dimSums(mselect(v_emi,all_enty1="seel",all_enty2="co2")[pe2se],dim=3)
         + p35_share_seh2_psm  * dimSums(mselect(v_emi,all_enty1="seh2",all_enty2="co2")[pe2se],dim=3)
         + p35_share_seliq_psm * dimSums(mselect(v_emi,all_enty1=se_Liq,all_enty2="co2")[pe2se],dim=3)
@@ -1204,7 +1204,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     
   }else if(tran_mod == "edge_esm"){
     ## Int. Freight and Aviation (Bunker) Emissions
-    tmp4 <- mbind(tmp4, setNames(p35_share_seliq_lo * tmp[,,"Emi|CO2|Transport|Demand (Mt CO2/yr)"], "Emi|CO2|Transport|Bunkers (Mt CO2/yr)"))
+    tmp4 <- mbind(tmp4, setNames(p35_share_feliq_lo * tmp[,,"Emi|CO2|Transport|Demand (Mt CO2/yr)"], "Emi|CO2|Transport|Bunkers (Mt CO2/yr)"))
     
     ## Kyoto w/o bunkers
     tmp4 <- mbind(tmp4, setNames(tmp4[,,"Emi|Kyoto Gases (Mt CO2-equiv/yr)"]-tmp4[,,"Emi|CO2|Transport|Bunkers (Mt CO2/yr)"], "Emi|Kyoto Gases|w/o Bunkers (Mt CO2-equiv/yr)"))
