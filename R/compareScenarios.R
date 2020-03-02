@@ -755,7 +755,30 @@ compareScenarios <- function(mif, hist,
       plot.priority=c("x_hist","x","x_proj"),
       facet.ncol=3)
     swfigure(sw,print,p,sw_option="height=9,width=8")
-}
+  }
+  
+  if("Policy Cost|GDP Loss (billion US$2005/yr)" %in% magclass::getNames(data,dim=3)) {
+    ## ---- Policy Cost|GDP Loss ----
+    swlatex(sw,"\\subsection{Policy Costs}")
+    
+    p <- mipLineHistorical(
+      data[mainReg,,"Policy Cost|GDP Loss (billion US$2005/yr)"],
+      x_hist=NULL,
+      ylab='Policy Cost|GDP Loss [billion US$2005/yr]',
+      scales="free_y",
+      plot.priority=c("x_hist","x","x_proj"))
+    swfigure(sw,print,p,sw_option="height=8,width=8")
+    
+    p <- mipLineHistorical(
+      data[,,"Policy Cost|GDP Loss (billion US$2005/yr)"][
+        mainReg,,,invert=TRUE],
+      x_hist=NULL,
+      ylab='Policy Cost|GDP Loss [billion US$2005/yr]',
+      scales="free_y",
+      plot.priority=c("x_hist","x","x_proj"),
+      facet.ncol=3)
+    swfigure(sw,print,p,sw_option="height=9,width=8")
+  }
 
   ## ---- Mitigation Indicators of demand-side transformation in 2050 ----
   ##varis <- c("FE|Industry (EJ/yr)",
@@ -1184,17 +1207,17 @@ compareScenarios <- function(mif, hist,
                          ylab='Emi|CO2|Energy|Supply|Electricity [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
   swfigure(sw,print,p,sw_option="height=9,width=8")
 
-  p <- mipLineHistorical(data[mainReg,,"Emi|CO2|Gross Fossil Fuels and Industry (Mt CO2/yr)"],x_hist=hist[mainReg,,"Emi|CO2|Energy and Industrial Processes (Mt CO2/yr)"],
+  p <- mipLineHistorical(data[mainReg,,"Emi|CO2|Gross Fossil Fuels and Industry (Mt CO2/yr)"],x_hist=hist[mainReg,,"Emi|CO2|Fossil Fuels and Industry (Mt CO2/yr)"],
                          ylab='Emi|CO2|Gross Fossil Fuels and Industry [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
   swfigure(sw,print,p,sw_option="height=8,width=8")
-  p <- mipLineHistorical(data[,,"Emi|CO2|Gross Fossil Fuels and Industry (Mt CO2/yr)"][mainReg,,,invert=TRUE],x_hist=hist[,,"Emi|CO2|Energy and Industrial Processes (Mt CO2/yr)"][mainReg,,,invert=TRUE],
+  p <- mipLineHistorical(data[,,"Emi|CO2|Gross Fossil Fuels and Industry (Mt CO2/yr)"][mainReg,,,invert=TRUE],x_hist=hist[,,"Emi|CO2|Fossil Fuels and Industry (Mt CO2/yr)"][mainReg,,,invert=TRUE],
                          ylab='Emi|CO2|Gross Fossil Fuels and Industry [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
   swfigure(sw,print,p,sw_option="height=9,width=8")
 
-  p <- mipLineHistorical(data[mainReg,,"Emi|CO2|Fossil Fuels and Industry (Mt CO2/yr)"],x_hist=hist[mainReg,,"Emi|CO2|Energy and Industrial Processes (Mt CO2/yr)"],
+  p <- mipLineHistorical(data[mainReg,,"Emi|CO2|Fossil Fuels and Industry (Mt CO2/yr)"],x_hist=hist[mainReg,,"Emi|CO2|Fossil Fuels and Industry (Mt CO2/yr)"],
                          ylab='Emi|CO2|Fossil Fuels and Industry [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
   swfigure(sw,print,p,sw_option="height=8,width=8")
-  p <- mipLineHistorical(data[,,"Emi|CO2|Fossil Fuels and Industry (Mt CO2/yr)"][mainReg,,,invert=TRUE],x_hist=hist[,,"Emi|CO2|Energy and Industrial Processes (Mt CO2/yr)"][mainReg,,,invert=TRUE],
+  p <- mipLineHistorical(data[,,"Emi|CO2|Fossil Fuels and Industry (Mt CO2/yr)"][mainReg,,,invert=TRUE],x_hist=hist[,,"Emi|CO2|Fossil Fuels and Industry (Mt CO2/yr)"][mainReg,,,invert=TRUE],
                          ylab='Emi|CO2|Fossil Fuels and Industry [Mt CO2/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
   swfigure(sw,print,p,sw_option="height=9,width=8")
 
@@ -2065,49 +2088,13 @@ compareScenarios <- function(mif, hist,
     swfigure(sw,print,p,sw_option="height=9,width=8")
   }
 
-  ## ---- ++++ USEFUL ENERGY + ENERGY SERVICES ++++ ----
+  ## ---- ++++ ENERGY SERVICES ++++ ----
 
-  swlatex(sw,"\\section{Useful Energy and Energy Services}")
+  swlatex(sw,"\\section{Energy Services}")
 
   swlatex(sw,"\\subsection{Transport}")
 
-
-  ## ---- UE transport per capita (time domain, line graph)----
-
   swlatex(sw,"\\onecolumn")
-  swlatex(sw,"\\subsubsection{UE for Transport (per Capita, year)}")
-
-  items<- c(
-    "UE|Transport|LDV (EJ/yr)",
-    "UE|Transport|Pass|non-LDV (EJ/yr)",
-    "UE|Transport|Freight (EJ/yr)")
-
-  p <- lineplots_perCap(data, items, 1e3, "UE per Cap. (GJ/yr)", global = T)
-
-  swfigure(sw,print,p,sw_option="height=9,width=16")
-
-  ## Second page, with color coded regions
-
-  p <- lineplots_perCap(data, items, 1e3, "UE per Cap. (GJ/yr)", global = F)
-
-  swfigure(sw,print,p,sw_option="height=9,width=16")
-
-
-  ## ---- UE per capita for transport (GDP domain)----
-
-  swlatex(sw,"\\subsubsection{UE for Transport (per Capita, GDP)}")
-
-  items<- c(
-    "UE|Transport|LDV (EJ/yr)",
-    "UE|Transport|Pass|non-LDV (EJ/yr)",
-    "UE|Transport|Freight (EJ/yr)")
-
-  p <- lineplots_perCap(data, items, 1e3, "UE per Cap. (GJ/yr)", global = T, per_gdp = T)
-  swfigure(sw,print,p,sw_option="height=9,width=16")
-
-  p <- lineplots_perCap(data, items, 1e3, "UE per Cap. (GJ/yr)", global = F, per_gdp = T)
-  swfigure(sw,print,p,sw_option="height=9,width=16")
-
 
   ## ---- ES passenger transport per capita (time domain, line graph)----
 

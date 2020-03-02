@@ -859,13 +859,37 @@ reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
   # ---- debug infromation for industry/subsectors ----
   if ('subsectors' == indu_mod & !is.null(q37_limit_secondary_steel_share.m)) {
     x <- q37_limit_secondary_steel_share.m[,y,] / budget.m
+    
+    y <- mbind(
+      lapply(
+        list(
+          c('ue_industry',        '',                 'arbitrary unit', 1),
+          c('ue_cement',          '|Cement',          't cement',       1e3),
+          c('ue_chemicals',       '|Chemicals',       'arbitrary unit', 1),
+          c('ue_steel',           '|Steel',           't Steel',        1e3),
+          c('ue_steel_primary',   '|Steel|Primary',   't Steel',        1e3),
+          c('ue_steel_secondary', '|Steel|Secondary', 't Steel',        1e3),
+          c('ue_otherInd',        '|other',           'arbitrary unit', 1)),
+        function(x) {
+          setNames(
+            derivatives[,,paste0('inco.', x[1])] * as.numeric(x[4]), 
+            paste0('Debug|Price|Industry', x[2], ' (US$2005/', x[3], ')'))
+        })
+    )
+    
     tmp <- mbind(
       tmp,
+      
+      # fake some GLO data
       setNames(
-        # fake some GLO data
         mbind(x, dimSums(x * NA, dim = 1)),
-        'Debug|Industry|Secondary Steel Premium (US$2005)'))
+        'Debug|Industry|Secondary Steel Premium (US$2005)'),
+      
+      mbind(y, dimSums(y, dim = 1) * NA)
+    )
   }
+  
+  
   
   return(tmp)
 }

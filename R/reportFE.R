@@ -119,7 +119,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   v33_grindrock_onfield<- v33_grindrock_onfield[,y,]
   
   ######## compute sets for summation below ######
-  setSolBio <- dplyr::filter_(pe2se, ~all_enty %in% pebio, ~all_enty1 == se_Solids)
+  setSolBio <- dplyr::filter_(pe2se, ~all_enty %in% pebio, ~all_enty1 %in% se_Solids)
 
   ####### calculate reporting parameters ############
   tmp0 <- NULL
@@ -363,14 +363,15 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                                                       'feelwlth_otherInd')
     )
 
-    # list of UE items to calculate, including factor for unit conversion
+    # list of production items to calculate, including factor for unit conversion
     var_UE_Industry <- inline.data.frame(
-      'item;                                   pf;                   factor',
-      'UE|Industry|Cement (useless unit);      ue_cement;            1',
-      'UE|Industry|Chemicals (useless unit);   ue_chemicals;         1',
-      'UE|Industry|Steel|Primary (Mt/yr);      ue_steel_primary;     1e3',
-      'UE|Industry|Steel|Secondary (Mt/yr);    ue_steel_secondary;   1e3',
-      'UE|Industry|other (useless unit);       ue_otherInd;          1'
+      'item;                                                  pf;                   factor',
+      'Production|Industry|Cement (Mt/yr);                    ue_cement;            1e3',
+      'Production|Industry|Steel|Primary (Mt/yr);             ue_steel_primary;     1e3',
+      'Production|Industry|Steel|Secondary (Mt/yr);           ue_steel_secondary;   1e3',
+      'Value Added|Industry|Chemicals (billion US$2005/yr);   ue_chemicals;         1e3',
+      'Value Added|Industry|other (billion US$2005/yr);       ue_otherInd;          1e3',
+      'Activity|Industry (arbitrary unit/yr);                 ue_industry;          1'
     )
     
     tmp0 <- mbind(
@@ -408,9 +409,9 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     tmp0 <- mbind(
       tmp0,
       setNames(
-        tmp0[,,'UE|Industry|Steel|Primary (Mt/yr)']
-        + tmp0[,,'UE|Industry|Steel|Secondary (Mt/yr)'],
-        'UE|Industry|Steel (Mt/yr)')
+        tmp0[,,'Production|Industry|Steel|Primary (Mt/yr)']
+        + tmp0[,,'Production|Industry|Steel|Secondary (Mt/yr)'],
+        'Production|Industry|Steel (Mt/yr)')
     )
     
   }
@@ -508,7 +509,15 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     vm_demFeForEs_trnsp = vm_demFeForEs[fe2es_dyn35]
     
     tmp1 <- mbind(tmp1,
-                  setNames(dimSums(prodFE[,,"fegat"],dim=3)- vm_otherFEdemand[,,'fegat'],"FE|Transport|NG (EJ/yr)"),  ## there is no NG explicitly included in other transport realizations
+                  setNames(dimSums(vm_demFeForEs_trnsp[,,"eselt_frgt_",pmatch=TRUE],dim=3),"FE|Transport|Freight|Electricity (EJ/yr)"),
+                  setNames(dimSums(vm_demFeForEs_trnsp[,,"eselt_pass_",pmatch=TRUE],dim=3),"FE|Transport|Pass|Electricity (EJ/yr)"),
+                  setNames(dimSums(vm_demFeForEs_trnsp[,,"esdie_frgt_",pmatch=TRUE],dim=3),"FE|Transport|Freight|Diesel (EJ/yr)"),
+                  setNames(dimSums(vm_demFeForEs_trnsp[,,"esdie_pass_",pmatch=TRUE],dim=3),"FE|Transport|Pass|Diesel (EJ/yr)"),
+                  setNames(dimSums(vm_demFeForEs_trnsp[,,"espet_pass_",pmatch=TRUE],dim=3),"FE|Transport|Pass|Petrol (EJ/yr)"),
+                  setNames(dimSums(vm_demFeForEs_trnsp[,,"esgat_frgt_",pmatch=TRUE],dim=3),"FE|Transport|Freight|Gases (EJ/yr)"),
+                  setNames(dimSums(vm_demFeForEs_trnsp[,,"esgat_pass_",pmatch=TRUE],dim=3),"FE|Transport|Pass|Gases (EJ/yr)"),
+                  setNames(dimSums(vm_demFeForEs_trnsp[,,"esh2t_pass_",pmatch=TRUE],dim=3),"FE|Transport|Pass|Hydrogen (EJ/yr)"),
+                  setNames(dimSums(vm_demFeForEs_trnsp[,,"esh2t_frgt_",pmatch=TRUE],dim=3),"FE|Transport|Freight|Hydrogen (EJ/yr)"),
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"eselt_frgt_sm",pmatch=TRUE],dim=3),"FE|Transport|Freight|Short-Medium distance|Electricity (EJ/yr)"),
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"eselt_pass_sm",pmatch=TRUE],dim=3),"FE|Transport|Pass|Short-Medium distance|Electricity (EJ/yr)"),
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"esdie_frgt_sm",pmatch=TRUE],dim=3),"FE|Transport|Freight|Short-Medium distance|Diesel Liquids (EJ/yr)"),
@@ -516,8 +525,8 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"espet_pass_sm",pmatch=TRUE],dim=3),"FE|Transport|Pass|Short-Medium distance|Petrol Liquids (EJ/yr)"),
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"esdie_frgt_lo",pmatch=TRUE],dim=3),"FE|Transport|Freight|Long distance|Diesel Liquids (EJ/yr)"),
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"esdie_pass_lo",pmatch=TRUE],dim=3),"FE|Transport|Pass|Long distance|Diesel Liquids (EJ/yr)"),
-                  setNames(dimSums(vm_demFeForEs_trnsp[,,"esgat_frgt_sm",pmatch=TRUE],dim=3),"FE|Transport|Freight|Short-Medium distance|NG (EJ/yr)"),
-                  setNames(dimSums(vm_demFeForEs_trnsp[,,"esgat_pass_sm",pmatch=TRUE],dim=3),"FE|Transport|Pass|Short-Medium distance|NG (EJ/yr)"),
+                  setNames(dimSums(vm_demFeForEs_trnsp[,,"esgat_frgt_sm",pmatch=TRUE],dim=3),"FE|Transport|Freight|Short-Medium distance|Gases (EJ/yr)"),
+                  setNames(dimSums(vm_demFeForEs_trnsp[,,"esgat_pass_sm",pmatch=TRUE],dim=3),"FE|Transport|Pass|Short-Medium distance|Gases (EJ/yr)"),
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"esh2t_pass_sm",pmatch=TRUE],dim=3),"FE|Transport|Pass|Short-Medium distance|Hydrogen (EJ/yr)"),
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"esh2t_frgt_sm",pmatch=TRUE],dim=3),"FE|Transport|Freight|Short-Medium distance|Hydrogen (EJ/yr)"),
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"_frgt_",pmatch=TRUE],dim=3),"FE|Transport|Freight (EJ/yr)"),
@@ -569,9 +578,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   tmpCDR4 <- mbind(tmpCDR3,
                 setNames(tmpCDR3[,,"FE|CDR|DAC (EJ/yr)"] + tmpCDR3[,,"FE|CDR|EW (EJ/yr)"], "FE|CDR (EJ/yr)")
   )
-  
-  
-  
+
   tmp2 <- mbind(
     tmp1,
     tmpCDR4)
@@ -643,7 +650,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   
   #--- Disaggregate solids between coal, modern biomass and traditional biomass
   if (stat_mod == "off"){
-    
+
     tmp4 <-  mbind(tmp4,  setNames(asS4(pmin(tmp4[,,"FE|Solids|Biomass|Traditional (EJ/yr)"],tmp4[,,"FE|Buildings|Solids (EJ/yr)"]))  ,"FE|Buildings|Solids|Biomass|Traditional (EJ/yr)"))
     
     tmp4 <-  mbind(tmp4,  setNames(tmp4[,,"FE|Solids|Biomass|Traditional (EJ/yr)"] - tmp4[,,"FE|Buildings|Solids|Biomass|Traditional (EJ/yr)"],"FE|Industry|Solids|Biomass|Traditional (EJ/yr)" ))
