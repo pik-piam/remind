@@ -491,7 +491,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
 
     tmp1 <- mbind(tmp1,
                   setNames(dimSums(demFE[,, "fepet"],dim=3),             "FE|Transport|Pass|Liquids (EJ/yr)" ),
-                  setNames(dimSums(demFE[,, "fedie"],dim=3) - vm_otherFEdemand[,,'fedie'],             "FE|Transport|Freight|Liquids (EJ/yr)" ),
+                  setNames(dimSums(demFE[,, "fedie"] - vm_otherFEdemand[,,'fedie'],dim=3),             "FE|Transport|Freight|Liquids (EJ/yr)" ),
                   setNames(dimSums(demFE[,, "feh2t"],dim=3),             "FE|Transport|Pass|Hydrogen (EJ/yr)" ),
                   setNames(dimSums(demFE[,, "feelt"],dim=3),             "FE|Transport|Pass|Electricity (EJ/yr)" ),
                   setNames(dimSums(demFE[setTrainEl],dim=3),             "FE|Transport|Pass|Train|Electricity (EJ/yr)" ),
@@ -624,11 +624,6 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
 
   if (tran_mod == "complex") {  
     tmp2 <- mbind(tmp2a,
-                  setNames(
-                    tmp1[,,"FE|Transport|Pass|Train|Electricity (EJ/yr)"] 
-                    + tmp1[,,"FE|Transport|Pass|Road|LDV|Electricity (EJ/yr)"], 
-                    "FE|Transport|Pass|Electricity (EJ/yr)"),
-                  setNames(tmp1[,,"FE|Transport|Pass|Road|LDV|Hydrogen (EJ/yr)"], "FE|Transport|Pass|Hydrogen (EJ/yr)"),
                   setNames(p35_pass_FE_share_transp * tmp1[,, "FE|Transport|non-LDV (EJ/yr)"], "FE|Transport|Pass|non-LDV (EJ/yr)"),
                   setNames((1- p35_pass_FE_share_transp) * tmp1[,, "FE|Transport|non-LDV (EJ/yr)"], "FE|Transport|Freight (EJ/yr)"),
                   setNames(p35_pass_FE_share_transp * tmp1[,, "UE|Transport|HDV (EJ/yr)"], "UE|Transport|Pass|non-LDV (EJ/yr)"),
