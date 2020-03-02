@@ -463,6 +463,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   }
     
   if (tran_mod == "complex"){
+
     ## load conversion parameters
     p35_passLDV_ES_efficiency <- readGDX(gdx,"p35_passLDV_ES_efficiency", restore_zeros = FALSE)
     p35_pass_FE_share_transp <- readGDX(gdx,"p35_pass_FE_share_transp", restore_zeros = FALSE)
@@ -489,6 +490,10 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     demFE <- demFE[fe2ue]
 
     tmp1 <- mbind(tmp1,
+                  setNames(dimSums(demFE[,, "fepet"],dim=3),             "FE|Transport|Pass|Liquids (EJ/yr)" ),
+                  setNames(dimSums(demFE[,, "fedie"],dim=3) - vm_otherFEdemand[,,'fedie'],             "FE|Transport|Freight|Liquids (EJ/yr)" ),
+                  setNames(dimSums(demFE[,, "feh2t"],dim=3),             "FE|Transport|Pass|Hydrogen (EJ/yr)" ),
+                  setNames(dimSums(demFE[,, "feelt"],dim=3),             "FE|Transport|Pass|Electricity (EJ/yr)" ),
                   setNames(dimSums(demFE[setTrainEl],dim=3),             "FE|Transport|Pass|Train|Electricity (EJ/yr)" ),
                   setNames(dimSums(demFE[,,LDV35],dim=3),                "FE|Transport|Pass|Road|LDV (EJ/yr)"),
                   setNames(dimSums(demFE[,,"apCarH2T"],dim=3),           "FE|Transport|Pass|Road|LDV|Hydrogen (EJ/yr)"),
@@ -511,9 +516,8 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     tmp1 <- mbind(tmp1,
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"eselt_frgt_",pmatch=TRUE],dim=3),"FE|Transport|Freight|Electricity (EJ/yr)"),
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"eselt_pass_",pmatch=TRUE],dim=3),"FE|Transport|Pass|Electricity (EJ/yr)"),
-                  setNames(dimSums(vm_demFeForEs_trnsp[,,"esdie_frgt_",pmatch=TRUE],dim=3),"FE|Transport|Freight|Diesel (EJ/yr)"),
-                  setNames(dimSums(vm_demFeForEs_trnsp[,,"esdie_pass_",pmatch=TRUE],dim=3),"FE|Transport|Pass|Diesel (EJ/yr)"),
-                  setNames(dimSums(vm_demFeForEs_trnsp[,,"espet_pass_",pmatch=TRUE],dim=3),"FE|Transport|Pass|Petrol (EJ/yr)"),
+                  setNames(dimSums(vm_demFeForEs_trnsp[,,"esdie_frgt_",pmatch=TRUE],dim=3),"FE|Transport|Freight|Liquids (EJ/yr)"),
+                  setNames(dimSums(vm_demFeForEs_trnsp[,,c("esdie_pass_", "espet_pass_"),pmatch=TRUE],dim=3),"FE|Transport|Pass|Liquids (EJ/yr)"),
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"esgat_frgt_",pmatch=TRUE],dim=3),"FE|Transport|Freight|Gases (EJ/yr)"),
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"esgat_pass_",pmatch=TRUE],dim=3),"FE|Transport|Pass|Gases (EJ/yr)"),
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"esh2t_pass_",pmatch=TRUE],dim=3),"FE|Transport|Pass|Hydrogen (EJ/yr)"),
