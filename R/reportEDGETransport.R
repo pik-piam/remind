@@ -32,7 +32,7 @@ reportEDGETransport <- function(output_folder=".",
   ## NULL Definitons for codeCheck compliance
   RegionCode <- CountryCode <- cfg <- `.` <- sector <- subsector_L3 <- region <- year <- NULL
   subsector_L2 <- subsector_L1 <- aggr_mode <- vehicle_type <- det_veh <- aggr_nonmot <- NULL
-  demand_F <- demand_EJ <- remind_rep <- V25 <- aggr_veh <- NULL
+  demand_F <- demand_EJ <- remind_rep <- V25 <- aggr_veh <- technology <- NULL
 
   load(file.path(output_folder, "config.Rdata"))
 
