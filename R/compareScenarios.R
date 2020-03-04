@@ -45,7 +45,7 @@ compareScenarios <- function(mif, hist,
     if(!is.null(histdata)){
       if(all(items %in% getNames(histdata, dim=3))){
         hist_dt <- as.data.table(as.quitte(histdata[,, items]))
-        varhist <- hist_dt[model != "EDGE_SSP1"][, c("unit", "model") := list(NULL, "REMIND")]
+        varhist <- hist_dt[model == "James_IMF"][, c("unit", "model") := list(NULL, "REMIND")]
         var <- rbind(var, varhist)
       }else{
         print(sprintf("Items %s not found in historical data.", items))
