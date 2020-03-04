@@ -69,7 +69,7 @@ reportEDGETransport <- function(output_folder=".",
     ## datatable[is.na(aggr_mode), aggr_mode := "Freight"]
 
     ## A little more detail: Vehicle Aggregates
-    datatable[grepl("Truck", vehicle_type), aggr_veh := "Freight|Road"]
+    datatable[grepl("^Truck", vehicle_type), aggr_veh := "Freight|Road"]
     datatable["Freight Rail_tmp_vehicletype" == vehicle_type, aggr_veh := "Freight|Rail"]
     ## there seem to be no passenger ships in EDGE-T!
     datatable[grepl("Ship", subsector_L3), aggr_veh := "Freight|Shipping"]
@@ -158,16 +158,18 @@ reportEDGETransport <- function(output_folder=".",
     ## with energy carrier
 
     ## remove cycling and walking placeholder techs for ESs
-    techs <- if(mode == "ES") unique(datatable$technology)[-2:-1] else unique(datatable$technology)
-
-    techmap <- data.table(
-      technology=techs,
-      remind_rep=c("Electricity", "Liquids", "Electricity",
-                   "Hydrogen", "Gases", "Liquids", "Electricity"))
-
-    datatable <- datatable[techmap, on="technology"]
+    techmap <- data.table(technology=unique(datatable$technology),
+                          key="technology")[!c("Cycle_tmp_technology", "Walk_tmp_technology")]
 
     if(mode == "ES"){
+      ## for energy services, it is better to refer to the actual technologies
+      ## and not the fuel types (-> LCA)
+      techmap[, remind_rep := technology]
+      techmap["LA-BEV", remind_rep := "BEV"]
+      techmap["NG", remind_rep := "Gases"]
+
+      datatable <- datatable[techmap, on="technology"]
+
       report_tech <- rbindlist(list(
         prepare4MIF(
           datatable[sector == "Pass", sum(demand_F, na.rm=T),
@@ -189,6 +191,16 @@ reportEDGETransport <- function(output_folder=".",
                               ][, det_veh := paste0(det_veh, "|", remind_rep)],
                     "bn pkm/yr", "V1", "det_veh")))
     }else{
+      techmap["BEV", remind_rep := "Electricity"]
+      techmap["Electric", remind_rep := "Electricity"]
+      techmap["LA-BEV", remind_rep := "Electricity"]
+      techmap["FCEV", remind_rep := "Hydrogen"]
+      techmap["Liquids", remind_rep := "Liquids"]
+      techmap["Hybrid Liquids", remind_rep := "Liquids"]
+      techmap["NG", remind_rep := "Gases"]
+
+      datatable <- datatable[techmap, on="technology"]
+
       report_tech <- rbindlist(list(
         prepare4MIF(
           datatable[!is.na(aggr_mode), sum(demand_EJ, na.rm=T),
@@ -223,7 +235,8 @@ reportEDGETransport <- function(output_folder=".",
   ## Make sure there are no duplicates!
   idx <- anyDuplicated(toMIF, by = c("region", "variable", "period"))
   if(idx){
-    warning(paste("Duplicates found in EDGE-T reporting output:", toMIF[idx]))
+    warning(paste0("Duplicates found in EDGE-T reporting output:",
+                   capture.output(toMIF[idx]), collapse="\n"))
   }
 
   toMIF <- data.table::dcast(toMIF, ... ~ period, value.var="value")
