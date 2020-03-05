@@ -1,5 +1,7 @@
 
-#' copy fulldata.gdx and mif files from a suite of runs into one folder
+#' Copy fulldata.gdx and mif files from a suite of runs into one folder. This function creates the folder "./data/" in
+#' your working directory if such folder does not exist. It will furthermore create a subfolder with the experiment name where the gdx and mif-files 
+#' will be copied to. Care: If this subfolder is already existing, old files in this subfolder will be overwritten!
 #' 
 #' 
 #' @param output.folder a vector with the paths to REMIND output folders of the desired runs
