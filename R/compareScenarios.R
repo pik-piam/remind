@@ -27,6 +27,7 @@
 #' @importFrom quitte as.quitte
 #' @importFrom data.table as.data.table setnames := data.table
 #' @importFrom utils installed.packages
+#' @importFrom rmndt magpie2dt
 
 compareScenarios <- function(mif, hist,
                              y=c(seq(2005,2060,5),seq(2070,2100,10)),
@@ -1141,6 +1142,62 @@ compareScenarios <- function(mif, hist,
   p <- mipArea(var["GLO",,,invert=TRUE],scales="free_y") + ylab("FE int. of GDP (MJ/US$2005)")
   swfigure(sw,print,p,sw_option="height=8,width=16")
   swlatex(sw,"\\twocolumn")
+
+  ## ---- FE intensity of GDP (GDP domain)----
+
+  swlatex(sw,"\\onecolumn")
+  swlatex(sw,"\\subsection{FE intensity of GDP, linegraph (by GDP)}")
+
+  `FE|Transport (EJ/yr)` <- `FE|Buildings (EJ/yr)` <- `FE|Industry (EJ/yr)` <- NULL
+  `GDP|PPP (billion US$2005/yr)` <- `Population (million)` <- year <- GDPpC <- NULL
+
+  items<- c("FE|Transport (EJ/yr)",
+            "FE|Buildings (EJ/yr)",
+            "FE|Industry (EJ/yr)",
+            "GDP|PPP (billion US$2005/yr)",
+            "Population (million)")
+  var <- data[,,intersect(items, getNames(data,dim=3))]
+  dt <- magpie2dt(var)
+  dt_hist <- magpie2dt(hist)
+  dt_hist <- dt_hist[variable %in% items & model %in% c("IEA", "James_IMF", "WDI")][
+    , model := "REMIND"]
+  dt <- rbindlist(list(dt, dt_hist))
+  hvar <- data.table::dcast(dt, ... ~ variable)
+
+  hvar[, `:=`(
+    `FE Intensity Transport`=`FE|Transport (EJ/yr)`/`GDP|PPP (billion US$2005/yr)` * 1e3,
+    `FE Intensity Buildings` = `FE|Buildings (EJ/yr)`/`GDP|PPP (billion US$2005/yr)` * 1e3,
+    `FE Intensity Industry` = `FE|Industry (EJ/yr)`/`GDP|PPP (billion US$2005/yr)` * 1e3,
+    `GDPpC` = `GDP|PPP (billion US$2005/yr)`/`Population (million)`)]
+
+  dt <- data.table::melt(hvar, id.vars=c("model", "scenario", "region", "year", "GDPpC"))
+
+  reg_cols <- plotstyle(as.character(unique(dt$region)))
+  reg_labels <- plotstyle(as.character(unique(dt$region)), out="legend")
+
+  dt <- dt[grepl("Intensity", variable)]
+
+  highlight_yrs <- c(2030, 2050, 2070)
+  highlights <- dt[scenario != "historical" & year %in% highlight_yrs]
+
+  dt <- dt[value > 0]
+
+  p <- ggplot() +
+    geom_line(data=dt[scenario != "historical" & region != "GLO"],
+              aes(x=GDPpC, y=value, linetype=scenario, color=region)) +
+    geom_point(data=dt[scenario == "historical" & region != "GLO"],
+               aes(x=GDPpC, y=value, color=region), shape=4) +
+    geom_point(data=highlights[region != "GLO"], aes(x=`GDPpC`, y=value, color=region), shape=1) +
+    facet_wrap(~ variable, scales="free_y") +
+    ylab("FE Intensity (MJ/US$2005)") +
+    xlab("GDP PPP per Cap. (kUS$2005)") +
+    scale_y_continuous(limits = c(0, 7.5)) +
+    theme_minimal()
+
+  swfigure(sw,print,p,sw_option="height=9,width=16")
+
+  swlatex(sw,"\\twocolumn")
+
 
   ## ---- Kaya decomposition ----
 
