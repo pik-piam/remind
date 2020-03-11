@@ -398,7 +398,8 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
         inner_join(var_UE_Industry, c('Data1' = 'pf')) %>% 
         # compute converted values
         group_by(.data$Region, .data$Year, .data$item) %>% 
-        summarise(Value = sum(.data$Value * .data$factor)) %>% 
+        # reverse unit conversion done during loading
+        summarise(Value = sum(.data$Value * .data$factor) / TWa_2_EJ) %>% 
         ungroup() %>% 
         rename(Data1 = .data$item) %>% 
         # back to magpie
