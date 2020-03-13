@@ -19,7 +19,7 @@
 #' @importFrom magclass getNames<- getYears collapseNames mbind getYears new.magpie getRegions setYears dimSums mselect 
 #' @importFrom dplyr inner_join select filter group_by summarise ungroup mutate
 #'             tbl_df rename
-#' @importFrom tidyr complete nesting
+#' @importFrom tidyr complete nesting unite matches
 #' @importFrom quitte as.quitte character.data.frame
 #' @importFrom rlang .data
 
@@ -153,7 +153,9 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   oc2te    <- readGDX(gdx,c("pc2te","oc2te"),format="first_found")
 
   ## variables
-  v_emi          <- readGDX(gdx,name=c("vm_emiTeDetail","v_emiTeDetail","v_emi"),field="l",restore_zeros=FALSE,format="first_found", react = "silent")
+  v_emi <- readGDX(gdx, name = c("vm_emiTeDetail", "v_emiTeDetail", "v_emi"),
+                   field = "l", restore_zeros = FALSE, format = "first_found",
+                   react = "silent")
   vm_co2capture  <- readGDX(gdx,name=c("vm_co2capture","vm_co2CCS","v_co2CCS","v_ccs"),field="l",restore_zeros=FALSE,format="first_found")
   vm_co2CCS      <- readGDX(gdx,name=c("vm_co2CCS","v_co2CCS","v_ccs"),field="l",restore_zeros=FALSE,format="first_found")
   vm_emiengregi  <- readGDX(gdx,name=c("vm_emiTe","vm_emiengregi"),field="l",format="first_found")
@@ -260,6 +262,18 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                      (oc2te$all_te=="refdip" & oc2te$all_enty2=="sehe")|
                      (oc2te$all_te=="gash2" & (oc2te$all_enty2 %in% se_Gas))|
                      (oc2te$all_te=="gash2c" & (oc2te$all_enty2 %in% se_Gas))),]
+  
+  # ---- expand v_emi to include regions w/o data (for testOneRegi) ----
+  v_emi <- v_emi %>% 
+    as.data.frame() %>% 
+    select(-!!sym('Cell')) %>% 
+    unite('data', matches('^Data[0-9]$'), sep = '.') %>% 
+    complete(!!sym('Region') := as.character(readGDX(gdx, 'regi')),
+             nesting(!!sym('Year'), !!sym('data'))) %>% 
+    rename(!!sym(names(attr(v_emi, 'dimnames'))[1]) := !!sym('Region'), 
+           !!sym(names(attr(v_emi, 'dimnames'))[2]) := !!sym('Year'),
+           !!sym(names(attr(v_emi, 'dimnames'))[3]) := !!sym('data')) %>% 
+    as.magpie(tidy = TRUE)
 
   ###### Compute share parameter
   if (is.null(ppfen_stat)){
@@ -392,7 +406,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     # does not containt the IndustryCCS applied to Biogas, Biosolids, Bioliquids ...
     setNames(
       dimSums(mselect(v_emi, all_enty = pebio, all_enty2 = "cco2"), dim = 3) 
-    * p_share_carbonCapture_stor 
+    * dimSums(p_share_carbonCapture_stor)
     * GtC_2_MtCO2,
     "Emi|CO2|Carbon Capture and Storage|Biomass (Mt CO2/yr)"
     ),
