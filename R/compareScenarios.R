@@ -38,18 +38,40 @@ compareScenarios <- function(mif, hist,
 
   lineplots_perCap <- function(data, vars, percap_factor, ylabstr,
                                global=FALSE, per_gdp=FALSE, histdata=NULL){
+
+    ## models for historical data
+    histmap = list(
+      "Population"="WDI",
+      "GDP|PPP"="James_IMF",
+      "FE"="IEA",
+      "FE|Transport"="IEA",
+      "FE|Buildings"="IEA",
+      "FE|Industry"="IEA"
+    )
+
     items <- c(vars,
                "Population (million)",
                "GDP|PPP (billion US$2005/yr)")
     var <- as.data.table(as.quitte(data[,, items]))[, "unit" := NULL]
 
+    plain_items <- gsub("(.+) \\(.+\\)", "\\1", items)
+
     if(!is.null(histdata)){
-      if(all(items %in% getNames(histdata, dim=3))){
-        hist_dt <- as.data.table(as.quitte(histdata[,, items]))
-        varhist <- hist_dt[model == "James_IMF"][, c("unit", "model") := list(NULL, "REMIND")]
-        var <- rbind(var, varhist)
+      if(!all(items %in% getNames(histdata, dim=3))){
+        missing <- items[!items %in% getNames(histdata, dim=3)]
+        stop(paste("Items missing in historical dataset:",
+                   paste(missing, collapse=", ")))
+      }else if(!all(plain_items %in% names(histmap))){
+        missing <- items[!plain_items %in% names(histmap)]
+        stop(paste("No model defined for item in historical dataset:",
+                   paste(missing, collapse=", ")))
       }else{
-        print(sprintf("Items %s not found in historical data.", items))
+        hist_dt <- as.data.table(as.quitte(histdata[,, items]))
+        models <- unlist(histmap[plain_items])
+        varhist <- hist_dt[
+          model %in% models][ # IEA: energy, IMF: GDP, WDI: Population
+          , c("unit", "model") := list(NULL, "REMIND")]
+        var <- rbind(var, varhist)
       }
     }
 
@@ -396,7 +418,12 @@ compareScenarios <- function(mif, hist,
     "FE|Buildings (EJ/yr)",
     "FE|Industry (EJ/yr)")
 
-  p <- lineplots_perCap(data, items, 1e3, "FE per Cap. (GJ/yr)", global=T, histdata=hist)
+  p <- lineplots_perCap(
+    data=data,
+    vars=items,
+    percap_factor=1e3,
+    ylabstr="FE per Cap. (GJ/yr)",
+    global=T, histdata=hist)
 
   if("sr15data" %in% rownames(installed.packages()) & is.character(sr15marker_RCP)){
 
