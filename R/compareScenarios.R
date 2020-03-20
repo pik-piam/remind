@@ -284,6 +284,7 @@ compareScenarios <- function(mif, hist,
   var <- mbind(var,data[,,"Emi|N2O|Energy Supply and Demand (kt N2O/yr)"]          *GWP["N2O"]/1000)
   var <- mbind(var,data[,,"Emi|N2O|Waste (kt N2O/yr)"]                             *GWP["N2O"]/1000)
   var <- mbind(var,data[,,"Emi|N2O|Industry (kt N2O/yr)"]                          *GWP["N2O"]/1000)
+  var <- mbind(var,data[,,"Emi|F-Gases (Mt CO2-equiv/yr)"]                         )
   var <- setNames(var,gsub(" \\(.*\\)"," (Mt CO2eq/yr)",magclass::getNames(var)))
 
   p <- mipArea(var[mainReg,,],scales="free_y")
@@ -1526,6 +1527,19 @@ compareScenarios <- function(mif, hist,
   swfigure(sw,print,p,sw_option="height=8,width=8")
   p <- mipLineHistorical(data[,,"Emi|N2O|Energy Supply and Demand (kt N2O/yr)"][mainReg,,,invert=TRUE],x_hist=hist[,,"Emi|N2O|Energy Supply and Demand (kt N2O/yr)"][mainReg,,,invert=TRUE],
                          ylab='Emi|N2O|Energy Supply and Demand [kt N2O/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
+  swfigure(sw,print,p,sw_option="height=9,width=8")
+
+  ## ---- Emissions F-Gases ----
+  swlatex(sw,"\\subsection{F-Gases}")
+
+  p <- mipLineHistorical(data[mainReg,,"Emi|F-Gases (Mt CO2-equiv/yr)"],
+                         ylab='Emi|F-Gases [Mt CO2-eq./yr]',
+                         scales="free_y")
+  swfigure(sw,print,p,sw_option="height=8,width=8")
+  p <- mipLineHistorical(data[,,"Emi|F-Gases (Mt CO2-equiv/yr)"][mainReg,,,invert=TRUE],
+                         ylab='Emi|F-Gases [Mt CO2-eq./yr]',
+                         scales="free_y",plot.priority=c("x_hist","x","x_proj"),
+                         facet.ncol=3)
   swfigure(sw,print,p,sw_option="height=9,width=8")
 
   ## ---- ++++ E N E R G Y ++++ ----
