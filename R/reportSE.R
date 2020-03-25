@@ -280,9 +280,13 @@ reportSE <- function(gdx,regionSubsetList=NULL){
 #                                 - tmp1[,,"SE|Solids|Traditional Biomass (EJ/yr)"],"SE|Solids|Biomass (EJ/yr)"))
 
   if (!(is.null(vm_macBase) & is.null(vm_emiMacSector))){
-    #correction for the reused gas from waste landfills
+    ## correction for the reused gas from waste landfills
+    MtCH4_2_TWa <- readGDX(gdx, "sm_MtCH4_2_TWa")
+    if(is.null(MtCH4_2_TWa)){
+      MtCH4_2_TWa <- 0.001638
+    }
     tmp1 <- mbind(tmp1, setNames(
-                          0.001638 * (vm_macBase[,,"ch4wstl"] - vm_emiMacSector[,,"ch4wstl"]),
+                          MtCH4_2_TWa * (vm_macBase[,,"ch4wstl"] - vm_emiMacSector[,,"ch4wstl"]),
                           "SE|Gases|Waste (EJ/yr)"))
     tmp1[,,"SE|Gases (EJ/yr)"] <- tmp1[,,"SE|Gases (EJ/yr)"] + tmp1[,,"SE|Gases|Waste (EJ/yr)"] 
   }
