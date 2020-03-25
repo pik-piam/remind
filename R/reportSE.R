@@ -281,9 +281,10 @@ reportSE <- function(gdx,regionSubsetList=NULL){
 
   if (!(is.null(vm_macBase) & is.null(vm_emiMacSector))){
     #correction for the reused gas from waste landfills
-  tmp1[,,"SE|Gases (EJ/yr)"] <- tmp1[,,"SE|Gases (EJ/yr)"] +
-                                0.001638 * (vm_macBase[,,"ch4wstl"] 
-                                            -vm_emiMacSector[,,"ch4wstl"]) 
+    tmp1 <- mbind(tmp1, setNames(
+                          0.001638 * (vm_macBase[,,"ch4wstl"] - vm_emiMacSector[,,"ch4wstl"]),
+                          "SE|Gases|Waste (EJ/yr)"))
+    tmp1[,,"SE|Gases (EJ/yr)"] <- tmp1[,,"SE|Gases (EJ/yr)"] + tmp1[,,"SE|Gases|Waste (EJ/yr)"] 
   }
   # add global values
   out <- mbind(tmp1,dimSums(tmp1,dim=1))
