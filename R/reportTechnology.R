@@ -48,13 +48,8 @@ reportTechnology <- function(gdx,output=NULL,regionSubsetList=NULL) {
       inco0[,i,] <- pm_data
   }
   # use pm_inco0_t for v_investcost for REMIND 1.6 where it was 0 for all non-learning technologies
-  for (te in getNames(v_investcost)) {
-    for (t in getYears(v_investcost)) {
-       if(v_investcost[,t,te] == 0) {
-       v_investcost[,t,te] <- pm_inco0_t[,t,te]
-    }
-    }
-  }
+  v_investcost[v_investcost == 0] <- pm_inco0_t[v_investcost == 0]
+
   pm_data      <- collapseNames(readGDX(gdx,name=c("pm_data"),format = "first_found")[,,"omf"])
   omf <- new.magpie(getRegions(pm_data),y,magclass::getNames(pm_data))
   for(i in y){
