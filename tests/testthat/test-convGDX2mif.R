@@ -1,11 +1,14 @@
 context("REMIND reporting")
 
 test_that("Test if REMIND reporting is produced as it should", {
-  
+
   library(gdx)
 
+  ## add GDXs for comparison here:
+  my_gdxs <- NULL
+
   runParallelTests <- function(gdxs=NULL,cores=0,par=FALSE){
-    
+
     new_gdxs <- NULL
     if (is.null(gdxs) & file.exists("/p/projects/")) {
       gdxs <- system2("find","/p/projects/remind/runs/r* -name fulldata.gdx",stdout=T,stderr = FALSE)
@@ -40,6 +43,6 @@ test_that("Test if REMIND reporting is produced as it should", {
     unlink(new_gdxs)
   }
 
-  expect_error(runParallelTests(),regexp = NA)
+  expect_error(runParallelTests(my_gdxs),regexp = NA)
 
 })
