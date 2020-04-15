@@ -21,6 +21,8 @@ Simply run the following command twice with the location of each GDX as argument
 
 ```{r}
 a <- convGDX2mif("/where/the/first/GDX/is/fulldata.gdx")
+a <- convGDX2mif("/<repository>/inst/extdata/old.gdx")
+## this might also work if the working directory is the repository main folder
 a <- convGDX2mif(system.file("extdata", "old.gdx", package = "remind"))
 ```
 
@@ -32,7 +34,7 @@ in R follow these steps:
 
 - In `tests/testthat/test-convGDX2mif.R` add the location of the two GDX's. Example:
 ```{r}
-my_gdxs <- c("/path/to/fulldata.gdx", system.file("extdata", "old.gdx", package = "remind"))
+my_gdxs <- c("/path/to/fulldata.gdx", "../../inst/extdata/old.gdx")
 
 ```
 - In RStudio hit Ctr+Shift+T or run `devtools::test()` in the command
