@@ -174,7 +174,7 @@ reportTechnology <- function(gdx,output=NULL,regionSubsetList=NULL) {
           int2ext[[report_str("Electricity|Storage|Battery|For CSP", category, unit)]] <- report_str("Electricity|Solar|CSP", unit="EJ/yr", predicate="SE")
           int2ext[[report_str("Electricity|Storage|Battery|For Wind", category, unit)]] <- report_str("Electricity|Wind", unit="EJ/yr", predicate="SE")
 
-      }else if(map == carmap){
+      }else if(all(map == carmap)){
           ## cars need a special mapping, too
           ## for global avgs we use FEs as weights
           int2ext[[report_str("Transport|Pass|Road|LDV|ICE", category, unit)]] <- report_str("Transport|Pass|Road|LDV|Liquids", unit="EJ/yr", predicate="FE")

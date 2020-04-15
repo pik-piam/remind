@@ -20,10 +20,10 @@ with using the model) and the `old.gdx` distributed with this package.
 Simply run the following command twice with the location of each GDX as argument:
 
 ```{r}
-a <- convGDX2mif("/where/the/first/GDX/is/fulldata.gdx")
-a <- convGDX2mif("/<repository>/inst/extdata/old.gdx")
+a <- convGDX2MIF("/where/the/first/GDX/is/fulldata.gdx")
+a <- convGDX2MIF("/<repository>/inst/extdata/old.gdx")
 ## this might also work if the working directory is the repository main folder
-a <- convGDX2mif(system.file("extdata", "old.gdx", package = "remind"))
+a <- convGDX2MIF(system.file("extdata", "old.gdx", package = "remind"))
 ```
 
 and proceed with `lucode::buildlibrary()` as usual.
