@@ -992,8 +992,15 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                setNames(tmp[,,"Emi|CO2|Fossil Fuels and Industry|Energy Supply (Mt CO2/yr)"] +
                     tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Supply|w/ couple prod (Mt CO2/yr)"] -
                     tmp[,,"Emi|CO2|Energy|Supply|Electricity|Gross (Mt CO2/yr)"],
-                   "Emi|CO2|Energy|Supply|Non-Elec (Mt CO2/yr)")
+                   "Emi|CO2|Energy|Supply|Non-Elec|Gross (Mt CO2/yr)")
   )
+  
+  tmp <- mbind(tmp,
+               setNames(tmp[,,"Emi|CO2|Fossil Fuels and Industry|Energy Supply (Mt CO2/yr)"] -
+                          tmp[,,"Emi|CO2|Energy|Supply|Electricity (Mt CO2/yr)"],
+                        "Emi|CO2|Energy|Supply|Non-Elec (Mt CO2/yr)")
+  )
+  
   
   tmp <- mbind(tmp,
                setNames(-1 * tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass (Mt CO2/yr)"], 
