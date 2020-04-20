@@ -343,6 +343,18 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   )
   p_share_carbonCapture_stor[is.na(p_share_carbonCapture_stor)] <- 1
   
+  # share of captured carbon that is biogenic
+  p_share_cco2_bio <- (
+    dimSums(v_emi[,,pebio][,,"cco2"], dim=3) /
+      vm_co2capture)
+  
+  # share of captured carbon from DAC
+  p_share_cco2_DAC <- (
+    v33_emiDAC /
+      vm_co2capture)
+    
+
+  
   ####### internal function for cumulated values ############
   cumulatedValue <- function(var,i_pm_ts=pm_ts){
     ts <- i_pm_ts[,getYears(var),]
@@ -540,7 +552,21 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     
     setNames(
       dimSums(vm_co2CCUshort,dim=3) * GtC_2_MtCO2,
-      "Carbon Sequestration|CCU (Mt CO2/yr)")
+      "Carbon Sequestration|CCU (Mt CO2/yr)"),
+    
+    setNames(
+      dimSums(vm_co2CCUshort,dim=3) * p_share_cco2_bio * GtC_2_MtCO2,
+      "Carbon Sequestration|CCU|Biomass (Mt CO2/yr)"),
+    
+    setNames(
+      dimSums(vm_co2CCUshort,dim=3) * p_share_cco2_DAC * GtC_2_MtCO2,
+      "Carbon Sequestration|CCU|DAC (Mt CO2/yr)"),
+    
+    setNames(
+      dimSums(vm_co2CCUshort,dim=3) * (1-p_share_cco2_DAC-p_share_cco2_bio) *
+        GtC_2_MtCO2,
+      "Carbon Sequestration|CCU|Fossil (Mt CO2/yr)")
+    
   )
   # cumulative CDR emissions
   tmp <- mbind(tmp, 
