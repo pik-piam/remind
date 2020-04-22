@@ -76,6 +76,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   if (is.null(s33_rockgrind_fedem)){
     s33_rockgrind_fedem  <- new.magpie("GLO",NULL,fill=0)
   }
+  pm_cesdata_offset_quantity <- readGDX(gdx, 'pm_cesdata')
   
   ## variables
   prodFE  <- readGDX(gdx,name=c("vm_prodFe"),field="l",restore_zeros=FALSE,format="first_found")*TWa_2_EJ
@@ -123,7 +124,19 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
 
   ####### calculate reporting parameters ############
   tmp0 <- NULL
-  vm_cesIO = vm_cesIO[,y,]
+  
+  # adjust vm_cesIO quantities by offset_quantites used during the calibration
+  if (any(grep('\\.offset_quantity$', getNames(pm_cesdata_offset_quantity)))) {
+    pf <- paste0(getNames(vm_cesIO), '.offset_quantity')
+    pm_cesdata_offset_quantity <- dimSums(pm_cesdata_offset_quantity[,,pf], 
+                                          dim = 3.2) * TWa_2_EJ
+    vm_cesIO <- vm_cesIO[,y,] + pm_cesdata_offset_quantity[,y,] 
+  } else {
+    # old gdxes don't have offset_quantities
+    vm_cesIO <- vm_cesIO[,y,]
+  }
+  
+  
   #--- Stationary Module ---
   if (stat_mod == "simple"){
     tmp0 <- mbind(tmp0,
