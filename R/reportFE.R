@@ -72,7 +72,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   
   ## parameter
   p_eta_conv = readGDX(gdx, c("pm_eta_conv","p_eta_conv"), restore_zeros = FALSE,format="first_found")
-  offset = collapseNames(readGDX(gdx,"pm_cesdata")[,,"offset_quantity"]*TWa_2_EJ)
+  pm_cesdata = readGDX(gdx,"pm_cesdata")
   s33_rockgrind_fedem <- readGDX(gdx,"s33_rockgrind_fedem", react = "silent")
   if (is.null(s33_rockgrind_fedem)){
     s33_rockgrind_fedem  <- new.magpie("GLO",NULL,fill=0)
@@ -124,9 +124,16 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
 
   ####### calculate reporting parameters ############
   tmp0 <- NULL
-  vm_cesIO = vm_cesIO[,y,]
-  # Correct for offset quantities in the transition between ESM and CES for zero quantities
-  vm_cesIO = vm_cesIO + offset[,y,getNames(vm_cesIO)]
+
+  if (any(grep('\\.offset_quantity$', getNames(pm_cesdata)))) {
+    # Correct for offset quantities in the transition between ESM and CES for zero quantities
+    pf <- paste0(getNames(vm_cesIO), '.offset_quantity')
+    offset <- collapseNames(pm_cesdata[,,pf]) * TWa_2_EJ
+    vm_cesIO = vm_cesIO + offset[,y,getNames(vm_cesIO)]
+  } else {
+    # old gdxes don't have offset_quantities
+    vm_cesIO <- vm_cesIO[,y,]
+  }
   
   #--- Stationary Module ---
   if (stat_mod == "simple"){
