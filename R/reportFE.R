@@ -364,7 +364,27 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                                                       'feelwlth_chemicals',
                                                       'feel_steel_primary',
                                                       'feel_steel_secondary',
-                                                      'feelwlth_otherInd')
+                                                      'feelwlth_otherInd'),
+      
+      # subsector totals
+      'Cement' = c('feso_cement', 'feli_cement', 'fega_cement', 'feh2_cement',
+                   'feh2_cement', 'feel_cement'),
+      
+      'Chemicals' = c('feso_chemicals', 'feli_chemicals', 'fega_chemicals', 
+                      'feh2_chemicals', 'feelhth_chemicals', 
+                      'feelwlth_chemicals'),
+      
+      'Steel' = c('feso_steel', 'feli_steel', 'fega_steel', 'feh2_steel', 
+                  'feel_steel_primary', 'feel_steel_secondary'),
+      
+      'Steel|Primary' = c('feso_steel', 'feli_steel', 'fega_steel', 
+                          'feh2_steel', 'feel_steel_primary'),
+      
+      'Steel|Secondary' = 'feel_steel_secondary',
+
+      'other' = c('feso_otherInd', 'feli_otherInd', 'fega_otherInd', 
+                  'feh2_otherInd', 'feh2_otherInd', 'feelhth_otherInd', 
+                  'feelwlth_otherInd')
     )
 
     # list of production items to calculate, including factor for unit conversion
@@ -417,6 +437,29 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
         tmp0[,,'Production|Industry|Steel|Primary (Mt/yr)']
         + tmp0[,,'Production|Industry|Steel|Secondary (Mt/yr)'],
         'Production|Industry|Steel (Mt/yr)')
+    )
+   
+    # calculate specific energy consumption of industrial production
+    tmp0 <- mbind(
+      tmp0,
+      
+      setNames(
+        # EJ/yr / Mt/yr * 1e12 MJ/EJ / (1e6 t/Mt) = MJ/t
+        ( tmp0[,,'FE|Industry|Cement (EJ/yr)']
+        / tmp0[,,'Production|Industry|Cement (Mt/yr)']
+        ) * 1e6,
+        
+        'Specific Energy Consumption|Production|Cement (MJ/t)'
+      ),
+      
+      setNames(
+        # EJ/yr / Mt/yr * 1e12 MJ/EJ / (1e6 t/Mt) = MJ/t
+        ( tmp0[,,'FE|Industry|Steel (EJ/yr)']
+        / tmp0[,,'Production|Industry|Steel (Mt/yr)']
+        ) * 1e6,
+        
+        'Specific Energy Consumption|Production|Steel (MJ/t)'
+      )
     )
     
   }

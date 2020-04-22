@@ -1552,5 +1552,54 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                  setNames(cumulatedValue(out[,,"Emi|CO2|Transport|Demand (Mt CO2/yr)"]), "Emi|CO2|Transport|Demand|Cumulated (Mt CO2/yr)"),
                  setNames(cumulatedValue(out[,,"Emi|CO2|Transport (Mt CO2/yr)"]), "Emi|CO2|Transport|Cumulated (Mt CO2/yr)")
     )
-  return(out)
+    
+    # ---- report specific industry emissions ----
+    if ('subsectors' == indu_mod) {
+      out <- mbind(
+        out,
+        
+        mbind(  
+          lapply(
+            list(
+              # <variables to calculate> by dividing <numerator> by <denominator>
+              c('Carbon Intensity|Production|Cement (Mt CO2/Mt)',
+                'Emi|CO2|FFaI|Industry|Cement (Mt CO2/yr)',
+                'Production|Industry|Cement (Mt/yr)'),
+              
+              c(paste0('Carbon Intensity|Production|Cement|Fossil|Energy|Demand|',
+                       'Industry (Mt CO2/Mt)'),
+                'Emi|CO2|FFaI|Industry|Cement|Fuel (Mt CO2/yr)',
+                'Production|Industry|Cement (Mt/yr)'),
+              
+              c(paste('Carbon Intensity|Production|Cement|Industrial Processes',
+                      '(Mt CO2/Mt)'),
+                'Emi|CO2|FFaI|Industry|Cement|Process (Mt CO2/yr)',
+                'Production|Industry|Cement (Mt/yr)'),
+              
+              c('Carbon Intensity|Production|Steel (Mt CO2/Mt)',
+                'Emi|CO2|FFaI|Industry|Steel (Mt CO2/yr)',
+                'Production|Industry|Steel (Mt/yr)'),
+              
+              c(paste0('Carbon Intensity|Production|Steel|Fossil|Energy|Demand|',
+                       'Industry (Mt CO2/Mt)'),
+                'Emi|CO2|FFaI|Industry|Steel|Fuel (Mt CO2/yr)',
+                'Production|Industry|Steel (Mt/yr)')),
+            
+            function(x) {
+              setNames(
+                ( out[,,x[[2]]]
+                  # add missing global totals
+                  / mbind(output[,,x[[3]]]['GLO',, invert = TRUE],
+                          dimSums(output[,,x[[3]]]['GLO',, invert = TRUE], 
+                                  dim = 1))
+                ),
+                x[[1]]
+              )
+            }
+          )
+        )
+      )
+    }
+    
+    return(out)
 }
