@@ -21,9 +21,8 @@ reportEmployment <- function(gdx,improvements){
   x <- calcOutput("Employmentfactors",improvements=improvements)
   
   # capital costs evolution over time for different techs
-  # cap_costs <- reportTechnology(gdx)
+  cap_costs <- reportTechnology(gdx)
   # use a mif file until reportTechnology() is not resolved
-  cap_costs <-  read.report(file = "~/PROJECTS/emp-remind/data/REMIND_generic_SSP2-NDC.mif",as.list = F)
   cap_costs <- collapseNames(cap_costs)
   var <- c("Tech|Electricity|Coal|PC|w/o CCS|Capital Costs (US$2005/kW)",
            "Tech|Electricity|Gas|CC|w/o CCS|Capital Costs (US$2005/kW)",
