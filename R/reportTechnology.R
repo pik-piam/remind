@@ -22,7 +22,10 @@
 
 reportTechnology <- function(gdx,output=NULL,regionSubsetList=NULL) {
   if(is.null(output)){
-    output <- reportSE(gdx,regionSubsetList)
+    output <- mbind(
+      reportSE(gdx, regionSubsetList),
+      reportFE(gdx, regionSubsetList)
+    )
   }
 
   ## Check transport realisation
