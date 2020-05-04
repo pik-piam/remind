@@ -61,6 +61,14 @@ reportSE <- function(gdx,regionSubsetList=NULL){
   ## variables
   prodSe <- readGDX(gdx,name=c("vm_prodSe","v_seprod"),field="l",restore_zeros=FALSE,format="first_found")*pm_conv_TWa_EJ
   prodSe <- mselect(prodSe,all_enty1=sety)
+
+  if (any(getNames(prodSe) %in% c("seh2.seliqfos.MeOH", "seh2.segafos.h22ch4") == TRUE)) {
+    ## if synfuels are activated, there might be no demand until 2020. This can lead to NAs that need to be substituted with 0
+    tmp_syn <- prodSe[, c("y2005", "y2010", "y2015", "y2020"), c("seh2.seliqfos.MeOH", "seh2.segafos.h22ch4")]
+    tmp_syn[is.na(tmp_syn)] <- 0
+    prodSe[, c("y2005", "y2010", "y2015", "y2020"), c("seh2.seliqfos.MeOH", "seh2.segafos.h22ch4")] <- tmp_syn
+  }
+
   #  storloss only exist for versions previous to the power module creation and for the IntC power module realisation
   if ((is.null(power_realisation)) || (power_realisation == "IntC")) {
     storLoss <- readGDX(gdx,name=c("v32_storloss","v_storloss"), field = "l", restore_zeros=TRUE, format ="first_found")*pm_conv_TWa_EJ
