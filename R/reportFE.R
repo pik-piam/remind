@@ -132,8 +132,6 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     offset <- collapseNames(pm_cesdata[,,pf]) * TWa_2_EJ
     vm_cesIO = vm_cesIO + offset[,y,getNames(vm_cesIO)]
   }
-    
-  }
   
   #--- Stationary Module ---
   if (stat_mod == "simple"){
