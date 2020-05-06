@@ -116,6 +116,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   y <- Reduce(intersect,list(getYears(prodFE),getYears(prodSE)))
   prodFE  <- prodFE[,y,]
   prodSE <- prodSE[,y,]
+  vm_cesIO <- vm_cesIO[,y,]
   vm_otherFEdemand <- vm_otherFEdemand[,y,]
   v33_grindrock_onfield<- v33_grindrock_onfield[,y,]
   
@@ -130,9 +131,8 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     pf <- paste0(getNames(vm_cesIO), '.offset_quantity')
     offset <- collapseNames(pm_cesdata[,,pf]) * TWa_2_EJ
     vm_cesIO = vm_cesIO + offset[,y,getNames(vm_cesIO)]
-  } else {
-    # old gdxes don't have offset_quantities
-    vm_cesIO <- vm_cesIO[,y,]
+  }
+    
   }
   
   #--- Stationary Module ---
