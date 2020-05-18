@@ -297,6 +297,11 @@ reportSE <- function(gdx,regionSubsetList=NULL){
         se.prod(prodSe,dataoc,oc2te,sety,pety,"sedie",                      name = "SE|Liquids|sedie (EJ/yr)")
         )
    }
+  if("segafos" %in% se_Gas){
+    tmp1 <- mbind(tmp1,
+                  se.prod(prodSe,dataoc,oc2te,sety,pety,"segafos",                     name = "SE|Gases|Non-Biomass (EJ/yr)")
+                  )
+  }
   
 #    tmp1 <- mbind(tmp1, setNames(se.prod(prodSe,dataoc,oc2te,sety,pebio ,se_Solids, name = NULL)
 #                                 - tmp1[,,"SE|Solids|Traditional Biomass (EJ/yr)"],"SE|Solids|Biomass (EJ/yr)"))
