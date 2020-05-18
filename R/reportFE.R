@@ -651,9 +651,13 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                  )
   } else if (stat_mod == "off"){
     tmp2 = mbind(tmp2,
-                 setNames(tmp1[,,"FE|Buildings|Solids (EJ/yr)"] + tmp1[,,"FE|Industry|Solids (EJ/yr)"] ,"FE|Other Sector|Solids (EJ/yr)"),
+                 setNames(dimSums(prodFE[,,"fesos",pmatch=TRUE],dim=3),"FE|Other Sector|Solids (EJ/yr)"),
+                 setNames(dimSums(prodFE[,,"fegas",pmatch=TRUE],dim=3),"FE|Other Sector|Gases (EJ/yr)"),
+                 setNames(dimSums(prodFE[,,"sesobio.fesos.tdbiosos"],dim=3),"FE|Other Sector|Solids|Biomass (EJ/yr)"),
+                 setNames(dimSums(prodFE[,,"sesofos.fesos.tdfossos"],dim=3),"FE|Other Sector|Solids|Fossil (EJ/yr)"),
+                 setNames(dimSums(prodFE[,,"segabio.fegas.tdbiogas"],dim=3),"FE|Other Sector|Gases|Biomass (EJ/yr)"),
+                 setNames(dimSums(prodFE[,,"segafos.fegas.tdfosgas"],dim=3),"FE|Other Sector|Gases|Fossil (EJ/yr)"),
                  setNames(tmp1[,,"FE|Buildings|Liquids (EJ/yr)"] + tmp1[,,"FE|Industry|Liquids (EJ/yr)"] + tmpCDR4[,,"FE|CDR|Liquids (EJ/yr)"],"FE|Other Sector|Liquids (EJ/yr)"),
-                 setNames(tmp1[,,"FE|Buildings|Gases (EJ/yr)"] + tmp1[,,"FE|Industry|Gases (EJ/yr)"] + tmpCDR4[,,"FE|CDR|Gases (EJ/yr)"],"FE|Other Sector|Gases (EJ/yr)"),
                  setNames(tmp1[,,"FE|Buildings|Hydrogen (EJ/yr)"] + tmp1[,,"FE|Industry|Hydrogen (EJ/yr)"]+ tmpCDR4[,,"FE|CDR|Hydrogen (EJ/yr)"],"FE|Other Sector|Hydrogen (EJ/yr)"),
                  setNames(tmp1[,,"FE|Buildings|Electricity (EJ/yr)"] + tmp1[,,"FE|Industry|Electricity (EJ/yr)"]+ tmpCDR4[,,"FE|CDR|Electricity (EJ/yr)"],"FE|Other Sector|Electricity (EJ/yr)"),
                  setNames(tmp1[,,"FE|Buildings|Heat (EJ/yr)"] + tmp1[,,"FE|Industry|Heat (EJ/yr)"],"FE|Other Sector|Heat (EJ/yr)")
