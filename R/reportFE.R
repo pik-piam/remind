@@ -658,6 +658,12 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                  setNames(tmp1[,,"FE|Buildings|Electricity (EJ/yr)"] + tmp1[,,"FE|Industry|Electricity (EJ/yr)"]+ tmpCDR4[,,"FE|CDR|Electricity (EJ/yr)"],"FE|Other Sector|Electricity (EJ/yr)"),
                  setNames(tmp1[,,"FE|Buildings|Heat (EJ/yr)"] + tmp1[,,"FE|Industry|Heat (EJ/yr)"],"FE|Other Sector|Heat (EJ/yr)")
                  )
+    if("segabio" %in% se_Gas){
+      tmp2 <- mbind(tmp2,
+                 setNames(dimSums(prodFE[,,"segabio.fegas.tdbiogas"],dim=3),"FE|Other Sector|Gases|Biomass (EJ/yr)"),
+                 setNames(dimSums(prodFE[,,"segafos.fegas.tdfosgas"],dim=3),"FE|Other Sector|Gases|Non-Biomass (EJ/yr)")
+                 )
+      }
   }
     
     tmp2 = mbind(tmp2,
