@@ -72,6 +72,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   
   ## parameter
   p_eta_conv = readGDX(gdx, c("pm_eta_conv","p_eta_conv"), restore_zeros = FALSE,format="first_found")
+  pm_cesdata = readGDX(gdx,"pm_cesdata")
   s33_rockgrind_fedem <- readGDX(gdx,"s33_rockgrind_fedem", react = "silent")
   if (is.null(s33_rockgrind_fedem)){
     s33_rockgrind_fedem  <- new.magpie("GLO",NULL,fill=0)
@@ -115,6 +116,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   y <- Reduce(intersect,list(getYears(prodFE),getYears(prodSE)))
   prodFE  <- prodFE[,y,]
   prodSE <- prodSE[,y,]
+  vm_cesIO <- vm_cesIO[,y,]
   vm_otherFEdemand <- vm_otherFEdemand[,y,]
   v33_grindrock_onfield<- v33_grindrock_onfield[,y,]
   
@@ -123,7 +125,14 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
 
   ####### calculate reporting parameters ############
   tmp0 <- NULL
-  vm_cesIO = vm_cesIO[,y,]
+
+  if (any(grep('\\.offset_quantity$', getNames(pm_cesdata)))) {
+    # Correct for offset quantities in the transition between ESM and CES for zero quantities
+    pf <- paste0(getNames(vm_cesIO), '.offset_quantity')
+    offset <- collapseNames(pm_cesdata[,,pf]) * TWa_2_EJ
+    vm_cesIO = vm_cesIO + offset[,y,getNames(vm_cesIO)]
+  }
+  
   #--- Stationary Module ---
   if (stat_mod == "simple"){
     tmp0 <- mbind(tmp0,
@@ -360,7 +369,27 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                                                       'feelwlth_chemicals',
                                                       'feel_steel_primary',
                                                       'feel_steel_secondary',
-                                                      'feelwlth_otherInd')
+                                                      'feelwlth_otherInd'),
+      
+      # subsector totals
+      'Cement' = c('feso_cement', 'feli_cement', 'fega_cement', 'feh2_cement',
+                   'feh2_cement', 'feel_cement'),
+      
+      'Chemicals' = c('feso_chemicals', 'feli_chemicals', 'fega_chemicals', 
+                      'feh2_chemicals', 'feelhth_chemicals', 
+                      'feelwlth_chemicals'),
+      
+      'Steel' = c('feso_steel', 'feli_steel', 'fega_steel', 'feh2_steel', 
+                  'feel_steel_primary', 'feel_steel_secondary'),
+      
+      'Steel|Primary' = c('feso_steel', 'feli_steel', 'fega_steel', 
+                          'feh2_steel', 'feel_steel_primary'),
+      
+      'Steel|Secondary' = 'feel_steel_secondary',
+
+      'other' = c('feso_otherInd', 'feli_otherInd', 'fega_otherInd', 
+                  'feh2_otherInd', 'feh2_otherInd', 'feelhth_otherInd', 
+                  'feelwlth_otherInd')
     )
 
     # list of production items to calculate, including factor for unit conversion
@@ -398,7 +427,8 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
         inner_join(var_UE_Industry, c('Data1' = 'pf')) %>% 
         # compute converted values
         group_by(.data$Region, .data$Year, .data$item) %>% 
-        summarise(Value = sum(.data$Value * .data$factor)) %>% 
+        # reverse unit conversion done during loading
+        summarise(Value = sum(.data$Value * .data$factor) / TWa_2_EJ) %>% 
         ungroup() %>% 
         rename(Data1 = .data$item) %>% 
         # back to magpie
@@ -412,6 +442,29 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
         tmp0[,,'Production|Industry|Steel|Primary (Mt/yr)']
         + tmp0[,,'Production|Industry|Steel|Secondary (Mt/yr)'],
         'Production|Industry|Steel (Mt/yr)')
+    )
+   
+    # calculate specific energy consumption of industrial production
+    tmp0 <- mbind(
+      tmp0,
+      
+      setNames(
+        # EJ/yr / Mt/yr * 1e12 MJ/EJ / (1e6 t/Mt) = MJ/t
+        ( tmp0[,,'FE|Industry|Cement (EJ/yr)']
+        / tmp0[,,'Production|Industry|Cement (Mt/yr)']
+        ) * 1e6,
+        
+        'Specific Energy Consumption|Production|Cement (MJ/t)'
+      ),
+      
+      setNames(
+        # EJ/yr / Mt/yr * 1e12 MJ/EJ / (1e6 t/Mt) = MJ/t
+        ( tmp0[,,'FE|Industry|Steel (EJ/yr)']
+        / tmp0[,,'Production|Industry|Steel (Mt/yr)']
+        ) * 1e6,
+        
+        'Specific Energy Consumption|Production|Steel (MJ/t)'
+      )
     )
     
   }
@@ -463,6 +516,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   }
     
   if (tran_mod == "complex"){
+
     ## load conversion parameters
     p35_passLDV_ES_efficiency <- readGDX(gdx,"p35_passLDV_ES_efficiency", restore_zeros = FALSE)
     p35_pass_FE_share_transp <- readGDX(gdx,"p35_pass_FE_share_transp", restore_zeros = FALSE)
@@ -489,6 +543,10 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     demFE <- demFE[fe2ue]
 
     tmp1 <- mbind(tmp1,
+                  setNames(dimSums(demFE[,, "fepet"],dim=3),             "FE|Transport|Pass|Liquids (EJ/yr)" ),
+                  setNames(dimSums(demFE[,, "fedie"] - vm_otherFEdemand[,,'fedie'],dim=3),             "FE|Transport|Freight|Liquids (EJ/yr)" ),
+                  setNames(dimSums(demFE[,, "feh2t"],dim=3),             "FE|Transport|Pass|Hydrogen (EJ/yr)" ),
+                  setNames(dimSums(demFE[,, "feelt"],dim=3),             "FE|Transport|Pass|Electricity (EJ/yr)" ),
                   setNames(dimSums(demFE[setTrainEl],dim=3),             "FE|Transport|Pass|Train|Electricity (EJ/yr)" ),
                   setNames(dimSums(demFE[,,LDV35],dim=3),                "FE|Transport|Pass|Road|LDV (EJ/yr)"),
                   setNames(dimSums(demFE[,,"apCarH2T"],dim=3),           "FE|Transport|Pass|Road|LDV|Hydrogen (EJ/yr)"),
@@ -511,9 +569,8 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     tmp1 <- mbind(tmp1,
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"eselt_frgt_",pmatch=TRUE],dim=3),"FE|Transport|Freight|Electricity (EJ/yr)"),
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"eselt_pass_",pmatch=TRUE],dim=3),"FE|Transport|Pass|Electricity (EJ/yr)"),
-                  setNames(dimSums(vm_demFeForEs_trnsp[,,"esdie_frgt_",pmatch=TRUE],dim=3),"FE|Transport|Freight|Diesel (EJ/yr)"),
-                  setNames(dimSums(vm_demFeForEs_trnsp[,,"esdie_pass_",pmatch=TRUE],dim=3),"FE|Transport|Pass|Diesel (EJ/yr)"),
-                  setNames(dimSums(vm_demFeForEs_trnsp[,,"espet_pass_",pmatch=TRUE],dim=3),"FE|Transport|Pass|Petrol (EJ/yr)"),
+                  setNames(dimSums(vm_demFeForEs_trnsp[,,"esdie_frgt_",pmatch=TRUE],dim=3),"FE|Transport|Freight|Liquids (EJ/yr)"),
+                  setNames(dimSums(vm_demFeForEs_trnsp[,,c("esdie_pass_", "espet_pass_"),pmatch=TRUE],dim=3),"FE|Transport|Pass|Liquids (EJ/yr)"),
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"esgat_frgt_",pmatch=TRUE],dim=3),"FE|Transport|Freight|Gases (EJ/yr)"),
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"esgat_pass_",pmatch=TRUE],dim=3),"FE|Transport|Pass|Gases (EJ/yr)"),
                   setNames(dimSums(vm_demFeForEs_trnsp[,,"esh2t_pass_",pmatch=TRUE],dim=3),"FE|Transport|Pass|Hydrogen (EJ/yr)"),
@@ -601,6 +658,12 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                  setNames(tmp1[,,"FE|Buildings|Electricity (EJ/yr)"] + tmp1[,,"FE|Industry|Electricity (EJ/yr)"]+ tmpCDR4[,,"FE|CDR|Electricity (EJ/yr)"],"FE|Other Sector|Electricity (EJ/yr)"),
                  setNames(tmp1[,,"FE|Buildings|Heat (EJ/yr)"] + tmp1[,,"FE|Industry|Heat (EJ/yr)"],"FE|Other Sector|Heat (EJ/yr)")
                  )
+    if("segabio" %in% se_Gas){
+      tmp2 <- mbind(tmp2,
+                 setNames(dimSums(prodFE[,,"segabio.fegas.tdbiogas"],dim=3),"FE|Other Sector|Gases|Biomass (EJ/yr)"),
+                 setNames(dimSums(prodFE[,,"segafos.fegas.tdfosgas"],dim=3),"FE|Other Sector|Gases|Non-Biomass (EJ/yr)")
+                 )
+      }
   }
     
     tmp2 = mbind(tmp2,
@@ -620,11 +683,6 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
 
   if (tran_mod == "complex") {  
     tmp2 <- mbind(tmp2a,
-                  setNames(
-                    tmp1[,,"FE|Transport|Pass|Train|Electricity (EJ/yr)"] 
-                    + tmp1[,,"FE|Transport|Pass|Road|LDV|Electricity (EJ/yr)"], 
-                    "FE|Transport|Pass|Electricity (EJ/yr)"),
-                  setNames(tmp1[,,"FE|Transport|Pass|Road|LDV|Hydrogen (EJ/yr)"], "FE|Transport|Pass|Hydrogen (EJ/yr)"),
                   setNames(p35_pass_FE_share_transp * tmp1[,, "FE|Transport|non-LDV (EJ/yr)"], "FE|Transport|Pass|non-LDV (EJ/yr)"),
                   setNames((1- p35_pass_FE_share_transp) * tmp1[,, "FE|Transport|non-LDV (EJ/yr)"], "FE|Transport|Freight (EJ/yr)"),
                   setNames(p35_pass_FE_share_transp * tmp1[,, "UE|Transport|HDV (EJ/yr)"], "UE|Transport|Pass|non-LDV (EJ/yr)"),

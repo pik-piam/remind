@@ -61,6 +61,14 @@ reportSE <- function(gdx,regionSubsetList=NULL){
   ## variables
   prodSe <- readGDX(gdx,name=c("vm_prodSe","v_seprod"),field="l",restore_zeros=FALSE,format="first_found")*pm_conv_TWa_EJ
   prodSe <- mselect(prodSe,all_enty1=sety)
+
+  if (any(getNames(prodSe) %in% c("seh2.seliqfos.MeOH", "seh2.segafos.h22ch4") == TRUE)) {
+    ## if synfuels are activated, there might be no demand until 2020. This can lead to NAs that need to be substituted with 0
+    tmp_syn <- prodSe[, c("y2005", "y2010", "y2015", "y2020"), c("seh2.seliqfos.MeOH", "seh2.segafos.h22ch4")]
+    tmp_syn[is.na(tmp_syn)] <- 0
+    prodSe[, c("y2005", "y2010", "y2015", "y2020"), c("seh2.seliqfos.MeOH", "seh2.segafos.h22ch4")] <- tmp_syn
+  }
+
   #  storloss only exist for versions previous to the power module creation and for the IntC power module realisation
   if ((is.null(power_realisation)) || (power_realisation == "IntC")) {
     storLoss <- readGDX(gdx,name=c("v32_storloss","v_storloss"), field = "l", restore_zeros=TRUE, format ="first_found")*pm_conv_TWa_EJ
@@ -158,7 +166,21 @@ reportSE <- function(gdx,regionSubsetList=NULL){
   ## reporting should adhere to the following logic:
   ## if a category has more than one subcategory, the subcategories should be reported *explicitly*.
 
-  tmp1 <- mbind(
+  if (!(is.null(vm_macBase) & is.null(vm_emiMacSector))){
+    ## correction for the reused gas from waste landfills
+    MtCH4_2_TWa <- readGDX(gdx, "sm_MtCH4_2_TWa", react="silent")
+    if(is.null(MtCH4_2_TWa)){
+      MtCH4_2_TWa <- 0.001638
+    }
+    tmp1 <- setNames(
+      MtCH4_2_TWa * (vm_macBase[,,"ch4wstl"] - vm_emiMacSector[,,"ch4wstl"]),
+      "SE|Gases|Waste (EJ/yr)")
+  }else{
+    tmp1 <- setNames(new.magpie(cells_and_regions=getRegions(dataoc), years=y, fill=0),
+                     "SE|Gases|Waste (EJ/yr)")
+  }
+
+  tmp1 <- mbind(tmp1,
     se.prod(prodSe,dataoc,oc2te,sety,pety,sety,              name = "SE (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,pebio,sety,                         name = "SE|Biomass (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,append(pety, "seh2"),"seel",        name = "SE|Electricity (EJ/yr)"),  # seh2 to account for se2se prodution once we add h2 to elec technology
@@ -202,7 +224,7 @@ reportSE <- function(gdx,regionSubsetList=NULL){
     se.prodLoss(prodSe,dataoc,oc2te,sety,"pesol","seel", te = "spv",     name = "SE|Electricity|Curtailment|Solar|PV (EJ/yr)"),
     se.prodLoss(prodSe,dataoc,oc2te,sety,"pewin","seel",                 name = "SE|Electricity|Curtailment|Wind (EJ/yr)"),
     se.prodLoss(prodSe,dataoc,oc2te,sety,c("pewin","pesol"),"seel",      name = "SE|Electricity|Curtailment|WindSolar (EJ/yr)"),
-    se.prod(prodSe,dataoc,oc2te,sety,input_gas,se_Gas,                   name = "SE|Gases (EJ/yr)"),
+    setNames(se.prod(prodSe,dataoc,oc2te,sety,input_gas,se_Gas) + tmp1[,,"SE|Gases|Waste (EJ/yr)"], "SE|Gases (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,pebio,se_Gas,                       name = "SE|Gases|Biomass (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,"pegas",se_Gas,                     name = "SE|Gases|Natural Gas (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,"pecoal",se_Gas,                    name = "SE|Gases|Coal (EJ/yr)"),
@@ -275,16 +297,15 @@ reportSE <- function(gdx,regionSubsetList=NULL){
         se.prod(prodSe,dataoc,oc2te,sety,pety,"sedie",                      name = "SE|Liquids|sedie (EJ/yr)")
         )
    }
+  if("segafos" %in% se_Gas){
+    tmp1 <- mbind(tmp1,
+                  se.prod(prodSe,dataoc,oc2te,sety,pety,"segafos",                     name = "SE|Gases|Non-Biomass (EJ/yr)")
+                  )
+  }
   
 #    tmp1 <- mbind(tmp1, setNames(se.prod(prodSe,dataoc,oc2te,sety,pebio ,se_Solids, name = NULL)
 #                                 - tmp1[,,"SE|Solids|Traditional Biomass (EJ/yr)"],"SE|Solids|Biomass (EJ/yr)"))
 
-  if (!(is.null(vm_macBase) & is.null(vm_emiMacSector))){
-    #correction for the reused gas from waste landfills
-  tmp1[,,"SE|Gases (EJ/yr)"] <- tmp1[,,"SE|Gases (EJ/yr)"] +
-                                0.001638 * (vm_macBase[,,"ch4wstl"] 
-                                            -vm_emiMacSector[,,"ch4wstl"]) 
-  }
   # add global values
   out <- mbind(tmp1,dimSums(tmp1,dim=1))
   # add other region aggregations

@@ -27,6 +27,7 @@
 #' @importFrom quitte as.quitte
 #' @importFrom data.table as.data.table setnames := data.table
 #' @importFrom utils installed.packages
+#' @importFrom rmndt magpie2dt
 
 compareScenarios <- function(mif, hist,
                              y=c(seq(2005,2060,5),seq(2070,2100,10)),
@@ -37,18 +38,40 @@ compareScenarios <- function(mif, hist,
 
   lineplots_perCap <- function(data, vars, percap_factor, ylabstr,
                                global=FALSE, per_gdp=FALSE, histdata=NULL){
+
+    ## models for historical data
+    histmap = list(
+      "Population"="WDI",
+      "GDP|PPP"="James_IMF",
+      "FE"="IEA",
+      "FE|Transport"="IEA",
+      "FE|Buildings"="IEA",
+      "FE|Industry"="IEA"
+    )
+
     items <- c(vars,
                "Population (million)",
                "GDP|PPP (billion US$2005/yr)")
     var <- as.data.table(as.quitte(data[,, items]))[, "unit" := NULL]
 
+    plain_items <- gsub("(.+) \\(.+\\)", "\\1", items)
+
     if(!is.null(histdata)){
-      if(all(items %in% getNames(histdata, dim=3))){
-        hist_dt <- as.data.table(as.quitte(histdata[,, items]))
-        varhist <- hist_dt[model != "EDGE_SSP1"][, c("unit", "model") := list(NULL, "REMIND")]
-        var <- rbind(var, varhist)
+      if(!all(items %in% getNames(histdata, dim=3))){
+        missing <- items[!items %in% getNames(histdata, dim=3)]
+        stop(paste("Items missing in historical dataset:",
+                   paste(missing, collapse=", ")))
+      }else if(!all(plain_items %in% names(histmap))){
+        missing <- items[!plain_items %in% names(histmap)]
+        stop(paste("No model defined for item in historical dataset:",
+                   paste(missing, collapse=", ")))
       }else{
-        print(sprintf("Items %s not found in historical data.", items))
+        hist_dt <- as.data.table(as.quitte(histdata[,, items]))
+        models <- unlist(histmap[plain_items])
+        varhist <- hist_dt[
+          model %in% models][ # IEA: energy, IMF: GDP, WDI: Population
+          , c("unit", "model") := list(NULL, "REMIND")]
+        var <- rbind(var, varhist)
       }
     }
 
@@ -261,6 +284,7 @@ compareScenarios <- function(mif, hist,
   var <- mbind(var,data[,,"Emi|N2O|Energy Supply and Demand (kt N2O/yr)"]          *GWP["N2O"]/1000)
   var <- mbind(var,data[,,"Emi|N2O|Waste (kt N2O/yr)"]                             *GWP["N2O"]/1000)
   var <- mbind(var,data[,,"Emi|N2O|Industry (kt N2O/yr)"]                          *GWP["N2O"]/1000)
+  var <- mbind(var,data[,,"Emi|F-Gases (Mt CO2-equiv/yr)"]                         )
   var <- setNames(var,gsub(" \\(.*\\)"," (Mt CO2eq/yr)",magclass::getNames(var)))
 
   p <- mipArea(var[mainReg,,],scales="free_y")
@@ -395,7 +419,12 @@ compareScenarios <- function(mif, hist,
     "FE|Buildings (EJ/yr)",
     "FE|Industry (EJ/yr)")
 
-  p <- lineplots_perCap(data, items, 1e3, "FE per Cap. (GJ/yr)", global=T, histdata=hist)
+  p <- lineplots_perCap(
+    data=data,
+    vars=items,
+    percap_factor=1e3,
+    ylabstr="FE per Cap. (GJ/yr)",
+    global=T, histdata=hist)
 
   if("sr15data" %in% rownames(installed.packages()) & is.character(sr15marker_RCP)){
 
@@ -1142,6 +1171,62 @@ compareScenarios <- function(mif, hist,
   swfigure(sw,print,p,sw_option="height=8,width=16")
   swlatex(sw,"\\twocolumn")
 
+  ## ---- FE intensity of GDP (GDP domain)----
+
+  swlatex(sw,"\\onecolumn")
+  swlatex(sw,"\\subsection{FE intensity of GDP, linegraph (by GDP)}")
+
+  `FE|Transport (EJ/yr)` <- `FE|Buildings (EJ/yr)` <- `FE|Industry (EJ/yr)` <- NULL
+  `GDP|PPP (billion US$2005/yr)` <- `Population (million)` <- year <- GDPpC <- NULL
+
+  items<- c("FE|Transport (EJ/yr)",
+            "FE|Buildings (EJ/yr)",
+            "FE|Industry (EJ/yr)",
+            "GDP|PPP (billion US$2005/yr)",
+            "Population (million)")
+  var <- data[,,intersect(items, getNames(data,dim=3))]
+  dt <- magpie2dt(var)
+  dt_hist <- magpie2dt(hist)
+  dt_hist <- dt_hist[variable %in% items & model %in% c("IEA", "James_IMF", "WDI")][
+    , model := "REMIND"]
+  dt <- rbindlist(list(dt, dt_hist))
+  hvar <- data.table::dcast(dt, ... ~ variable)
+
+  hvar[, `:=`(
+    `FE Intensity Transport`=`FE|Transport (EJ/yr)`/`GDP|PPP (billion US$2005/yr)` * 1e3,
+    `FE Intensity Buildings` = `FE|Buildings (EJ/yr)`/`GDP|PPP (billion US$2005/yr)` * 1e3,
+    `FE Intensity Industry` = `FE|Industry (EJ/yr)`/`GDP|PPP (billion US$2005/yr)` * 1e3,
+    `GDPpC` = `GDP|PPP (billion US$2005/yr)`/`Population (million)`)]
+
+  dt <- data.table::melt(hvar, id.vars=c("model", "scenario", "region", "year", "GDPpC"))
+
+  reg_cols <- plotstyle(as.character(unique(dt$region)))
+  reg_labels <- plotstyle(as.character(unique(dt$region)), out="legend")
+
+  dt <- dt[grepl("Intensity", variable)]
+
+  highlight_yrs <- c(2030, 2050, 2070)
+  highlights <- dt[scenario != "historical" & year %in% highlight_yrs]
+
+  dt <- dt[value > 0]
+
+  p <- ggplot() +
+    geom_line(data=dt[scenario != "historical" & region != "GLO"],
+              aes(x=GDPpC, y=value, linetype=scenario, color=region)) +
+    geom_point(data=dt[scenario == "historical" & region != "GLO"],
+               aes(x=GDPpC, y=value, color=region), shape=4) +
+    geom_point(data=highlights[region != "GLO"], aes(x=`GDPpC`, y=value, color=region), shape=1) +
+    facet_wrap(~ variable, scales="free_y") +
+    ylab("FE Intensity (MJ/US$2005)") +
+    xlab("GDP PPP per Cap. (kUS$2005)") +
+    scale_y_continuous(limits = c(0, 7.5)) +
+    theme_minimal()
+
+  swfigure(sw,print,p,sw_option="height=9,width=16")
+
+  swlatex(sw,"\\twocolumn")
+
+
   ## ---- Kaya decomposition ----
 
   swlatex(sw,"\\subsection{Kaya-Decomposition}")
@@ -1442,6 +1527,19 @@ compareScenarios <- function(mif, hist,
   swfigure(sw,print,p,sw_option="height=8,width=8")
   p <- mipLineHistorical(data[,,"Emi|N2O|Energy Supply and Demand (kt N2O/yr)"][mainReg,,,invert=TRUE],x_hist=hist[,,"Emi|N2O|Energy Supply and Demand (kt N2O/yr)"][mainReg,,,invert=TRUE],
                          ylab='Emi|N2O|Energy Supply and Demand [kt N2O/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
+  swfigure(sw,print,p,sw_option="height=9,width=8")
+
+  ## ---- Emissions F-Gases ----
+  swlatex(sw,"\\subsection{F-Gases}")
+
+  p <- mipLineHistorical(data[mainReg,,"Emi|F-Gases (Mt CO2-equiv/yr)"],
+                         ylab='Emi|F-Gases [Mt CO2-eq./yr]',
+                         scales="free_y")
+  swfigure(sw,print,p,sw_option="height=8,width=8")
+  p <- mipLineHistorical(data[,,"Emi|F-Gases (Mt CO2-equiv/yr)"][mainReg,,,invert=TRUE],
+                         ylab='Emi|F-Gases [Mt CO2-eq./yr]',
+                         scales="free_y",plot.priority=c("x_hist","x","x_proj"),
+                         facet.ncol=3)
   swfigure(sw,print,p,sw_option="height=9,width=8")
 
   ## ---- ++++ E N E R G Y ++++ ----

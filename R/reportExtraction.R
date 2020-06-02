@@ -38,6 +38,7 @@ reportExtraction <- function(gdx,regionSubsetList=NULL){
   grades            <- readGDX(gdx,name=c("p31_grades"), restore_zeros=FALSE, format="first_found", react="silent")
   if(!is.null(grades)) {grades[is.na(grades)] <- 0  }  # substitute na by 0 
   datarog           <- readGDX(gdx,name=c("p31_costExPoly","p31_datarog"), format="first_found")
+  datarog2          <- readGDX(gdx,name=c("p31_ffPolyCoeffs"), format="first_found")
   pebiolc_demandmag <- readGDX(gdx,name=c("p30_pebiolc_demandmag"),  format="first_found")
   p_cint            <- readGDX(gdx,name=c("pm_cint","p_cint"), format="first_found", react = "silent")
   fuExtrOwnCons     <- readGDX(gdx,name=c("pm_fuExtrOwnCons"), format="first_found")
@@ -48,7 +49,7 @@ reportExtraction <- function(gdx,regionSubsetList=NULL){
   costfu_ex  <- readGDX(gdx,name=c("vm_costFuEx","vm_costfu_ex"),   field="l", restore_zeros=FALSE, format="first_found")  
   
   ####### select relevant items #####
- if(!is.null(grades)) {
+  if(!is.null(grades)) {
     mappegrad <- c(dimnames(grades[,,"xi1",drop=TRUE])$all_enty.rlf, "peur.1")
   } else {
     mappegrad <- enty2rlf[enty2rlf$all_enty %in% petyex,]
@@ -74,18 +75,18 @@ reportExtraction <- function(gdx,regionSubsetList=NULL){
   calcAvgSupplyCosts <- function(i_pe, i_fuelex, i_costfuex) {
     
     o_asc <- mselect(i_costfuex, all_enty = i_pe)[,,,drop=TRUE] / 
-             dimSums(i_fuelex[,,i_pe], dim=3) * 
-             TDpTWa_2_DpGJ * ifelse(i_pe=="peur",1/uranium_conv,1)
+      dimSums(i_fuelex[,,i_pe], dim=3) * 
+      TDpTWa_2_DpGJ * ifelse(i_pe=="peur",1/uranium_conv,1)
     
     return(o_asc)
   }
-
+  
   calcAvgExtractionCosts <- function(i_pe, i_fuelex, i_fuelexcum, i_grades) {
     # Select regional information because grades are only defined for regions
     # and not at the global level
     tmp_fuelex    <- i_fuelex[   which(getRegions(i_fuelex)    != "GLO"),,] 
     tmp_fuelexcum <- i_fuelexcum[which(getRegions(i_fuelexcum) != "GLO"),,] 
-  
+    
     # Generate magpie object containing timestep periods
     tmp_ts <- new.magpie(getRegions(tmp_fuelex),t)
     tmp_ts[,,] <- ts
@@ -106,19 +107,19 @@ reportExtraction <- function(gdx,regionSubsetList=NULL){
     
     # Compute average extraction costs
     o_aec <- dimSums(( xi1 +                                          # minimum extraction cost
-                      (xi2-xi1) * (tmp_fuelexcum_xi3) +               # contribution of already extracted FF (in previous timesteps) to cost increase
-                      (xi2-xi1) * (tmp_fuelex_xi3) * (tmp_ts/2.0)     # contribution of extracted FF in current timestep to cost increase
-                     ) * tmp_fuelex, dim=3) /                         # total costs of extracting FF in current timestep
-             dimSums(tmp_fuelex, dim=3) /                             # average costs of extracting FF in current timestep
-             TDpTWa_2_DpGJ                                            # convert from T$/TWa to $/GJ
+                         (xi2-xi1) * (tmp_fuelexcum_xi3) +               # contribution of already extracted FF (in previous timesteps) to cost increase
+                         (xi2-xi1) * (tmp_fuelex_xi3) * (tmp_ts/2.0)     # contribution of extracted FF in current timestep to cost increase
+    ) * tmp_fuelex, dim=3) /                         # total costs of extracting FF in current timestep
+      dimSums(tmp_fuelex, dim=3) /                             # average costs of extracting FF in current timestep
+      TDpTWa_2_DpGJ                                            # convert from T$/TWa to $/GJ
     o_aec[is.na(o_aec)] <- 0
     # Compute and add global values (as a mean over regions)
     o_aec <- mbind(o_aec, dimSums(o_aec,dim=1)/length(getRegions(tmp_fuelex)))
-      
+    
     return(o_aec)
   }
-
-  calcAvgExtractionCostsGrade <- function(i_fuelexcum, i_datarog, i_fuelex, TDpTWa_2_DpGJ, uranium_conv=NULL,igrade) {
+  
+  calcAvgExtractionCostsGradeUranium <- function(i_fuelexcum, i_datarog, i_fuelex, TDpTWa_2_DpGJ, uranium_conv=NULL,igrade) {
     # Select regional information because parameters for polynomials are only defined for regions
     # and not at the global level
     tmp_fuelexcum <- i_fuelexcum[which(getRegions(i_fuelexcum) != "GLO"),,]
@@ -127,15 +128,38 @@ reportExtraction <- function(gdx,regionSubsetList=NULL){
     o_aec <- 
       (
         (
-           i_datarog %>% mselect(xirog = "xi1", all_enty = igrade) 
-         + i_datarog %>% mselect(xirog = "xi2", all_enty = igrade) * tmp_fuelexcum[,,igrade][,,"1"]
-         + i_datarog %>% mselect(xirog = "xi3", all_enty = igrade) * tmp_fuelexcum[,,igrade][,,"1"]^2
-         + i_datarog %>% mselect(xirog = "xi4", all_enty = igrade) * tmp_fuelexcum[,,igrade][,,"1"]^3
+          i_datarog %>% mselect(xirog = "xi1", all_enty = igrade) 
+          + i_datarog %>% mselect(xirog = "xi2", all_enty = igrade) * tmp_fuelexcum[,,igrade][,,"1"]
+          + i_datarog %>% mselect(xirog = "xi3", all_enty = igrade) * tmp_fuelexcum[,,igrade][,,"1"]^2
+          + i_datarog %>% mselect(xirog = "xi4", all_enty = igrade) * tmp_fuelexcum[,,igrade][,,"1"]^3
         ) * setNames(tmp_fuelex[,,"1"] / dimSums(tmp_fuelex,dim=3), NULL)
       ) / TDpTWa_2_DpGJ
     o_aec[is.na(o_aec)] <- 0
     # uranium conversion for peur
     if(!is.null(uranium_conv)) { o_aec <- o_aec / uranium_conv }
+    # Compute and add global values (as a mean over regions)
+    o_aec <- mbind(o_aec, dimSums(o_aec,dim=1)/length(getRegions(tmp_fuelexcum)))
+    
+    return(o_aec)
+  }
+  
+  calcAvgExtractionCostsGradeFossilFuels <- function(i_fuelexcum, i_datarog, i_fuelex, TDpTWa_2_DpGJ, igrade) {
+    # Select regional information because parameters for polynomials are only defined for regions
+    # and not at the global level
+    tmp_fuelexcum <- i_fuelexcum[which(getRegions(i_fuelexcum) != "GLO"),,]
+    tmp_fuelex    <- i_fuelex[which(getRegions(i_fuelex)!= "GLO"),,igrade]
+    
+    o_aec <- 
+      (
+        (
+          i_datarog %>% mselect(polyCoeffCost = "0", all_enty = igrade) 
+          + i_datarog %>% mselect(polyCoeffCost = "1", all_enty = igrade) * tmp_fuelexcum[,,igrade][,,"1"]
+          + i_datarog %>% mselect(polyCoeffCost = "2", all_enty = igrade) * tmp_fuelexcum[,,igrade][,,"1"]^2
+          + i_datarog %>% mselect(polyCoeffCost = "3", all_enty = igrade) * tmp_fuelexcum[,,igrade][,,"1"]^3
+        ) * setNames(tmp_fuelex[,,"1"] / dimSums(tmp_fuelex,dim=3), NULL)
+      ) / TDpTWa_2_DpGJ
+    o_aec[is.na(o_aec)] <- 0
+    
     # Compute and add global values (as a mean over regions)
     o_aec <- mbind(o_aec, dimSums(o_aec,dim=1)/length(getRegions(tmp_fuelexcum)))
     
@@ -156,7 +180,7 @@ reportExtraction <- function(gdx,regionSubsetList=NULL){
   
   
   ####### calculate reporting values ############
-
+  
   # Resource extraction
   tmp1 <- NULL 
   tmp1 <- mbind(
@@ -173,13 +197,13 @@ reportExtraction <- function(gdx,regionSubsetList=NULL){
       setNames(calcAvgExtractionCosts("pecoal", fuelex, fuelex_cum[,c(2000,t),], grades),               "Res|Average Extraction Costs|Coal ($/GJ)"),
       setNames(calcAvgExtractionCosts("peoil",  fuelex, fuelex_cum[,c(2000,t),], grades),               "Res|Average Extraction Costs|Oil ($/GJ)"),
       setNames(calcAvgExtractionCosts("pegas",  fuelex, fuelex_cum[,c(2000,t),], grades),               "Res|Average Extraction Costs|Gas ($/GJ)"),
-      setNames(calcAvgExtractionCostsGrade(fuelex_cum[,t,],datarog,fuelex,TDpTWa_2_DpGJ,uranium_conv=uranium_conv,igrade="peur"),"Res|Average Extraction Costs|Uranium ($/GJ)"))  
+      setNames(calcAvgExtractionCostsGradeUranium(fuelex_cum[,t,],datarog,fuelex,TDpTWa_2_DpGJ,uranium_conv=uranium_conv,igrade="peur"),"Res|Average Extraction Costs|Uranium ($/GJ)"))  
   } else{
     tmp2 <- mbind(  
-      setNames(calcAvgExtractionCostsGrade(fuelex_cum[,t,],datarog,fuelex,TDpTWa_2_DpGJ,igrade="pecoal"),"Res|Average Extraction Costs|Coal ($/GJ)"),
-      setNames(calcAvgExtractionCostsGrade(fuelex_cum[,t,],datarog,fuelex,TDpTWa_2_DpGJ,igrade="peoil"),"Res|Average Extraction Costs|Oil ($/GJ)"),
-      setNames(calcAvgExtractionCostsGrade(fuelex_cum[,t,],datarog,fuelex,TDpTWa_2_DpGJ,igrade="pegas"),"Res|Average Extraction Costs|Gas ($/GJ)"),
-      setNames(calcAvgExtractionCostsGrade(fuelex_cum[,t,],datarog,fuelex,TDpTWa_2_DpGJ,uranium_conv=uranium_conv,igrade="peur"),"Res|Average Extraction Costs|Uranium ($/GJ)"))
+      setNames(calcAvgExtractionCostsGradeFossilFuels(fuelex_cum[,t,],datarog2,fuelex,TDpTWa_2_DpGJ,igrade="pecoal"),"Res|Average Extraction Costs|Coal ($/GJ)"),
+      setNames(calcAvgExtractionCostsGradeFossilFuels(fuelex_cum[,t,],datarog2,fuelex,TDpTWa_2_DpGJ,igrade="peoil"),"Res|Average Extraction Costs|Oil ($/GJ)"),
+      setNames(calcAvgExtractionCostsGradeFossilFuels(fuelex_cum[,t,],datarog2,fuelex,TDpTWa_2_DpGJ,igrade="pegas"),"Res|Average Extraction Costs|Gas ($/GJ)"),
+      setNames(calcAvgExtractionCostsGradeUranium(fuelex_cum[,t,],datarog,fuelex,TDpTWa_2_DpGJ,uranium_conv=uranium_conv,igrade="peur"),"Res|Average Extraction Costs|Uranium ($/GJ)"))
   }  
   # Average supply costs
   tmp3 <- NULL 
@@ -189,7 +213,7 @@ reportExtraction <- function(gdx,regionSubsetList=NULL){
     setNames(calcAvgSupplyCosts("pegas",  fuelex, costfu_ex) * 1000, "Res|Average Supply Costs|Gas ($/GJ)"),
     setNames(calcAvgSupplyCosts("peur",   fuelex, costfu_ex) * 1000, "Res|Average Supply Costs|Uranium ($/GJ)"))
   
-# Biomass prod. (Energy crops)
+  # Biomass prod. (Energy crops)
   tmp4 <- NULL
   tmp4 <- mbind(  
     setNames(dimSums(fuelex_bio[,,"pebiolc.1"], dim=3) * TWa_2_EJ, "Primary Energy Production|Biomass|Energy Crops (EJ/yr)"),
@@ -207,23 +231,23 @@ reportExtraction <- function(gdx,regionSubsetList=NULL){
   tmp5 <- NULL
   tmp5 <- setNames(pebiolc_demandmag * TWa_2_EJ,
                    "Primary Energy Production|Biomass|Energy Crops MAgPIE (EJ/yr)")
-
-# Cumulative values
+  
+  # Cumulative values
   getSets(tmp1)[3] <- "variable"
   tmp6 <- quitte::as.quitte(tmp1)
   mylist <- lapply(levels(tmp6$variable), function(x) {
     calcCumulatedDiscount(data = tmp6 %>% 
-                              filter_(~variable == x) ,
-                            nameVar = x, 
-                            discount = 0.0) %>% 
-                          mutate_(variable = ~paste0(gsub(" \\(.*\\)", "", x), 
-                                                   "|Cumulated ", 
-                                                   gsub("/yr", "",  # remove /yr
-                                                        substr(x, 
-                                                               regexec("(\\(.*\\))", x)[[1]][1],
-                                                               regexec("(\\(.*\\))", x)[[1]][1] + 
-                                                                 attributes(regexec("(\\(.*\\))", x)[[1]])$match.length[1])))) 
-    })
+                            filter_(~variable == x) ,
+                          nameVar = x, 
+                          discount = 0.0) %>% 
+      mutate_(variable = ~paste0(gsub(" \\(.*\\)", "", x), 
+                                 "|Cumulated ", 
+                                 gsub("/yr", "",  # remove /yr
+                                      substr(x, 
+                                             regexec("(\\(.*\\))", x)[[1]][1],
+                                             regexec("(\\(.*\\))", x)[[1]][1] + 
+                                               attributes(regexec("(\\(.*\\))", x)[[1]])$match.length[1])))) 
+  })
   
   tmp6 <- do.call('rbind', mylist)
   tmp6 <- as.magpie(quitte::as.quitte(tmp6))

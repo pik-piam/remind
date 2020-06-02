@@ -1,8 +1,8 @@
 Package: remind
 Type: Package
 Title: The REMIND R package
-Version: 36.154.2
-Date: 2020-02-26
+Version: 36.162.3
+Date: 2020-05-18
 Author: Anastasis Giannousakis, Michaja Pehl
 Maintainer: Anastasis Giannousakis <giannou@pik-potsdam.de>
 Description: Contains the REMIND-specific routines for data and model output manipulation.
@@ -39,9 +39,9 @@ Imports:
     rmndt
 Encoding: UTF-8
 License: LGPL-3
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.0
 Suggests:
 	testthat,
 	sr15data
-ValidationKey: 6622726356
+ValidationKey: 6653863200
 VignetteBuilder: knitr
