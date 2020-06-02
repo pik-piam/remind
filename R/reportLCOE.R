@@ -390,6 +390,9 @@ reportLCOE <- function(gdx, extended.output = F){
   ccs2te <-  readGDX(gdx, "ccs2te") # ccsinje technology
   teReNoBio <- readGDX(gdx, "teReNoBio") # renewable technologies without biomass
   
+  # conversion factors
+  s_twa2mwh <- readGDX(gdx,c("sm_TWa_2_MWh","s_TWa_2_MWh","s_twa2mwh"),format="first_found")
+  
   
   se_gen_mapping <- rbind(pe2se, se2se, se2se_ccu39) 
   colnames(se_gen_mapping) <- c("fuel", "output", "tech")
@@ -503,8 +506,7 @@ reportLCOE <- function(gdx, extended.output = F){
   ### Note: Can it be retrieved somewhere in REMIND? Is it p_tkremused which is 3%? 
   ### Former version of LCOE script had 6%, so I just stick with this one for now.
   
-  ### 6. calculate fuel price
-  # this calculates average fuel price over life time of plant weighted by capacity distribution over lifetime
+  ### 6. retrieve fuel price
   
   # retrieve marginal of balance equations
   qm_pebal  <- readGDX(gdx,name=c("q_balPe"),field="m",format="first_found")[,ttot_from2005,]
@@ -530,7 +532,17 @@ reportLCOE <- function(gdx, extended.output = F){
     rename(fuel = all_enty, fuel.price = value, opTimeYr = period) 
   
   
+  ### 7. retrieve carbon price
+  pm_priceCO2 <- readGDX(gdx, "pm_priceCO2", restore_zeros = F)
   
+  df.co2price <- as.quitte(pm_priceCO2) %>% 
+    select(region, period, value) %>%
+    # where carbon price is NA, it is zero
+    # convert from USD2005/tC CO2 to USD2015/tCO2
+    mutate(value = ifelse(is.na(value), 0, value*1.2/3.66)) %>% 
+    rename(co2.price = value, opTimeYr = period)
+  
+  ### 8. calculate capacity distribution weighted prices over lifetimes of plant
   
   # capacity distribution over lifetime                  
   df.pomeg <- as.quitte(p_omeg) %>% 
@@ -547,7 +559,7 @@ reportLCOE <- function(gdx, extended.output = F){
   
   # expanded df.omeg, with additional period dimension combined with opTimeYr dimensions,
   # period will be year of building the plant, 
-  # opTimeYr will be year within lifetime of plant (where only a certain fraction, pomeg, of capacit is still standing)
+  # opTimeYr will be year within lifetime of plant (where only a certain fraction, pomeg, of capacity is still standing)
   df.pomeg.expand <- df.pomeg %>% 
     expand(opTimeYr, period = seq(2005,2150,5)) %>%   
     full_join(df.pomeg) %>% 
@@ -557,6 +569,9 @@ reportLCOE <- function(gdx, extended.output = F){
     arrange(tech, period, opTimeYr)
   
   
+  
+  ### 9. weight fuel price and carbon price with capacity density over liftime
+  
   # join fuel price to df.omeg and weigh fuel price by df.pomeg (pomeg = fraction of capacity still standing in that year of plant lifetime)
   df.fuel.price.weighted <- df.Fuel.Price %>% 
     full_join(df.pomeg.expand) %>% 
@@ -565,10 +580,21 @@ reportLCOE <- function(gdx, extended.output = F){
     summarise( fuel.price.weighted.mean = sum(fuel.price * pomeg / pomeg.total)) %>% 
     ungroup() 
   
-  # note: do we still need to discount the fuel price before calculating the time average? This is not included. Pomeg only refers to capacity depreciation.  
+  # join carbon price to df.omeg and weigh it by df.pomeg (pomeg = fraction of capacity still standing in that year of plant lifetime)
+  df.co2price.weighted <- df.co2price %>% 
+    full_join(df.pomeg.expand) %>% 
+    filter( !is.na(tech)) %>% 
+    # mean of carbon price over first 50-years of plant lifetime weighted by pomeg
+    group_by(region, period, tech) %>% 
+    summarise( co2.price.weighted.mean = sum(co2.price * pomeg / pomeg.total)) %>% 
+    ungroup() 
   
+  # note: do we still need to discount the fuel price/carbon price before calculating the time average? This is not included. Pomeg only refers to capacity depreciation.  
+  # note: el2VRE does not have p_omeg?
+  # note: What about anticipated fuel prices before 2025 in BAU and NDC run...technically we would need to take the weighted average prices
+  # of those years from BAU and NDC runs because of myopic decision maker
   
-  ### 7. get fuel conversion efficiencies 
+  ### 10. get fuel conversion efficiencies 
   
   pm_eta_conv <- readGDX(gdx,"pm_eta_conv", restore_zeros=F)[,ttot_from2005,] # efficiency oftechnologies with time-independent eta
   pm_dataeta <- readGDX(gdx,"pm_dataeta", restore_zeros=F)[,ttot_from2005,]# efficiency of technologies with time-dependent eta
@@ -577,6 +603,18 @@ reportLCOE <- function(gdx, extended.output = F){
     rename(tech = all_te, eff = value) %>% 
     select(region, period, tech, eff) %>% 
     filter( tech %in% te_SE_gen)
+  
+  ### 11. get emission factors of technologies
+  
+  pm_emifac <- readGDX(gdx,"pm_emifac", restore_zeros=F)[,ttot_from2005,"co2"] # co2 emission factor per technology
+  
+  df.emiFac <- as.quitte(pm_emifac) %>% 
+    # do not need period dimension
+    filter(period == 2005) %>% 
+    select(region, all_te, value) %>% 
+    # convert from GtC CO2/TWa to tCo2/MWh
+    mutate(value = value / s_twa2mwh * 3.66 *1e9) %>% 
+    rename(tech = all_te, emiFac = value)
   
   
   
@@ -591,7 +629,9 @@ reportLCOE <- function(gdx, extended.output = F){
     left_join(df.CapFac) %>% 
     left_join(df.lifetime) %>%   
     left_join(df.fuel.price.weighted) %>%  
+    left_join(df.co2price.weighted) %>% 
     left_join(df.eff) %>% 
+    left_join(df.emiFac) %>% 
     # only SE generating technologies, auxiliary technologies treated later
     filter( tech %in% te_SE_gen) %>% 
     # if OMV, OMF NA -> set to 0
@@ -614,7 +654,8 @@ reportLCOE <- function(gdx, extended.output = F){
     mutate( `OMF Cost` = CAPEX * OMF / (CapFac*8760)*1e3) %>% 
     mutate( `OMV Cost` = OMV) %>% 
     mutate( `Fuel Cost` = fuel.price.weighted.mean / eff) %>% 
-    mutate( `Total LCOE` = `Investment Cost` + `OMF Cost` + `OMV Cost` + `Fuel Cost` )
+    mutate( `CO2 Cost` = co2.price.weighted.mean / eff * emiFac) %>% 
+    mutate( `Total LCOE` = `Investment Cost` + `OMF Cost` + `OMV Cost` + `Fuel Cost` + `CO2 Cost`)
   
   
   # if extended.output = T 
