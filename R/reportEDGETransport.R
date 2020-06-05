@@ -33,6 +33,7 @@ reportEDGETransport <- function(output_folder=".",
   RegionCode <- CountryCode <- cfg <- `.` <- sector <- subsector_L3 <- region <- year <- NULL
   subsector_L2 <- subsector_L1 <- aggr_mode <- vehicle_type <- det_veh <- aggr_nonmot <- NULL
   demand_F <- demand_EJ <- remind_rep <- V25 <- aggr_veh <- technology <- NULL
+  variable <- value <- NULL
 
   load(file.path(output_folder, "config.Rdata"))
 
@@ -227,6 +228,20 @@ reportEDGETransport <- function(output_folder=".",
     reportingESandFE(demand_km, "ES"),
     reportingESandFE(demand_ej, "FE")
   ))
+
+  ## add Road totals
+  road_tot_es <- toMIF[grep("ES\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+$", variable),
+                       .(variable="ES|Transport|Pass|Road",
+                         unit="bn pkm/yr", value=sum(value)),
+                       by=c("model", "scenario", "region", "period")]
+  road_tot_fe <- toMIF[grep("FE\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+$", variable),
+                       .(variable="FE|Transport|Pass|Road",
+                         unit="EJ/yr", value=sum(value)),
+                       by=c("model", "scenario", "region", "period")]
+
+  toMIF <- rbindlist(list(
+    toMIF, road_tot_es, road_tot_fe
+  ), use.names = TRUE)
 
   if(!is.null(regionSubsetList)){
     toMIF <- toMIF[region %in% regionSubsetList]
