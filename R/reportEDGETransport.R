@@ -246,28 +246,6 @@ reportEDGETransport <- function(output_folder=".",
             unit="EJ/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")]), use.names = TRUE)
 
-  toMIF <- rbindlist(list(
-    toMIF,
-    toMIF[grep("ES\\|Transport\\|(Pass|Freight)\\|Road$", variable),
-          .(variable="ES|Transport|Road",
-            unit="bn pkm/yr", value=sum(value)),
-          by=c("model", "scenario", "region", "period")],
-    toMIF[grep("FE\\|Transport\\|(Pass|Freight)\\|Road$", variable),
-          .(variable="FE|Transport|Road",
-            unit="EJ/yr", value=sum(value)),
-          by=c("model", "scenario", "region", "period")]), use.names = TRUE)
-
-  ## add Rail Totals
-  toMIF <- rbindlist(list(
-    toMIF,
-    toMIF[grep("ES\\|Transport\\|(Pass|Freight)\\|Rail$", variable),
-          .(variable="ES|Transport|Rail",
-            unit="bn pkm/yr", value=sum(value)),
-          by=c("model", "scenario", "region", "period")],
-    toMIF[grep("FE\\|Transport\\|(Pass|Freight)\\|Rail$", variable),
-          .(variable="FE|Transport|Rail",
-            unit="EJ/yr", value=sum(value)),
-          by=c("model", "scenario", "region", "period")]), use.names = TRUE)
 
 
   if(!is.null(regionSubsetList)){
