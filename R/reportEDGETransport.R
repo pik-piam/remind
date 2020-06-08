@@ -33,6 +33,7 @@ reportEDGETransport <- function(output_folder=".",
   RegionCode <- CountryCode <- cfg <- `.` <- sector <- subsector_L3 <- region <- year <- NULL
   subsector_L2 <- subsector_L1 <- aggr_mode <- vehicle_type <- det_veh <- aggr_nonmot <- NULL
   demand_F <- demand_EJ <- remind_rep <- V25 <- aggr_veh <- technology <- NULL
+  variable <- value <- NULL
 
   load(file.path(output_folder, "config.Rdata"))
 
@@ -43,7 +44,9 @@ reportEDGETransport <- function(output_folder=".",
   REMIND2ISO_MAPPING <- fread(file.path(remind_root, cfg$regionmapping))[, .(iso = CountryCode, region = RegionCode)]
 
   ## load input data from last EDGE run
-  demand_km <- readRDS(datapath(fname = "demandF_plot_pkm.RDS")) ## detailed energy services demand, million km
+  demand_km <- readRDS(datapath(fname = "demandF_plot_pkm.RDS"))[
+    , demand_F := demand_F * 1e-3] ## million -> billion pkm
+
   demand_ej <- readRDS(datapath(fname = "demandF_plot_EJ.RDS")) ## detailed final energy demand, EJ
 
   name_mif = list.files(output_folder, pattern = "REMIND_generic", full.names = F)
@@ -72,7 +75,8 @@ reportEDGETransport <- function(output_folder=".",
     datatable[grepl("^Truck", vehicle_type), aggr_veh := "Freight|Road"]
     datatable["Freight Rail_tmp_vehicletype" == vehicle_type, aggr_veh := "Freight|Rail"]
     ## there seem to be no passenger ships in EDGE-T!
-    datatable[grepl("Ship", subsector_L3), aggr_veh := "Freight|Shipping"]
+    datatable[subsector_L3 == "International Ship", aggr_veh := "Freight|International Shipping"]
+    datatable[subsector_L3 == "Domestic Ship", aggr_veh := "Freight|Navigation"]
 
     datatable[grepl("bus|Bus", vehicle_type), aggr_veh := "Pass|Road|Bus"]
     if(mode == "ES")
@@ -224,9 +228,36 @@ reportEDGETransport <- function(output_folder=".",
   }
 
   toMIF <- rbindlist(list(
-    reportingESandFE(demand_km, "ES"),
+    reportingESandFE(
+      datatable=demand_km,
+      mode="ES"),
     reportingESandFE(demand_ej, "FE")
   ))
+
+  ## add Road Totals
+  toMIF <- rbindlist(list(
+    toMIF,
+    toMIF[grep("ES\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+$", variable),
+          .(variable="ES|Transport|Pass|Road",
+            unit="bn pkm/yr", value=sum(value)),
+          by=c("model", "scenario", "region", "period")],
+    toMIF[grep("FE\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+$", variable),
+          .(variable="FE|Transport|Pass|Road",
+            unit="EJ/yr", value=sum(value)),
+          by=c("model", "scenario", "region", "period")]), use.names = TRUE)
+
+  toMIF <- rbindlist(list(
+    toMIF,
+    toMIF[grep("FE\\|Transport\\|(Pass|Freight)\\|Road$", variable),
+          .(variable="FE|Transport|Road",
+            unit="EJ/yr", value=sum(value)),
+          by=c("model", "scenario", "region", "period")],
+    toMIF[grep("FE\\|Transport\\|(Pass|Freight)\\|Rail$", variable),
+          .(variable="FE|Transport|Rail",
+            unit="EJ/yr", value=sum(value)),
+          by=c("model", "scenario", "region", "period")]), use.names = TRUE)
+
+
 
   if(!is.null(regionSubsetList)){
     toMIF <- toMIF[region %in% regionSubsetList]

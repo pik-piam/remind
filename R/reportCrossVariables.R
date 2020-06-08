@@ -118,10 +118,6 @@ reportCrossVariables <- function(gdx,output=NULL,regionSubsetList=NULL){
                  / output[r,,"SE|Liquids (EJ/yr)"],                     "FE|Transport|Freight|Liquids|Hydrogen (EJ/yr)"))
   tmp <- mbind(tmp,setNames(
                    output[r,,"FE|Transport|Liquids (EJ/yr)"] 
-                 * output[r,,"SE|Liquids|Biomass (EJ/yr)"]
-                 / output[r,,"SE|Liquids (EJ/yr)"],                     "FE|Transport|Liquids|Biomass (EJ/yr)"))
-  tmp <- mbind(tmp,setNames(
-                   output[r,,"FE|Transport|Liquids (EJ/yr)"] 
                  * output[r,,"SE|Liquids|Coal (EJ/yr)"]
                  / output[r,,"SE|Liquids (EJ/yr)"],                     "FE|Transport|Liquids|Coal (EJ/yr)"))
   tmp <- mbind(tmp,setNames(

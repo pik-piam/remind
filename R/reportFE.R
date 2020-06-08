@@ -661,9 +661,19 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     if("segabio" %in% se_Gas){
       tmp2 <- mbind(tmp2,
                  setNames(dimSums(prodFE[,,"segabio.fegas.tdbiogas"],dim=3),"FE|Other Sector|Gases|Biomass (EJ/yr)"),
-                 setNames(dimSums(prodFE[,,"segafos.fegas.tdfosgas"],dim=3),"FE|Other Sector|Gases|Non-Biomass (EJ/yr)")
+                 setNames(dimSums(prodFE[,,"segafos.fegas.tdfosgas"],dim=3),"FE|Other Sector|Gases|Non-Biomass (EJ/yr)"),
+                 setNames(dimSums(prodFE[,,c("seliqbio.fedie.tdbiodie", "seliqbio.fepet.tdbiopet")],dim=3),"FE|Transport|Liquids|Biomass (EJ/yr)"),
+                 setNames(dimSums(prodFE[,,c("seliqfos.fedie.tdfosdie", "seliqfos.fepet.tdfospet")],dim=3),"FE|Transport|Liquids|Non-Biomass (EJ/yr)")
                  )
-      }
+    }
+
+    if("fegat" %in% fety && "segabio" %in% se_Gas){
+      tmp2 <- mbind(tmp2,
+                 setNames(dimSums(prodFE[,,"segabio.fegat.tdbiogat"],dim=3),"FE|Transport|Gases|Biomass (EJ/yr)"),
+                 setNames(dimSums(prodFE[,,"segafos.fegat.tdfosgat"],dim=3),"FE|Transport|Gases|Non-Biomass (EJ/yr)")
+                 )
+
+    }
   }
     
     tmp2 = mbind(tmp2,
