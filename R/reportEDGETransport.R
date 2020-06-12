@@ -33,6 +33,8 @@ reportEDGETransport <- function(output_folder=".",
   RegionCode <- CountryCode <- cfg <- `.` <- sector <- subsector_L3 <- region <- year <- NULL
   subsector_L2 <- subsector_L1 <- aggr_mode <- vehicle_type <- det_veh <- aggr_nonmot <- NULL
   demand_F <- demand_EJ <- remind_rep <- V25 <- aggr_veh <- technology <- NULL
+  variable <- value <- NULL
+  all_enty <- ef <- variable_agg <- model <- scenario <- period <- NULL
 
   load(file.path(output_folder, "config.Rdata"))
 
@@ -43,7 +45,9 @@ reportEDGETransport <- function(output_folder=".",
   REMIND2ISO_MAPPING <- fread(file.path(remind_root, cfg$regionmapping))[, .(iso = CountryCode, region = RegionCode)]
 
   ## load input data from last EDGE run
-  demand_km <- readRDS(datapath(fname = "demandF_plot_pkm.RDS")) ## detailed energy services demand, million km
+  demand_km <- readRDS(datapath(fname = "demandF_plot_pkm.RDS"))[
+    , demand_F := demand_F * 1e-3] ## million -> billion pkm
+
   demand_ej <- readRDS(datapath(fname = "demandF_plot_EJ.RDS")) ## detailed final energy demand, EJ
 
   name_mif = list.files(output_folder, pattern = "REMIND_generic", full.names = F)
@@ -52,7 +56,7 @@ reportEDGETransport <- function(output_folder=".",
   stopifnot(typeof(name_mif) == "character")
   miffile <- fread(name_mif, sep=";", header=T)
 
-  ## ES Demand
+  ## ES and FE Demand
 
   reportingESandFE <- function(datatable, mode){
 
@@ -72,7 +76,8 @@ reportEDGETransport <- function(output_folder=".",
     datatable[grepl("^Truck", vehicle_type), aggr_veh := "Freight|Road"]
     datatable["Freight Rail_tmp_vehicletype" == vehicle_type, aggr_veh := "Freight|Rail"]
     ## there seem to be no passenger ships in EDGE-T!
-    datatable[grepl("Ship", subsector_L3), aggr_veh := "Freight|Shipping"]
+    datatable[subsector_L3 == "International Ship", aggr_veh := "Freight|International Shipping"]
+    datatable[subsector_L3 == "Domestic Ship", aggr_veh := "Freight|Navigation"]
 
     datatable[grepl("bus|Bus", vehicle_type), aggr_veh := "Pass|Road|Bus"]
     if(mode == "ES")
@@ -223,10 +228,80 @@ reportEDGETransport <- function(output_folder=".",
     return(rbindlist(list(report, report_tech)))
   }
 
+  ## Demand emissions
+  reportingEmi <- function(repFE, gdx){
+    ## load emission factors for fossil fuels
+    p_ef_dem <- readGDX(gdx, "p_ef_dem")  ## MtCO2/EJ
+    p_ef_dem <- as.data.table(p_ef_dem)[all_enty %in% c("fepet", "fegas", "feelt", "feh2t")]  ## emissions factor for Electricity and Hydrogen are 0, as we are calculating tailpipe emissions
+    setnames(p_ef_dem, old = "value", new = "ef")
+    ## attribute explicitly fuel used to the FE values
+    datatable = repFE[grepl("Liquids|Gases|Hydrogen|Electricity", variable)]   ## EJ
+    datatable[, all_enty := ifelse(grepl("Liquids", variable), "fepet", NA)]
+    datatable[, all_enty := ifelse(grepl("Gases", variable), "fegas", all_enty)]
+    datatable[, all_enty := ifelse(grepl("Electricity", variable), "feelt", all_enty)]
+    datatable[, all_enty := ifelse(grepl("Hydrogen", variable), "feh2t", all_enty)]
+    ## merge with emission factors
+    datatable = datatable[p_ef_dem, on = "all_enty"]
+    ## calculate emissions and attribute variable and unit names
+    datatable[, value := value*ef][, c("variable", "unit") := list(gsub("FE", "Emi\\|CO2\\|Demand", variable), "MtCO2/yr")]
+    datatable[, c("ef", "V3", "V2", "all_enty") := NULL]
+    ## aggregate removing the fuel dependency
+    datatable[, variable_agg := gsub("\\|Liquids|\\|Electricity|\\|Hydrogen|\\|Gases", "", variable)]
+    datatable = datatable[, .(value = sum(value)), by = c("model", "scenario", "region", "unit", "period", "variable_agg")]
+    setnames(datatable, old = "variable_agg", new = "variable")
+    datatable = datatable[, .(model, scenario, region, variable, unit, period, value)]
+
+    return(datatable)
+  }
+
+  repFE <- reportingESandFE(
+    demand_ej,
+    mode ="FE")
+
   toMIF <- rbindlist(list(
-    reportingESandFE(demand_km, "ES"),
-    reportingESandFE(demand_ej, "FE")
+    reportingESandFE(
+      datatable=demand_km,
+      mode="ES"),
+    repFE,
+    reportingEmi(repFE = repFE, gdx = gdx)
   ))
+
+  ## add Road Totals
+  toMIF <- rbindlist(list(
+    toMIF,
+    toMIF[grep("ES\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+$", variable),
+          .(variable="ES|Transport|Pass|Road",
+            unit="bn pkm/yr", value=sum(value)),
+          by=c("model", "scenario", "region", "period")],
+    toMIF[grep("FE\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+$", variable),
+          .(variable="FE|Transport|Pass|Road",
+            unit="EJ/yr", value=sum(value)),
+          by=c("model", "scenario", "region", "period")],
+    toMIF[grep("Emi\\|CO2\\|Demand\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+$", variable),
+          .(variable="Emi|CO2|Demand|Transport|Pass|Road",
+            unit="MtCO2/yr", value=sum(value)),
+          by=c("model", "scenario", "region", "period")]), use.names = TRUE)
+
+  toMIF <- rbindlist(list(
+    toMIF,
+    toMIF[grep("FE\\|Transport\\|(Pass|Freight)\\|Road$", variable),
+          .(variable="FE|Transport|Road",
+            unit="EJ/yr", value=sum(value)),
+          by=c("model", "scenario", "region", "period")],
+    toMIF[grep("FE\\|Transport\\|(Pass|Freight)\\|Rail$", variable),
+          .(variable="FE|Transport|Rail",
+            unit="EJ/yr", value=sum(value)),
+          by=c("model", "scenario", "region", "period")],
+    toMIF[grep("Emi\\|CO2\\|Demand\\|Transport\\|(Pass|Freight)\\|Road$", variable),
+          .(variable="Emi|CO2|Demand|Road",
+            unit="MtCO2/yr", value=sum(value)),
+          by=c("model", "scenario", "region", "period")],
+    toMIF[grep("Emi\\|CO2\\|Demand\\|Transport\\|(Pass|Freight)\\|Rail$", variable),
+          .(variable="Emi|CO2|Demand|Transport|Rail",
+            unit="MtCO2/yr", value=sum(value)),
+          by=c("model", "scenario", "region", "period")]), use.names = TRUE)
+
+
 
   if(!is.null(regionSubsetList)){
     toMIF <- toMIF[region %in% regionSubsetList]
