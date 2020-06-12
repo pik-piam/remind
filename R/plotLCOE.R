@@ -3,7 +3,7 @@
 #' Read in all information from LCOE mif file and create
 #' the LCOE_plots.pdf
 #' 
-#' @param mif a path to one or more mif-files (might be created by confGDX2MIF)
+#' @param LCOEfile a path to the LCOE reporting csv file of the scenario to be plotted
 #' @param y time span for the data in line plots, default: y=c(2015, 2020,2030,2040,2050,2060) 
 #' @param reg region(s) in focus, reg ="all_regi" shows all regions if the mifs contain different regions
 #' @param fileName name of the pdf, default = "LCOE_plots.pdf" 
@@ -15,57 +15,88 @@
 #' @importFrom ggplot2 ggplot facet_wrap geom_errorbar ggtitle xlab scale_y_continuous scale_fill_discrete geom_col aes element_text
 #' @importFrom dplyr left_join
 #' @importFrom quitte order.levels sum_total
+#' @importFrom zoo rollmean
 
-plotLCOE <- function(mif,y=c(2015,2020,2030,2040,2050,2060),reg=NULL,fileName="LCOE_plots.pdf") {
+plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_regi",fileName="LCOE_plots.pdf") {
   
-  # read model results 
-  data <- NULL
-  for(i in 1:length(mif)){
-    data_new <- read.report(mif[i],as.list=FALSE)
-    if (magclass::getNames(data_new,fulldim = TRUE)[["scenario"]] %in% magclass::getNames(data,fulldim = TRUE)[["scenario"]]) magclass::getNames(data_new) <- gsub(magclass::getNames(data_new,fulldim = TRUE)["scenario"],paste0(magclass::getNames(data_new,fulldim = TRUE)["scenario"],i),magclass::getNames(data_new))
-    if(all(getRegions(data) %in% getRegions(data_new))) {
-      data <- mbind(data,data_new)
-    } else {
-      if(is.null(reg)){
-        stop("the regional aggregation of the results are different, you might use reg='all_reg'")
-      } else if(reg=="all_reg"){
-        if(all(getRegions(data_new) %in% getRegions(data))) {
-          # expand data_new by old regions from data
-          oldReg         <- getRegions(data)[-which(getRegions(data) %in% getRegions(data_new))]
-          dummy_data_new <- new.magpie(oldReg,getYears(data_new),getNames(data_new),fill=NA)
-          data_new       <- mbind(data_new,dummy_data_new)
-          # compine old and new data
-          data <- mbind(data,data_new) 
-        } else {
-          # expand data by new regions from data_new
-          newReg     <- getRegions(data_new)[-which(getRegions(data_new) %in% getRegions(data))]
-          dummy_data <- new.magpie(newReg,getYears(data),getNames(data),fill=NA)
-          data       <- mbind(data,dummy_data)
-          # expand data_new by old regions from data
-          oldReg         <- getRegions(data)[-which(getRegions(data) %in% getRegions(data_new))]
-          dummy_data_new <- new.magpie(oldReg,getYears(data_new),getNames(data_new),fill=NA)
-          data_new       <- mbind(data_new,dummy_data_new)
-          # compine old and new data
-          data <- mbind(data,data_new) 
-        }
-        
-      } else { 
-        stop("the regional aggregation of the results are different, you might use reg='all_reg'")
-      }
-    }  
-  }
   
-  if (!(is.null(reg))) {
-    if (!reg=="all_regi") {
-      data <- data[reg,y,]
-    } else {
-      data <- data[,y,]
-    }  
-  } else {
-    data <- data[,y,]
-  }
+  df.LCOE.in <- read.csv(LCOEfile, sep = ";") 
   
-  # ---- Open output-pdf ----
+  # # read LCOE reporting files
+  # df.LCOE.fromFiles <- NULL
+  # for (i in 1:length(reportFiles)) {
+  #   df.LCOE.in <- read.csv(reportFiles[i], sep = ";")  
+  #   df.LCOE.fromFiles <- rbind(df.LCOE.fromFiles, df.LCOE.in)
+  # }
+  
+  
+  # # read model results 
+  # data <- NULL
+  # for(i in 1:length(mif)){
+  #   data_new <- read.report(mif[i],as.list=FALSE)
+  #   if (magclass::getNames(data_new,fulldim = TRUE)[["scenario"]] %in% magclass::getNames(data,fulldim = TRUE)[["scenario"]]) magclass::getNames(data_new) <- gsub(magclass::getNames(data_new,fulldim = TRUE)["scenario"],paste0(magclass::getNames(data_new,fulldim = TRUE)["scenario"],i),magclass::getNames(data_new))
+  #   if(all(getRegions(data) %in% getRegions(data_new))) {
+  #     data <- mbind(data,data_new)
+  #   } else {
+  #     if(is.null(reg)){
+  #       stop("the regional aggregation of the results are different, you might use reg='all_regi'")
+  #     } else if(reg=="all_regi"){
+  #       if(all(getRegions(data_new) %in% getRegions(data))) {
+  #         # expand data_new by old regions from data
+  #         oldReg         <- getRegions(data)[-which(getRegions(data) %in% getRegions(data_new))]
+  #         dummy_data_new <- new.magpie(oldReg,getYears(data_new),getNames(data_new),fill=NA)
+  #         data_new       <- mbind(data_new,dummy_data_new)
+  #         # compine old and new data
+  #         data <- mbind(data,data_new) 
+  #       } else {
+  #         # expand data by new regions from data_new
+  #         newReg     <- getRegions(data_new)[-which(getRegions(data_new) %in% getRegions(data))]
+  #         dummy_data <- new.magpie(newReg,getYears(data),getNames(data),fill=NA)
+  #         data       <- mbind(data,dummy_data)
+  #         # expand data_new by old regions from data
+  #         oldReg         <- getRegions(data)[-which(getRegions(data) %in% getRegions(data_new))]
+  #         dummy_data_new <- new.magpie(oldReg,getYears(data_new),getNames(data_new),fill=NA)
+  #         data_new       <- mbind(data_new,dummy_data_new)
+  #         # compine old and new data
+  #         data <- mbind(data,data_new) 
+  #       }
+  #       
+  #     } else { 
+  #       stop("the regional aggregation of the results are different, you might use reg='all_regi'")
+  #     }
+  #   }  
+  # }
+  # 
+  # if (!(is.null(reg))) {
+  #   if (!reg=="all_regi") {
+  #     data <- data[reg,y,]
+  #   } else {
+  #     data <- data[,y,]
+  #   }  
+  # } else {
+  #   data <- data[,y,]
+  # }
+  # 
+  
+  
+  # initialize variables used in dplyr pipes and ggplot below
+  scenario <- NULL
+  tech <- NULL
+  period <- NULL
+  region <- NULL
+  variable <- NULL
+  value <- NULL
+  Total <- NULL
+  type <- NULL
+  vm_deltaCap <- NULL
+  LCOE <- NULL
+  all_te <- NULL
+  output <- NULL
+  aes <- NULL
+  element_text <- NULL
+  
+
+  # ---- plot settings ----
   template <-  c("\\documentclass[a4paper,landscape]{article}",
                  "\\setlength{\\oddsidemargin}{-0.8in}",                                                                              
                  "\\setlength{\\evensidemargin}{-0.5in}",                                                                             
@@ -89,92 +120,147 @@ plotLCOE <- function(mif,y=c(2015,2020,2030,2040,2050,2060),reg=NULL,fileName="L
                  "options(width=110)",
                  "@")
 
-  sw <- swopen(fileName,template = template)
   
-  # initialize variables used in dplyr pipes and ggplot below
-  scenario <- NULL
-  tech <- NULL
-  period <- NULL
-  region <- NULL
-  variable <- NULL
-  value <- NULL
-  Total <- NULL
-  Type <- NULL
-  
-  aes <- NULL
-  element_text <- NULL
+  ylimit.up <- 300 # y axis max
+  plot.period <- y
+  plot.scen <- getNames(data, dim=1)
+  #plot.period <- c(2020,2030,2040,2050)
+  plot_theme <- theme_bw() + theme(axis.text.x = element_text(angle=90, size=40, vjust=0.3),
+                                   text = element_text(size=50),
+                                   axis.text.y = element_text(size=60),
+                                   legend.text = element_text(size=50),
+                                   legend.key.size = unit(6,"line"))
   
   
-  # plot configurations
-  techs <- c("pc", "igcc", "ngt","ngcc", "pcc", "ngccc","tnrs","hydro","spv","wind","csp", "bioigccc")
-  ylimit.up <- 150
-  ylimit.lo <- -100
- 
-  ## plot ##
+  # plot_theme <- theme_bw() + theme(axis.text.x = element_text(angle=90, size=20, vjust=0.3),
+  #                                  text = element_text(size=20),
+  #                                  axis.text.y = element_text(size=20),
+  #                                  legend.text = element_text(size=20),
+  #                                  legend.key.size = unit(2,"line"))
+  # colors of cost components
+  cost.colors <- c("Investment Cost" = "azure4", "OMF Cost" = "darkcyan", "OMV Cost" = "cyan",
+                   "Fuel Cost" = "orange3", "CO2 Tax Cost" = "red4", "CO2 Provision Cost" = "slategray1",
+                   "Second Fuel Cost" = "sandybrown", "VRE Storage Cost" = "mediumpurple3",
+                   "Grid Cost" = "lightgoldenrod1", "CCS Tax Cost" = "deeppink4", 
+                   "CCS Cost" = "burlywood3")
+  
+  ### end plot settings
+  
+  # read in capacity additions from .mif, for second y axes of plot
+  vm_deltaCap <- readGDX(gdx, "vm_deltaCap", field = "l", restore_zeros = F)
+  
+  
+  # calculate 15-year moving average capacity additions
+  df.dC <- as.quitte(dimSums(vm_deltaCap, dim=3.2)*1e3) %>%  
+    rename(tech=all_te, vm_deltaCap = value) %>% 
+    filter(period >= 2005) %>% 
+    select(region, period, tech, vm_deltaCap) %>% 
+    group_by(region, tech) %>% 
+    mutate( vm_deltaCap = rollmean(vm_deltaCap, 3, align = "center", fill = NA)) %>% 
+    ungroup() 
+  
+  
+  # relabel outputs and only plot most important technologies per output
+  relabel.outputs <- c("seliqfos" = "seliq", "seliqbio" = "seliq", "segafos" = "segas", "segabio" = "segas")
+  
+  plot.outputs <- c("seel","seliq","segas")
+  plot.techs <- c("pc", "igcc", "ngt","ngcc", "ngccc","tnrs","hydro","spv","wind","csp", "biochp","bioigccc",
+                  "refliq","biodiesel","bioftrec","bioftcrec", "MeOH",
+                  "gastr", "biogas","h22ch4")
+  
+  # join capacity additions with LCOE
+  df.LCOE.dC.join <- df.LCOE.in %>%
+                      filter( type == "New Plant") %>% 
+                      rename(LCOE = value) %>%
+                      left_join(df.dC) %>% 
+                      gather(variable, value, LCOE, vm_deltaCap) %>%   
+                      revalue.levels(output = relabel.outputs) %>% 
+                      # do away with cost dimension for vm_deltaCap to save memory, filter for periods
+                      filter( cost == "Investment Cost" | variable == "LCOE",
+                              period %in% plot.period,
+                              output %in% plot.outputs, tech %in% plot.techs)
+  
 
-  # loop over regions
-  for (i in 1:length(getRegions(data))) {
-    reg <- getRegions(data)[i]
-    #loop over scenarios
-    for (j in 1:length(getNames(data, dim = 1))) {
-      plot.scen <- getNames(data, dim = 1)[j]
-      
-      # rearrange data
-      
-      df.LCOE <- as.quitte(data[reg,,])
-      
-      # extract tech and cost dimensions from LCOE|Tech|Cost character strucutre
+  ### loop to plot LCOE and capacity additions per region and energy output
+  
+  # have to do plotting loop with lapply such that variable scale of second y axes works 
+  # (normal loop cannot do this)
+  LCOE.grouped <- split(df.LCOE.dC.join, list(df.LCOE.dC.join$output, df.LCOE.dC.join$region))
+  make_plot <- function(df.LCOE.grouped) {
 
-      
-      df.LCOE$Type <- strsplit(as.character(df.LCOE$variable), "\\|") 
-      df.LCOE$Type <- sapply(df.LCOE$Type, "[[", 2)
-      
-      df.LCOE$tech <- strsplit(as.character(df.LCOE$variable), "\\|") 
-      df.LCOE$tech <- sapply(df.LCOE$tech, "[[", 3)
-      
-      df.LCOE$variable <- strsplit(as.character(df.LCOE$variable), "\\|") 
-      df.LCOE$variable <- sapply(df.LCOE$variable, "[[", 4)
-      
-      # filter for scenario, tech etc. and plot only "standing system" LCOE, maybe add "new plant" LCOE later
-      df.LCOE <- df.LCOE %>%
-        filter( scenario %in% plot.scen & tech %in% techs, Type=="StandingSystem") %>% 
-        order.levels(variable = c("Curtailment Cost","CCS Cost","CO2 Cost","Grid Cost","Storage Cost",
-                                  "OMV Cost", "OMF Cost", "Fuel Cost",  "Investment Cost"))
-      
-      
-      
-      df.LCOE.total <- df.LCOE %>%
-        sum_total(variable, value) %>%
-        filter( variable == "Total") %>%
-        rename(Total=value) %>%
-        select(period, region, tech, Total)
-      
-      # if total LCOE is above ylimit, set Investment Cost to ylimit such that 
-      # the stacked bar is not cuff off before 
-      df.LCOE <- df.LCOE %>%
-        left_join(df.LCOE.total) %>%
-        mutate(value = ifelse( variable == "Investment Cost" & Total > ylimit.up, ylimit.up, value))
-      
-      
-      p <- ggplot(cex=2) +
-        geom_col(data=df.LCOE, aes(tech, value, fill=variable), alpha=0.6, position = "stack") +
-        geom_errorbar(data=filter(df.LCOE.total, Total!=0), aes(x=tech, ymin=Total, ymax=Total)) +
-        theme(legend.position="bottom") +
-        xlab("Technology") +
-        scale_y_continuous("Levelized Cost of Electricity\n [US$2005/MWh]", limits=c(ylimit.lo,ylimit.up)) +
-        facet_wrap(~period, ncol=2) +
-        scale_fill_discrete(name = "Cost Part") +
-        theme(text = element_text(size=50), 
-              axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.3), 
-              legend.position="bottom" , legend.key.size = unit(2, "cm")) +
-        ggtitle(paste0("Standing System LCOE, Region: ",reg,", Scenario: ", plot.scen))
-     
-      #swfigure(sw,print,p,sw_option="height=20,width=35", dpi=1800) 
-      swfigure(sw,print,p, sw_option="height=25,width=40") 
-    }
+    # region and output
+    plot.reg <- getRegs(df.LCOE.grouped)
+    plot.output <- unique(df.LCOE.grouped$output)
+    
+    # remove LCOE that are higher than y axis limit
+    df.LCOE.plot <- df.LCOE.grouped %>% 
+                      select(period, tech, cost, variable, value) %>% 
+                      spread(cost, value) %>%  
+                      mutate( TooHigh = ifelse(variable == "LCOE", ifelse((`Total LCOE` - ifelse(`CO2 Tax Cost` < 0, `CO2 Tax Cost`, 0)
+                                                            - ifelse(`Second Fuel Cost` < 0, `Second Fuel Cost`, 0)) > ylimit.up,T,F), F)) %>% 
+                      gather(cost, value,  -period, -tech, -variable, -TooHigh) %>% 
+                      filter(cost == "Investment Cost" | variable == "LCOE", TooHigh == FALSE)
+                            
+    
+    
+    # calculate lower y axis limit, limit of second y axes
+    df.LCOE.min <- df.LCOE.plot %>% 
+    # the two cost components that can be negative
+                    filter(cost %in% c("CO2 Tax Cost","Second Fuel Cost"))
+    
+    ylimit.lo <- min(df.LCOE.min$value, na.rm = T)-50 # y axis min.
+    
+    # maximum capacity addition in plot
+    df.dC.max <- df.LCOE.plot %>% 
+                  filter(variable == "vm_deltaCap")
+    
+    sec.axis.limit <- max(df.dC.max$value, na.rm = T) + 1 # second axis max
+    
+    
+    
+    df.LCOE.plot.out <- df.LCOE.plot %>% 
+                          # scale second axis variable s.t it fits into plot
+                          mutate(value = ifelse(variable == "vm_deltaCap",
+                            value / sec.axis.limit * ylimit.up,
+                            value)) %>% 
+                          # remove Total LCOE
+                          filter( cost != "Total LCOE") %>% 
+                          order.levels(cost = c("CCS Cost","CCS Tax Cost","Grid Cost","VRE Storage Cost","Second Fuel Cost","CO2 Provision Cost",
+                            "CO2 Tax Cost", "Fuel Cost", "OMV Cost", 
+                            "OMF Cost", "Investment Cost"))
+    
+    df.LCOE.total <- df.LCOE.plot %>% 
+                      filter(cost == "Total LCOE")
+    
+    
+    p.LCOE <- ggplot() +
+      geom_col(data=df.LCOE.plot.out %>% filter(variable == "LCOE"),
+               aes(tech, value, fill=cost), alpha=0.5) +
+      geom_point(data=df.LCOE.plot.out %>% filter(variable == "vm_deltaCap"),
+                 aes(tech, value), 
+                 alpha=1, size=9, shape=1, color="black",stroke = 5) +
+      geom_point(data=df.LCOE.plot.out %>% filter(variable == "vm_deltaCap"),
+                 aes(tech, value), 
+                 alpha=0.9, size=8, color="white") +
+      geom_errorbar(data=df.LCOE.total, aes(x=tech, ymin=value, ymax=value, linetype="solid"), size=2) +
+      scale_linetype_identity(name = '', guide = 'legend',labels = c('Total LCOE')) +
+      facet_wrap(~period) +
+      plot_theme +
+      scale_fill_manual(values=cost.colors, name="LCOE components") +
+      scale_x_discrete("Technology") +
+      scale_y_continuous("LCOE (USD2015/MWh)",
+                         limits = c(ylimit.lo,ylimit.up),
+                         sec.axis = sec_axis(~ . * sec.axis.limit / ylimit.up,
+                                             name = paste0("Capacity Additions in GW/yr\n(15-year average)")))+  
+      ggtitle(paste0(plot.scen,", ",plot.reg,":\nNew plant LCOE and capacity additions of ", plot.output," technologies"))
+    
+    swfigure(sw,print,p.LCOE, sw_option="height=23,width=35", dpi=1800)
+    
   }
-
-  # Close output-pdf
+ 
+  sw <- swopen(fileName,template = template)
+  fig_list <- lapply(LCOE.grouped, make_plot)
   swclose(sw)
+
 }
-  
+
