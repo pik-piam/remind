@@ -5,14 +5,13 @@
 #' 
 #' 
 #' @param gdx a GDX as created by readGDX, or the file name of a gdx
-#' @param gdx_ref a GDX as created by readGDX of the reference run
 #' @param file name of the csv file which will be written
-#' @param scenario scenario name that is used in the *.mif reporting
+#' @param scen scenario name that is used in the *.mif reporting
 #' @param t temporal resolution of the reporting, default:
 #' t=c(seq(2005,2060,5),seq(2070,2110,10),2030,2050)
 #' @author Felix Schreyer
 #' @examples
-#' 
+#' \dontrun{convGDX2CSV_LCOE(gdx,file="REMIND_LCOE_reporting.csv",scenario="default")}
 #' 
 #' @export
 #' @importFrom gdx readGDX
@@ -30,6 +29,7 @@ convGDX2CSV_LCOE <- function(gdx,file=NULL,scen="default",t=c(seq(2005,2060,5),s
   cost <- NULL
   value <- NULL
   unit <- NULL
+  tech <- NULL
   
   # make the reporting
   output <- NULL

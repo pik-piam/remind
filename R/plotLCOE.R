@@ -4,6 +4,7 @@
 #' the LCOE_plots.pdf
 #' 
 #' @param LCOEfile a path to the LCOE reporting csv file of the scenario to be plotted
+#' @param gdx gdx file of run
 #' @param y time span for the data in line plots, default: y=c(2015, 2020,2030,2040,2050,2060) 
 #' @param reg region(s) in focus, reg ="all_regi" shows all regions if the mifs contain different regions
 #' @param fileName name of the pdf, default = "LCOE_plots.pdf" 
@@ -12,10 +13,12 @@
 #' @export
 #' @importFrom magclass read.report mbind 
 #' @importFrom lusweave swopen swlatex swfigure swclose
-#' @importFrom ggplot2 ggplot facet_wrap geom_errorbar ggtitle xlab scale_y_continuous scale_fill_discrete geom_col aes element_text
+#' @importFrom ggplot2 ggplot facet_wrap geom_errorbar ggtitle xlab scale_y_continuous scale_fill_discrete geom_col aes element_text theme_bw sec_axis scale_x_discrete scale_linetype_identity
 #' @importFrom dplyr left_join
-#' @importFrom quitte order.levels sum_total
-#' @importFrom zoo rollmean
+#' @importFrom quitte order.levels sum_total getRegs revalue.levels
+#' @importFrom tidyr spread gather
+#' @importFrom data.table frollmean
+
 
 plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_regi",fileName="LCOE_plots.pdf") {
   
@@ -94,6 +97,13 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
   output <- NULL
   aes <- NULL
   element_text <- NULL
+  cost <- NULL
+  Total <- NULL
+  `CO2 Tax Cost` <- NULL
+  `Second Fuel Cost` <- NULL
+  TooHigh <- NULL
+  `Total LCOE` <- NULL
+  
   
 
   # ---- plot settings ----
@@ -123,7 +133,7 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
   
   ylimit.up <- 300 # y axis max
   plot.period <- y
-  plot.scen <- getNames(data, dim=1)
+  plot.scen <- getRegs(df.LCOE.in)
   #plot.period <- c(2020,2030,2040,2050)
   plot_theme <- theme_bw() + theme(axis.text.x = element_text(angle=90, size=40, vjust=0.3),
                                    text = element_text(size=50),
@@ -156,7 +166,7 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
     filter(period >= 2005) %>% 
     select(region, period, tech, vm_deltaCap) %>% 
     group_by(region, tech) %>% 
-    mutate( vm_deltaCap = rollmean(vm_deltaCap, 3, align = "center", fill = NA)) %>% 
+    mutate( vm_deltaCap = frollmean(vm_deltaCap, 3, align = "center", fill = NA)) %>% 
     ungroup() 
   
   

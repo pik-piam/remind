@@ -21,7 +21,7 @@
 #' @importFrom gdx readGDX
 #' @importFrom magclass new.magpie dimSums getRegions getYears getNames setNames clean_magpie dimReduce as.magpie magpie_expand
 #' @importFrom dplyr %>% mutate select rename group_by ungroup right_join filter full_join  arrange summarise
-#' @importFrom quitte as.quitte overwrite
+#' @importFrom quitte as.quitte overwrite getRegs
 #' @importFrom tidyr spread gather expand
 
 
@@ -370,6 +370,37 @@ reportLCOE <- function(gdx, extended.output = F){
   `Total LCOE` <- NULL
   `cost` <- NULL
   `variable` <- NULL
+  fuel <- NULL
+  output <- NULL
+  opTimeYr <- NULL
+  co2.price <- NULL
+  emiFac <- NULL
+  all_enty1 <- NULL
+  input <- NULL
+  emiFac.se2fe <- NULL
+  co2_dem <- NULL
+  CO2StoreShare <- NULL
+  all_enty2 <- NULL
+  secfuel <- NULL
+  secfuel.prod <- NULL
+  grid.factor <- NULL
+  grid.cost <- NULL
+  vm_prodSeVRE <- NULL
+  storloss <- NULL
+  VREstor.cost <- NULL
+  all_te1 <- NULL
+  CCStax.cost <- NULL
+  co2.price.weighted.mean <- NULL
+  secfuel.price <- NULL
+  `CO2 Tax Cost` <- NULL
+  `CO2 Provision Cost` <- NULL
+  `Second Fuel Cost` <- NULL
+  `VRE Storage Cost` <- NULL
+  `Grid Cost` <- NULL
+  `CCS Tax Cost` <- NULL
+  `CCS Cost` <- NULL
+  type <- NULL
+  
   ##############################################
   
   ########################################################
