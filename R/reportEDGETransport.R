@@ -12,9 +12,10 @@
 #'
 #' @param output_folder path to the output folder, default is current folder.
 #' @param remind_root path to the REMIND root directory, defaults to two levels up from output_folder.
-#' @author Alois Dirnaichner
+#' @author Alois Dirnaichner Marianna Rottoli
 #'
 #' @importFrom rmndt approx_dt
+#' @importFrom gdxdt readgdx
 #' @importFrom data.table fread fwrite rbindlist
 #' @export
 
