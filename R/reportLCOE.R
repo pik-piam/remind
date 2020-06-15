@@ -26,6 +26,24 @@
 
 
 reportLCOE <- function(gdx, extended.output = F){
+  
+ # check whether key variables are there  
+ # LCOE reporting does not make sense for old gdx 
+ # where variables are missing and model structure is different
+  
+ vm_capFac <- readGDX(gdx, "vm_capFac", field = "l", restore_zeros = F)
+ qm_balcapture  <- readGDX(gdx,"q_balcapture",field="m", restore_zeros = F)
+ vm_co2CCS <- readGDX(gdx, "vm_co2CCS", field = "l", restore_zeros = F)
+ pm_emifac <- readGDX(gdx, "pm_emiFac", field = "l", restore_zeros = F)
+ v32_storloss <- readGDX(gdx, "v32_storloss", field = "l")
+ 
+ if (is.null(vm_capFac) | is.null(qm_balcapture) | is.null(vm_co2CCS) | 
+     is.null(pm_emifac) | is.null(v32_storloss)) {
+   print("The gdx file is too old for generating a LCOE reporting...returning NULL")
+   return(new.magpie(cells_and_regions = "GLO", 
+                     years = c(seq(2005,2060,5),seq(2070,2110,10),2130,2150)))
+ }
+  
 
  #  
  #  ########################################################
@@ -822,12 +840,7 @@ reportLCOE <- function(gdx, extended.output = F){
     vm_co2CCS <- readGDX(gdx, "vm_co2CCS", field = "l", restore_zeros = F)
     vm_co2capture <- readGDX(gdx, "vm_co2capture", field = "l", restore_zeros = F)
     
-    p_share_carbonCapture_stor <- (
-      vm_co2CCS[,,"cco2.ico2.ccsinje.1"]
-      / dimSums(mselect(vm_co2capture, all_enty = "cco2"), dim = 3)
-    )
-    p_share_carbonCapture_stor[is.na(p_share_carbonCapture_stor)] <- 1
-    
+
     # calculate stored CO2 per output of capture technology (GtC/TWa)
     pm_eff <- mbind(pm_eta_conv, pm_dataeta)
     vm_co2CCS_m <- pm_emifac_cco2/pm_eff[,,getNames(pm_emifac_cco2, dim=3)]*collapseNames(p_share_carbonCapture_stor)
