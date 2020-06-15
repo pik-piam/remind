@@ -489,7 +489,7 @@ reportLCOE <- function(gdx, extended.output = F){
   
   
   # calculate renewable capacity factors of new plants
-  vm_capDistr <- readGDX(gdx, "vm_capDistr", field = "l", restore_zeros = F)
+  vm_capDistr <- readGDX(gdx, c("vm_capDistr","v_capDistr"), field = "l", restore_zeros = F)
   pm_dataren <- readGDX(gdx, "pm_dataren", restore_zeros = F)
   
   # RE capacity distribution over grades
@@ -683,8 +683,8 @@ reportLCOE <- function(gdx, extended.output = F){
   
   # Co2 Capture price, marginal of q_balcapture,  convert from tr USD 2005/GtC to USD2015/tCO2
   qm_balcapture  <- readGDX(gdx,"q_balcapture",field="m", restore_zeros = F)
-  # Co2.Capt.Price <- qm_balcapture /
-  #   (qm_budget[,getYears(qm_balcapture),]+1e-10)*1e3*1.2/3.66 ## looks weird
+  Co2.Capt.Price <- qm_balcapture /
+    (qm_budget[,getYears(qm_balcapture),]+1e-10)*1e3*1.2/3.66 ## looks weird
   # # for now, just assume 50USD/tCO2 for all times and regions (half of typical 100USD/tCO2 BECCS cost)
   Co2.Capt.Price[,,] <- 50
   
