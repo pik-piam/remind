@@ -88,7 +88,8 @@ reportEDGETransport <- function(output_folder=".",
 
     ## Rail & Aviation
     datatable[grepl("Passenger Rail|HSR", vehicle_type), aggr_veh := "Pass|Rail"]
-    datatable[grepl("Aviation", subsector_L3), aggr_veh := "Pass|Aviation"]
+    datatable[subsector_L3 == "Domestic Aviation", aggr_veh := "Pass|Aviation|Domestic"]
+    datatable[subsector_L3 == "International Aviation", aggr_veh := "Pass|Aviation|International"]
 
     ## High Detail: Ecoinvent-Compatible Output
     datatable[grepl("Compact|Subcompact", vehicle_type),
