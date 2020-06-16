@@ -248,7 +248,7 @@ reportEDGETransport <- function(output_folder=".",
     ## merge with emission factors
     emidem = emidem[p_ef_dem, on = "all_enty"]
     ## calculate emissions and attribute variable and unit names
-    emidem[, value := value*ef][, c("variable", "unit") := list(gsub("FE", "Emi\\|CO2\\|", variable), "MtCO2 /yr")]
+    emidem[, value := value*ef][, c("variable", "unit") := list(gsub("FE", "Emi\\|CO2", variable), "MtCO2 /yr")]
     ## the emissions are to be labeled as "Demand"
     emidem[, variable := paste0(variable, "|Demand")]
     
@@ -402,7 +402,7 @@ reportEDGETransport <- function(output_folder=".",
                       "Emi|CO2|Transport|Freight|Short-Medium Distance|Liquids", 
                       "Emi|CO2|Transport|Freight|Long Distance|Liquids")][, V25 := NULL]
     
-    fosemi = melt(fosemi, id.vars = c("Model", "Scenario", "Region", "Unit", "Variable"))
+    fosemi = data.table::melt(fosemi, id.vars = c("Model", "Scenario", "Region", "Unit", "Variable"))
     fosemi[, value :=as.numeric(value)]
     fosemi = fosemi[,.(Variable = "Emi|CO2|Transport|Liquids", value = sum(value)), by = c("Region", "variable", "Model", "Unit")]
     fosemi = fosemi[, .(year = variable, region = Region, se="fos", co2=as.numeric(value))]
@@ -430,7 +430,7 @@ reportEDGETransport <- function(output_folder=".",
     remind_scenario <- cfg$title
     emi_wide[, c("model", "scenario", "unit") := list("REMIND", remind_scenario, "MtCO2 /yr")]
     
-    emi_result <- melt(emi_wide,
+    emi_result <- data.table::melt(emi_wide,
                        value.name="co2",
                        id.vars = c("year", "region", "model", "unit", "scenario"),
                        variable.name = "tech")
