@@ -317,6 +317,13 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                                            output[,y,"FE|Transport|Pass|Short-Medium distance|Petrol Liquids (EJ/yr)"]) /
                                           output[,y,"FE|+|Liquids (EJ/yr)"])
     p35_share_seliq_fsm  <- collapseNames(output[,y,"FE|Transport|Freight|Short-Medium distance|Diesel Liquids (EJ/yr)"] / output[,y,"FE|+|Liquids (EJ/yr)"])
+    
+    p35_share_seliq_pl  <- collapseNames((output[,y,"FE|Transport|Pass|Long distance|Diesel Liquids (EJ/yr)"]) /
+                                           output[,y,"FE|+|Liquids (EJ/yr)"])
+    
+    p35_share_seliq_fl  <- collapseNames((output[,y,"FE|Transport|Freight|Long distance|Diesel Liquids (EJ/yr)"]) /
+                                           output[,y,"FE|+|Liquids (EJ/yr)"])
+    
     ## Electricity
     p35_share_seel_psm  <- collapseNames(output[,y,"FE|Transport|Pass|Short-Medium distance|Electricity (EJ/yr)"] /
                                           output[,y,"FE|+|Electricity (EJ/yr)"])
@@ -860,6 +867,12 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                * GtC_2_MtCO2, "Emi|CO2|Transport|Pass|Short-Medium Distance|Hydrogen (Mt CO2/yr)"),
       setNames(p35_share_seliq_psm  * dimSums(mselect(v_emi,all_enty1=se_Liq,all_enty2="co2")[pe2se],dim=3)
                * GtC_2_MtCO2, "Emi|CO2|Transport|Pass|Short-Medium Distance|Liquids (Mt CO2/yr)"),
+      setNames(p35_share_seliq_fsm  * dimSums(mselect(v_emi,all_enty1=se_Liq,all_enty2="co2")[pe2se],dim=3)
+               * GtC_2_MtCO2, "Emi|CO2|Transport|Freight|Short-Medium Distance|Liquids (Mt CO2/yr)"),
+      setNames(p35_share_seliq_pl  * dimSums(mselect(v_emi,all_enty1=se_Liq,all_enty2="co2")[pe2se],dim=3)
+               * GtC_2_MtCO2, "Emi|CO2|Transport|Pass|Long Distance|Liquids (Mt CO2/yr)"),
+      setNames(p35_share_seliq_fl  * dimSums(mselect(v_emi,all_enty1=se_Liq,all_enty2="co2")[pe2se],dim=3)
+               * GtC_2_MtCO2, "Emi|CO2|Transport|Freight|Long Distance|Liquids (Mt CO2/yr)"),
       setNames(p35_share_sega_psm  * dimSums(mselect(v_emi,all_enty1=se_Gas,all_enty2="co2")[pe2se],dim=3)
                * GtC_2_MtCO2, "Emi|CO2|Transport|Pass|Short-Medium Distance|Gases (Mt CO2/yr)"),
       setNames((p35_share_seel_psm  * dimSums(mselect(v_emi,all_enty1="seel",all_enty2="co2")[pe2se],dim=3)
