@@ -1216,24 +1216,29 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                                + vm_eminegregi[,,"ch4oil"]  + vm_emiengregi[,,"ch4"],    "Emi|CH4|Energy Supply and Demand (Mt CH4/yr)"))
   tmp2 <- mbind(tmp2,setNames( vm_eminegregi[,,"ch4coal"] + vm_eminegregi[,,"ch4gas"]
                                + vm_eminegregi[,,"ch4oil"],                              "Emi|CH4|Fossil Fuels and Industry (Mt CH4/yr)"))
-  tmp2 <- mbind(tmp2,setNames( dimSums(vm_eminegregi[,,emismacmagpiech4],dim=3),         "Emi|CH4|Land Use (Mt CH4/yr)"))
+  tmp2 <- mbind(tmp2,setNames( dimSums(vm_eminegregi[,,emismacmagpiech4],dim=3), "Emi|CH4|Land Use (Mt CH4/yr)"))
+  tmp2 <- mbind(tmp2,setNames( vm_eminegregi[,,"ch4rice"],                       "Emi|CH4|Land Use|+|Rice (Mt CH4/yr)"))
+  tmp2 <- mbind(tmp2,setNames( vm_eminegregi[,,"ch4anmlwst"],                    "Emi|CH4|Land Use|+|Animal waste management (Mt CH4/yr)"))
+  tmp2 <- mbind(tmp2,setNames( vm_eminegregi[,,"ch4animals"],                    "Emi|CH4|Land Use|+|Enteric fermentation (Mt CH4/yr)"))
   tmp2 <- mbind(tmp2,setNames( dimSums(vm_macBase[,,emiMacExoCH4],dim=3),                "Emi|CH4|Other (Mt CH4/yr)"))
   tmp2 <- mbind(tmp2,setNames( (vm_eminegregi[,,"ch4wstl"] + vm_eminegregi[,,"ch4wsts"]),"Emi|CH4|Waste (Mt CH4/yr)"))
-  
-  
+
   ### N2O ################################################################################
   tmp3 <- NULL
   MtN2_to_ktN2O <- 44 / 28 * 1000
   tmp3 <- mbind(tmp3,setNames((vm_sumeminegregi[,,"n2o"] + vm_emiengregi[,,"n2o"]) * MtN2_to_ktN2O,    "Emi|N2O (kt N2O/yr)"))
-  tmp3 <- mbind(tmp3,setNames(cumulatedValue(tmp3[,,"Emi|N2O (kt N2O/yr)"]),                            "Emi|N2O|Cumulated (kt N2O/yr)"))
+  tmp3 <- mbind(tmp3,setNames(cumulatedValue(tmp3[,,"Emi|N2O (kt N2O/yr)"]),                           "Emi|N2O|Cumulated (kt N2O/yr)"))
   tmp3 <- mbind(tmp3,setNames((vm_emiengregi[,,"n2o"] + vm_eminegregi[,,"n2otrans"]) * MtN2_to_ktN2O,  "Emi|N2O|Energy Supply and Demand (kt N2O/yr)"))
   tmp3 <- mbind(tmp3,setNames((vm_emiengregi[,,"n2o"]) * MtN2_to_ktN2O,                                "Emi|N2O|Energy Supply (kt N2O/yr)"))
   tmp3 <- mbind(tmp3,setNames((vm_eminegregi[,,"n2otrans"]) * MtN2_to_ktN2O,                           "Emi|N2O|Energy Demand|Transport (kt N2O/yr)"))
   tmp3 <- mbind(tmp3,setNames( dimSums(vm_eminegregi[,,emismacmagpien2o],dim=3) * MtN2_to_ktN2O,       "Emi|N2O|Land Use (kt N2O/yr)"))
+  tmp3 <- mbind(tmp3,setNames( vm_eminegregi[,,"n2oanwstm"]                       * MtN2_to_ktN2O,       "Emi|N2O|Land Use|+|Animal Waste Management (kt N2O/yr)"))
+  tmp3 <- mbind(tmp3,setNames( dimSums(vm_eminegregi[,,c("n2ofertin","n2oanwstc","n2ofertcr","n2ofertsom","n2oanwstp")],dim=3) * MtN2_to_ktN2O,       "Emi|N2O|Land Use|+|Agricultural Soils (kt N2O/yr)"))
+  
   tmp3 <- mbind(tmp3,setNames((vm_eminegregi[,,"n2owaste"]) * MtN2_to_ktN2O,                           "Emi|N2O|Waste (kt N2O/yr)"))
   tmp3 <- mbind(tmp3,setNames((vm_eminegregi[,,"n2oadac"] + vm_eminegregi[,,"n2onitac"] ) * MtN2_to_ktN2O, "Emi|N2O|Industry (kt N2O/yr)"))
   tmp3 <- mbind(tmp3,setNames( dimSums(vm_macBase[,,emiMacExoN2O],dim=3) * MtN2_to_ktN2O,              "Emi|N2O|Other (kt N2O/yr)"))
-                               
+
   ### Other ###############################################################################
   tmp4 <- NULL
   ### If Buildings Industry Structure
