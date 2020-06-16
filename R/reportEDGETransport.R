@@ -429,7 +429,7 @@ reportEDGETransport <- function(output_folder=".",
     emi_wide = emi_wide[is.na(syn), syn := 0]
     
     remind_scenario <- cfg$title
-    emi_wide[, c("model", "scenario", "unit") := list("REMIND", remind_scenario, "MtCO2 /yr")]
+    emi_wide[, c("model", "scenario", "unit") := list("REMIND", remind_scenario, "Mt CO2/yr")]
     
     emi_result <- data.table::melt(emi_wide,
                        value.name="co2",
@@ -475,7 +475,7 @@ reportEDGETransport <- function(output_folder=".",
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("Emi\\|CO2\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+\\|Demand$", variable),
           .(variable="Emi|CO2|Transport|Pass|Road|Demand",
-            unit="MtCO2/yr", value=sum(value)),
+            unit="Mt CO2/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("FE\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+$", variable),
           .(variable="FE|Transport|Pass|Road",
@@ -490,11 +490,11 @@ reportEDGETransport <- function(output_folder=".",
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("Emi\\|CO2\\|Transport\\|(Pass|Freight)\\|Road\\|Demand$", variable),
           .(variable="Emi|CO2|Transport|Road|Demand",
-            unit="MtCO2/yr", value=sum(value)),
+            unit="Mt CO2/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("Emi\\|CO2\\|Transport\\|(Pass|Freight)\\|Rail\\|Demand$", variable),
           .(variable="Emi|CO2|Transport|Rail|Demand",
-            unit="MtCO2/yr", value=sum(value)),
+            unit="Mt CO2/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("FE\\|Transport\\|(Pass|Freight)\\|Rail$", variable),
           .(variable="FE|Transport|Rail",
