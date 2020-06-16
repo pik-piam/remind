@@ -249,7 +249,7 @@ reportEDGETransport <- function(output_folder=".",
     ## merge with emission factors
     emidem = emidem[p_ef_dem, on = "all_enty"]
     ## calculate emissions and attribute variable and unit names
-    emidem[, value := value*ef][, c("variable", "unit") := list(gsub("FE", "Emi\\|CO2", variable), "MtCO2 /yr")]
+    emidem[, value := value*ef][, c("variable", "unit") := list(gsub("FE", "Emi\\|CO2", variable), "MtCO2/yr")]
     ## the emissions are to be labeled as "Demand"
     emidem[, variable := paste0(variable, "|Demand")]
     
