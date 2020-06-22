@@ -1,8 +1,8 @@
 Package: remind
 Type: Package
 Title: The REMIND R package
-Version: 36.165.3
-Date: 2020-06-16
+Version: 36.165.4
+Date: 2020-06-18
 Author: Anastasis Giannousakis, Michaja Pehl
 Maintainer: Anastasis Giannousakis <giannou@pik-potsdam.de>
 Description: Contains the REMIND-specific routines for data and model output manipulation.
@@ -14,7 +14,7 @@ Imports:
     dplyr,
     flexdashboard,
     knitr,
-    lucode,
+    lucode2,
     luplot,
     luscale,
     lusweave,
@@ -44,5 +44,5 @@ RoxygenNote: 7.1.0
 Suggests:
 	testthat,
 	sr15data
-ValidationKey: 6664903137
+ValidationKey: 6665644874
 VignetteBuilder: knitr

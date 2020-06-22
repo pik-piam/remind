@@ -16,7 +16,7 @@
 #'   read_all(outputdirs,read.reportEntry,entry="Emi|Kyoto Gases (Mt CO2eq/yr)",as.list=FALSE)
 #' }
 #' @export
-#' @importFrom lucode getScenNames
+#' @importFrom lucode2 getScenNames
 #' @importFrom magclass read.report collapseNames
 read.reportEntry <- function(outputdir,entry,type=NULL){
   fname <- file.path(outputdir,paste0("REMIND_generic_",getScenNames(outputdir)))
