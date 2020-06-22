@@ -35,11 +35,16 @@ convGDX2CSV_LCOE <- function(gdx,file=NULL,scen="default",t=c(seq(2005,2060,5),s
   output <- NULL
   output <- mbind(output,reportLCOE(gdx)[,t,]) 
   
-  # convert to quitte
-  df.LCOE.report <- as.quitte(output) %>% 
-                      mutate(scenario = scen, model = "REMIND") %>% 
-                      select(model, scenario, region, period, type, tech, output, unit, cost, value)
-  
+  # convert to quitte, 
+  # if reportLCOE only produced NA because gdx is from depreciated REMIND version -> return NA
+  if (all(is.na(output[,,]))) {
+    df.LCOE.report <- as.quitte(output)
+  } else {
+    df.LCOE.report <- as.quitte(output) %>% 
+      mutate(scenario = scen, model = "REMIND") %>% 
+      select(model, scenario, region, period, type, tech, output, unit, cost, value)
+  }
+
   # write the LCOE.mif or give back the magpie opject output
   if(!is.null(file)) {
     write.table(df.LCOE.report, file=file, quote = F, row.names = F, col.names = T, sep = ";")
