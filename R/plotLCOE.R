@@ -133,7 +133,7 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
   
   ylimit.up <- 300 # y axis max
   plot.period <- y
-  plot.scen <- getRegs(df.LCOE.in)
+  plot.scen <- getScenarios(df.LCOE.in)
   #plot.period <- c(2020,2030,2040,2050)
   plot_theme <- theme_bw() + theme(axis.text.x = element_text(angle=90, size=40, vjust=0.3),
                                    text = element_text(size=50),
@@ -149,10 +149,10 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
   #                                  legend.key.size = unit(2,"line"))
   # colors of cost components
   cost.colors <- c("Investment Cost" = "azure4", "OMF Cost" = "darkcyan", "OMV Cost" = "cyan",
-                   "Fuel Cost" = "orange3", "CO2 Tax Cost" = "red4", "CO2 Provision Cost" = "slategray1",
+                   "Fuel Cost" = "orange3", "CO2 Tax Cost" = "indianred", "CO2 Provision Cost" = "slategray1",
                    "Second Fuel Cost" = "sandybrown", "VRE Storage Cost" = "mediumpurple3",
-                   "Grid Cost" = "lightgoldenrod1", "CCS Tax Cost" = "deeppink4", 
-                   "CCS Cost" = "burlywood3")
+                   "Grid Cost" = "darkseagreen3", "CCS Tax Cost" = "chartreuse4", 
+                   "CCS Cost" = "darkblue", "Flex Tax" = "yellow1")
   
   ### end plot settings
   
@@ -235,7 +235,7 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
                             value)) %>% 
                           # remove Total LCOE
                           filter( cost != "Total LCOE") %>% 
-                          order.levels(cost = c("CCS Cost","CCS Tax Cost","Grid Cost","VRE Storage Cost","Second Fuel Cost","CO2 Provision Cost",
+                          order.levels(cost = c("Flex Tax","CCS Cost","CCS Tax Cost","Grid Cost","VRE Storage Cost","Second Fuel Cost","CO2 Provision Cost",
                             "CO2 Tax Cost", "Fuel Cost", "OMV Cost", 
                             "OMF Cost", "Investment Cost"))
     
@@ -245,13 +245,13 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
     
     p.LCOE <- ggplot() +
       geom_col(data=df.LCOE.plot.out %>% filter(variable == "LCOE"),
-               aes(tech, value, fill=cost), alpha=0.5) +
+               aes(tech, value, fill=cost), alpha=0.7) +
       geom_point(data=df.LCOE.plot.out %>% filter(variable == "vm_deltaCap"),
                  aes(tech, value), 
-                 alpha=1, size=9, shape=1, color="black",stroke = 5) +
+                 alpha=1, size=7, shape=1, color="black",stroke = 3) +
       geom_point(data=df.LCOE.plot.out %>% filter(variable == "vm_deltaCap"),
                  aes(tech, value), 
-                 alpha=0.9, size=8, color="white") +
+                 alpha=0.9, size=5, color="white") +
       geom_errorbar(data=df.LCOE.total, aes(x=tech, ymin=value, ymax=value, linetype="solid"), size=2) +
       scale_linetype_identity(name = '', guide = 'legend',labels = c('Total LCOE')) +
       facet_wrap(~period) +
@@ -264,7 +264,7 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
                                              name = paste0("Capacity Additions in GW/yr\n(15-year average)")))+  
       ggtitle(paste0(plot.scen,", ",plot.reg,":\nNew plant LCOE and capacity additions of ", plot.output," technologies"))
     
-    swfigure(sw,print,p.LCOE, sw_option="height=23,width=35", dpi=1800)
+    swfigure(sw,print,p.LCOE, sw_option="height=20,width=35", dpi=1800)
     
   }
  

@@ -23,6 +23,7 @@
 #' @importFrom dplyr %>% mutate select rename group_by ungroup right_join filter full_join  arrange summarise
 #' @importFrom quitte as.quitte overwrite getRegs
 #' @importFrom tidyr spread gather expand
+#' @importFrom zoo na.locf
 
 
 reportLCOE <- function(gdx, extended.output = F){
@@ -575,18 +576,23 @@ reportLCOE <- function(gdx, extended.output = F){
   p_omeg  <- readGDX(gdx,c("pm_omeg","p_omeg"),format="first_found") 
   
   # Primary Energy Price, convert from tr USD 2005/TWa to USD2015/MWh
-  Pe.Price <- qm_pebal[,ttot_from2005,unique(pe2se$all_enty)] / qm_budget*1e12/s_twa2mwh*1.2
+  Pe.Price <- qm_pebal[,ttot_from2005,unique(pe2se$all_enty)] / (qm_budget+1e-10)*1e12/s_twa2mwh*1.2
   # Secondary Energy Electricity Price (for se2se conversions), convert from tr USD 2005/TWa to USD2015/MWh
   Se.Seel.Price <- qm_sebal.seel[,,"seel"]/(qm_budget+1e-10)*1e12/s_twa2mwh*1.2
   # Secondary Energy Hydrogen Price (for se2se conversions), convert from tr USD 2005/TWa to USD2015/MWh
   Se.H2.Price <- qm_sebal[,,"seh2"]/(qm_budget+1e-10)*1e12/s_twa2mwh*1.2
   
-  Fuel.Price <- mbind(Pe.Price,Se.Seel.Price, Se.H2.Price )
+  Fuel.Price <- mbind(Pe.Price,Se.Seel.Price, Se.H2.Price )[,,c("peoil","pegas","pecoal","peur","pebiolc","pebios","pebioil","seel","seh2")]
   
   # Fuel price
   df.Fuel.Price <- as.quitte(Fuel.Price) %>%  
     select(region, period, all_enty, value) %>% 
-    rename(fuel = all_enty, fuel.price = value, opTimeYr = period) 
+    rename(fuel = all_enty, fuel.price = value, opTimeYr = period) %>% 
+    # replace zeros by last value of time series (marginals are sometimes zero if there are other constriants)
+    mutate( fuel.price = ifelse(fuel.price == 0, NA, fuel.price)) %>% 
+    group_by(region, fuel) %>% 
+    na.locf() %>% 
+    ungroup()
   
   
   ### 7. retrieve carbon price
@@ -854,7 +860,7 @@ reportLCOE <- function(gdx, extended.output = F){
                   select(region, period, tech, CCStax.cost)
     
     
-    ### CO2 Storage Cost
+    ### 18. CO2 Storage Cost
     p_teAnnuity <- readGDX(gdx, "p_teAnnuity", restore_zeros = F)
     # adding annualized capital cost and omf cost of ccsinje technology, 
     # multiply with vm_co2CCS_m (stored CO2 of CCS technology in GtC/TWa(output)), 
@@ -864,7 +870,19 @@ reportLCOE <- function(gdx, extended.output = F){
     df.CCSCost <- as.quitte(CCSCost) %>% 
                     rename(tech = all_te, CCSCost = value) %>% 
                     select(region, period, tech, CCSCost)
-  
+    
+    ### 19. Flexibility Tax
+    
+    vm_flexAdj <- readGDX(gdx, "vm_flexAdj", field = "l", restore_zeros = F)
+    if (is.null(vm_flexAdj)) {
+      vm_flexAdj <- vm_costTeCapital
+      vm_flexAdj[,,] <- 0
+    }
+    
+    # convert from trUSD2005/TWa(output) to USD2015/MWh(output)
+    df.FlexTax <- as.quitte(vm_flexAdj*1e12*1.2/s_twa2mwh) %>%  
+                    rename(tech = all_te, FlexTax = value) %>% 
+                    select(region, period, tech, FlexTax)
   
   
   ####################### LCOE calculation (New plant/marginal) ########################
@@ -891,14 +909,15 @@ reportLCOE <- function(gdx, extended.output = F){
     left_join(df.VREstorcost) %>% 
     left_join(df.CCStax) %>% 
     left_join(df.CCSCost) %>% 
+    left_join(df.FlexTax) %>% 
     # only LCOE for SE generating technologies for now
     filter( tech %in% c(te_SE_gen)) 
   
   
   # replace NA by 0 in certain columns
   # columns where NA should be replaced by 0
-  col.NA.zero <- c("OMF","OMV", "co2.price.weighted.mean", "co2_dem","emiFac.se2fe","Co2.Capt.Price",
-                   "secfuel.prod", "secfuel.price", "grid.cost","VREstor.cost", "CCStax.cost","CCSCost")
+  col.NA.zero <- c("OMF","OMV", "co2.price.weighted.mean", "fuel.price.weighted.mean","co2_dem","emiFac.se2fe","Co2.Capt.Price",
+                   "secfuel.prod", "secfuel.price", "grid.cost","VREstor.cost", "CCStax.cost","CCSCost","FlexTax")
   df.LCOE[,col.NA.zero][is.na(df.LCOE[,col.NA.zero])] <- 0
   
   #
@@ -928,9 +947,10 @@ reportLCOE <- function(gdx, extended.output = F){
     mutate( `CO2 Provision Cost` = Co2.Capt.Price * co2_dem) %>% 
     mutate( `Second Fuel Cost` = -(secfuel.prod * secfuel.price)) %>% 
     mutate( `VRE Storage Cost` = VREstor.cost, `Grid Cost` = grid.cost) %>% 
-    mutate( `CCS Tax Cost` = CCStax.cost, `CCS Cost` = CCSCost) %>% 
+    mutate( `CCS Tax Cost` = CCStax.cost, `CCS Cost` = CCSCost) %>%
+    mutate( `Flex Tax` = FlexTax) %>% 
     mutate( `Total LCOE` = `Investment Cost` + `OMF Cost` + `OMV Cost` + `Fuel Cost` + `CO2 Tax Cost` + 
-              `CO2 Provision Cost` + `Second Fuel Cost` + `VRE Storage Cost` + `Grid Cost` + `CCS Tax Cost` + `CCS Cost`)
+              `CO2 Provision Cost` + `Second Fuel Cost` + `VRE Storage Cost` + `Grid Cost` + `CCS Tax Cost` + `CCS Cost` + `Flex Tax`)
   
   
   
@@ -945,7 +965,7 @@ reportLCOE <- function(gdx, extended.output = F){
     df.LCOE.out <- df.LCOE %>% 
       select(region, period, tech, output, `Investment Cost`, `OMF Cost`, `OMV Cost`, `Fuel Cost` ,
              `CO2 Tax Cost`,`CO2 Provision Cost`,`Second Fuel Cost`,`VRE Storage Cost` ,`Grid Cost`,
-             `CCS Tax Cost`, `CCS Cost`,`Total LCOE`) %>% 
+             `CCS Tax Cost`, `CCS Cost`,`Flex Tax`,`Total LCOE`) %>% 
       gather(cost, value, -region, -period, -tech, -output) %>% 
       mutate(unit = "US$2015/MWh", type="New Plant") %>% 
       select(region, period, type, tech, output, unit, cost, value)
