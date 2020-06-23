@@ -88,7 +88,8 @@ reportEDGETransport <- function(output_folder=".",
 
     ## Rail & Aviation
     datatable[grepl("Passenger Rail|HSR", vehicle_type), aggr_veh := "Pass|Rail"]
-    datatable[grepl("Aviation", subsector_L3), aggr_veh := "Pass|Aviation"]
+    datatable[subsector_L3 == "Domestic Aviation", aggr_veh := "Pass|Aviation|Domestic"]
+    datatable[subsector_L3 == "International Aviation", aggr_veh := "Pass|Aviation|International"]
 
     ## High Detail: Ecoinvent-Compatible Output
     datatable[grepl("Compact|Subcompact", vehicle_type),
@@ -248,7 +249,7 @@ reportEDGETransport <- function(output_folder=".",
     ## merge with emission factors
     emidem = emidem[p_ef_dem, on = "all_enty"]
     ## calculate emissions and attribute variable and unit names
-    emidem[, value := value*ef][, c("variable", "unit") := list(gsub("FE", "Emi\\|CO2\\|", variable), "MtCO2 /yr")]
+    emidem[, value := value*ef][, c("variable", "unit") := list(gsub("FE", "Emi\\|CO2", variable), "Mt CO2/yr")]
     ## the emissions are to be labeled as "Demand"
     emidem[, variable := paste0(variable, "|Demand")]
     
@@ -402,7 +403,7 @@ reportEDGETransport <- function(output_folder=".",
                       "Emi|CO2|Transport|Freight|Short-Medium Distance|Liquids", 
                       "Emi|CO2|Transport|Freight|Long Distance|Liquids")][, V25 := NULL]
     
-    fosemi = melt(fosemi, id.vars = c("Model", "Scenario", "Region", "Unit", "Variable"))
+    fosemi = data.table::melt(fosemi, id.vars = c("Model", "Scenario", "Region", "Unit", "Variable"))
     fosemi[, value :=as.numeric(value)]
     fosemi = fosemi[,.(Variable = "Emi|CO2|Transport|Liquids", value = sum(value)), by = c("Region", "variable", "Model", "Unit")]
     fosemi = fosemi[, .(year = variable, region = Region, se="fos", co2=as.numeric(value))]
@@ -428,9 +429,9 @@ reportEDGETransport <- function(output_folder=".",
     emi_wide = emi_wide[is.na(syn), syn := 0]
     
     remind_scenario <- cfg$title
-    emi_wide[, c("model", "scenario", "unit") := list("REMIND", remind_scenario, "MtCO2 /yr")]
+    emi_wide[, c("model", "scenario", "unit") := list("REMIND", remind_scenario, "Mt CO2/yr")]
     
-    emi_result <- melt(emi_wide,
+    emi_result <- data.table::melt(emi_wide,
                        value.name="co2",
                        id.vars = c("year", "region", "model", "unit", "scenario"),
                        variable.name = "tech")
@@ -474,7 +475,7 @@ reportEDGETransport <- function(output_folder=".",
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("Emi\\|CO2\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+\\|Demand$", variable),
           .(variable="Emi|CO2|Transport|Pass|Road|Demand",
-            unit="MtCO2/yr", value=sum(value)),
+            unit="Mt CO2/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("FE\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+$", variable),
           .(variable="FE|Transport|Pass|Road",
@@ -489,11 +490,11 @@ reportEDGETransport <- function(output_folder=".",
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("Emi\\|CO2\\|Transport\\|(Pass|Freight)\\|Road\\|Demand$", variable),
           .(variable="Emi|CO2|Transport|Road|Demand",
-            unit="MtCO2/yr", value=sum(value)),
+            unit="Mt CO2/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("Emi\\|CO2\\|Transport\\|(Pass|Freight)\\|Rail\\|Demand$", variable),
           .(variable="Emi|CO2|Transport|Rail|Demand",
-            unit="MtCO2/yr", value=sum(value)),
+            unit="Mt CO2/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("FE\\|Transport\\|(Pass|Freight)\\|Rail$", variable),
           .(variable="FE|Transport|Rail",
