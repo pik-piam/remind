@@ -54,11 +54,22 @@ convGDX2MIF <- function(gdx,gdx_ref=NULL,file=NULL,scenario="default",t=c(seq(20
   # reporting of cross variables - needs variables from different other report* functions
   output <- mbind(output,reportCrossVariables(gdx,output,regionSubsetList)[,t,])
 
+  # Report policy costs, iif possible and sensible 
   if(!is.null(gdx_ref)) {
     if (file.exists(gdx_ref)) {
-      output <- mbind(output,reportPolicyCosts(gdx,gdx_ref,regionSubsetList)[,t,])
+      gdp_scen <- try(readGDX(gdx,"cm_GDPscen",react ="error"),silent=T)
+      gdp_scen_ref <- try(readGDX(gdx_ref,"cm_GDPscen",react = "error"),silent=T)
+      if(!inherits(gdp_scen,"try-error") && !inherits(gdp_scen_ref,"try-error")){
+        if(gdp_scen[1]==gdp_scen_ref[1]){
+          output <- mbind(output,reportPolicyCosts(gdx,gdx_ref,regionSubsetList)[,t,])
+        } else {
+          warning(paste0("The GDP scenario differs from that of the reference run. Did not execute 'reportPolicyCosts'! If a policy costs reporting is desired, please use the 'policyCosts' output.R script."))
+        }
+      } else {
+        warning(paste0("A comparison of the GDP scenarios between this run and its reference run wasn't possible (old remind version). Therefore to avoid reporting unsensible policy costs, 'reportPolicyCosts' was not executed. If a policy costs reporting is required, please use the  'policyCosts' output.R script."))
+      }
     } else {
-      warning(paste0("File ",gdx_ref," not found. Did not execute 'reportPolicyCosts'!"))
+      warning(paste0("File ",gdx_ref," not found. Did not execute 'reportPolicyCosts'! If a policy costs reporting is desired, please use the   'policyCosts' output.R script."))
     }
   }
 
