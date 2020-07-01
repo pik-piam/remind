@@ -875,6 +875,8 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                * GtC_2_MtCO2, "Emi|CO2|Transport|Freight|Long Distance|Liquids (Mt CO2/yr)"),
       setNames(p35_share_sega_psm  * dimSums(mselect(v_emi,all_enty1=se_Gas,all_enty2="co2")[pe2se],dim=3)
                * GtC_2_MtCO2, "Emi|CO2|Transport|Pass|Short-Medium Distance|Gases (Mt CO2/yr)"),
+      setNames(p35_share_sega_fsm  * dimSums(mselect(v_emi,all_enty1=se_Gas,all_enty2="co2")[pe2se],dim=3)
+               * GtC_2_MtCO2, "Emi|CO2|Transport|Freight|Short-Medium Distance|Gases (Mt CO2/yr)"),
       setNames((p35_share_seel_psm  * dimSums(mselect(v_emi,all_enty1="seel",all_enty2="co2")[pe2se],dim=3)
         + p35_share_seh2_psm  * dimSums(mselect(v_emi,all_enty1="seh2",all_enty2="co2")[pe2se],dim=3)
         + p35_share_seliq_psm * dimSums(mselect(v_emi,all_enty1=se_Liq,all_enty2="co2")[pe2se],dim=3)

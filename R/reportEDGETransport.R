@@ -37,7 +37,7 @@ reportEDGETransport <- function(output_folder=".",
   variable <- value <- NULL
   all_enty <- ef <- variable_agg <- model <- scenario <- period <- NULL
   Region <- Variable <- allEl <- co2 <- co2val <- elh2 <- elh2Dir <- elh2Syn <- fe <- fosh2  <- NULL
-  fosh2Dir <- fosh2Syn <- int <- pe <- se <- sec  <- sharesec  <- syn <- te  <- tech <-  val <- NULL
+  fosh2Dir <- fosh2Syn <- int <- pe <- se <- sec  <- sharesec  <- syn <- te  <- tech <-  val <- el <- NULL
 
   load(file.path(output_folder, "config.Rdata"))
 
@@ -295,12 +295,11 @@ reportEDGETransport <- function(output_folder=".",
     prodFosH2 <- unique(prodFosH2)
 
     ## SE to be devoted to transport
-    prodFe <- readgdx(gdx, "vm_prodFe")[, value := value*TWa_2_EJ] ## in EJ
-    setnames(prodFe, c("year", "region", "se", "fe", "te", "value"))
-    prodFe[, sec := ifelse(fe %in% c("fepet", "fedie", "feelt", "fegat", "feh2t"), "trsp", NA)]
-    prodFe[, sec := ifelse(fe %in% c("fesos", "fehos", "feels", "feh2s", "fegas", "fehes"), "st", sec)]
-    prodFe = prodFe[,.(value = sum(value)), by = c("year", "region", "se", "sec")]
-    shareSe <- prodFe[, sharesec := value/sum(value), by = c("year", "region", "se")]
+    demSe[, sec := ifelse(fe %in% c("fepet", "fedie", "feelt", "fegat", "feh2t"), "trsp", NA)]
+    demSe[, sec := ifelse(fe %in% c("fesos", "fehos", "feels", "feh2s", "fegas", "fehes"), "st", sec)]
+    demSe = demSe[fe != "seh2",] ## remove electricity used to produce hydrogen
+    demSe = demSe[,.(value = sum(value)), by = c("year", "region", "se", "sec")]
+    shareSe <- demSe[, sharesec := value/sum(value), by = c("year", "region", "se")]
     setnames(shareSe, old = "value", new = "feval")
     
     ## Electricity consumption for H2 production
@@ -412,11 +411,45 @@ reportEDGETransport <- function(output_folder=".",
     fosemi = rbind(fosemi, emisyn)
     fosemi = fosemi[, .(co2 = sum(co2), se = "fos"), by = c("year", "region")]
     
+    ## electricity demand, total
+    prodEl <- prodSe[se == "seel"]
+    prodEl[, el := sum(value), by = .(year, region)]
+    prodEl[, c("pe", "te", "value") := NULL]
+    prodEl <- unique(prodEl)
+
+    ## ... of which only a share is used in transport
+    prodEltrp <- merge(prodEl, shareSe[sec == "trsp"], all.x = TRUE, by = c("year", "region", "se"))
+    prodEltrp[, el := el*sharesec]
+    prodEltrp[, c("sharesec", "sec", "feval") := NULL]
+    
+    ## electricity demand, used directly (not used to produce hydrogen)
+    prodEltrp = merge(prodEltrp, prodElH2trp[,c("region", "year", "elh2")])
+    prodEltrp[, el := el - elh2]
+    prodEltrp[, elh2 := NULL]
+    
+    ## Emissions from electricity used directly
+    emiel <-  merge(prodEltrp, emiElco2, by = c("region", "year"))
+    emiel[, co2 := el*int]
+    emiel[, c("el", "int") := NULL]
+    emiel[, se := "el"]
+    
+    ## natural gas emissions
+    emigas = miffile[
+      Variable %in% c("Emi|CO2|Transport|Pass|Short-Medium Distance|Gases",
+                      "Emi|CO2|Transport|Freight|Short-Medium Distance|Gases")][, V25 := NULL]
+    
+    emigas = data.table::melt(emigas, id.vars = c("Model", "Scenario", "Region", "Unit", "Variable"))
+    emigas[, value :=as.numeric(value)]
+    emigas = emigas[,.(Variable = "Emi|CO2|Transport|Gases", value = sum(value)), by = c("Region", "variable", "Model", "Unit")]
+    emigas = emigas[, .(year = variable, region = Region, se="ng", co2=as.numeric(value))]
+    
     ## combine all
     emi_all <- rbindlist(list(
       emisyn,
       fosemi,
-      emih2),
+      emih2,
+      emiel,
+      emigas),
       use.names=TRUE)
     
     ## year and co2 columns should be numeric
@@ -439,6 +472,8 @@ reportEDGETransport <- function(output_folder=".",
     emi_result[, variable := ifelse(tech == "fos", "Emi|CO2|Transport|Liquids|WithSynfuels", NA)]
     emi_result[, variable := ifelse(tech == "syn", "Emi|CO2|Transport|Synfuels", variable)]
     emi_result[, variable := ifelse(tech == "seh2", "Emi|CO2|Transport|Hydrogen", variable)]
+    emi_result[, variable := ifelse(tech == "el", "Emi|CO2|Transport|Electricity", variable)]
+    emi_result[, variable := ifelse(tech == "ng", "Emi|CO2|Transport|Gases", variable)]
     
     ## fill in the values with NAs (e.g. hydrogen or synfuels in historical years)
     emi_result[is.na(co2), co2 := 0]
