@@ -268,7 +268,7 @@ reportTechnology <- function(gdx,output=NULL,regionSubsetList=NULL) {
   tmp_GLO <- new.magpie("GLO",getYears(tmp),magclass::getNames(tmp),fill=0)
 
   for (i2e in names(int2ext)){
-    tmp_GLO["GLO",,i2e] <- speed_aggregate(tmp[,,i2e],map,weight=output[map$region,,int2ext[i2e]])
+    tmp_GLO["GLO",,i2e] <- speed_aggregate(tmp[,,i2e],map,weight=output[map$region,,int2ext[[i2e]]])
   }
   tmp <- mbind(tmp,tmp_GLO)
 
