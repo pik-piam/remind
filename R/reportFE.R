@@ -117,7 +117,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   prodFE  <- prodFE[,y,]
   prodSE <- prodSE[,y,]
   vm_cesIO <- vm_cesIO[,y,]
-  v_prodEs <- v_prodEs[,y,]
+  if (0 < length(v_prodEs)) v_prodEs <- v_prodEs[,y,]
   vm_otherFEdemand <- vm_otherFEdemand[,y,]
   v33_grindrock_onfield<- v33_grindrock_onfield[,y,]
   
