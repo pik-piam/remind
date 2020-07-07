@@ -341,6 +341,40 @@ reportEDGETransport <- function(output_folder=".",
     emih2El[, co2 := elh2*int]
     emih2El[, c("elh2", "value", "int") := NULL]
 
+    ## Emissions to produce hydrogen from fossil fuels
+    emiH2Fosco2 <- vemi[se == "seh2" & emi == "co2"][
+      , co2val := sum(val) * GtC_2_MtCO2, by=.(year, region)][
+        , c("pe", "se", "te", "emi", "val") := NULL
+        ]
+    emiH2Fosco2 <- unique(emiH2Fosco2)
+
+
+    ## Fossils/biomass secondary energy for H2 production
+    prodFosH2 <- prodSe[pe != "seel" & se == "seh2"]
+    prodFosH2[, fosh2 := sum(value), by=.(year, region)]
+    prodFosH2[, c("pe", "te", "value") := NULL]
+    prodFosH2 <- unique(prodFosH2)
+
+    ## emissions intensity of fossil-based hydrogen
+    emiH2Fosco2 <- merge(emiH2Fosco2, prodFosH2, by=c("year", "region"))
+    emiH2Fosco2[, int := co2val/fosh2] # MtCO2/EJ -> tCO2/MJ
+    emiH2Fosco2[, c("fosh2", "co2val") := NULL]
+
+    ## Fossil/biomass for H2 in transport (both directly used and for synfuels, accounted for separately)
+    prodFosH2trp <- merge(prodFosH2, shareH2Trsp[fe %in% c("feh2t", "fesynt")], all.x = TRUE, by = c("year", "region"))
+    prodFosH2trp[, fosh2 := fosh2*share]
+    prodFosH2trp[, c("share", "value") := NULL]
+
+
+    ## Emissions from fossils used to produce hydrogen (both directly used and for synfuels, accounted for separately)
+    emih2Fos <-  merge(prodFosH2trp, emiH2Fosco2, by = c("region", "year", "se"))
+    emih2Fos[, co2 := fosh2*int]
+    emih2Fos[, c("fosh2", "int", "se") := NULL]
+
+    ## Emissions from hydrogen (from electricity and from fossil fuels, for both h2 used directly and synfuels, acocunted for separately)
+    emih2 = rbind(emih2Fos, emih2El)
+    emih2 = emih2[,.(co2 = sum(co2)), by = c("region", "year", "fe")]
+
     ## fossil emissions for the whole transport sector (the loaded values contain: tailpipe emissions, refineries, losses. NOT synfuels, which will be added in the following lines)
     fosemi = miffile[
       Variable %in% c("Emi|CO2|Transport|Pass|Short-Medium Distance|Liquids",
@@ -354,7 +388,7 @@ reportEDGETransport <- function(output_folder=".",
     fosemi = fosemi[, .(year = variable, region = Region, se="fos", co2=as.numeric(value))]
 
     ## calculate fosemi+synfuels
-    fosemi = rbind(fosemi, emih2El[fe == "fesynt"][, c("se", "fe") := list("fos", NULL)])
+    fosemi = rbind(fosemi, emih2[fe == "fesynt"][, c("se", "fe") := list("fos", NULL)])
     fosemi = fosemi[, .(co2 = sum(co2), se = "fos"), by = c("year", "region")]
 
     ## of the total electrity, only a share is used in transport (directly)
@@ -379,11 +413,11 @@ reportEDGETransport <- function(output_folder=".",
     emigas = emigas[, .(year = variable, region = Region, se="ng", co2=as.numeric(value))]
 
     ## rename h2 emissions
-    emih2El[, se := ifelse(fe == "feh2t", "h2", "syn") ]
-    emih2El[, fe := NULL]
+    emih2[, se := ifelse(fe == "feh2t", "h2", "syn") ]
+    emih2[, fe := NULL]
     ## combine all
     emi_all <- rbindlist(list(
-      emih2El,
+      emih2,
       fosemi,
       emiel,
       emigas),
