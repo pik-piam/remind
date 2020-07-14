@@ -515,10 +515,9 @@ reportEDGETransport <- function(output_folder=".",
   }
 
   toMIF <- data.table::dcast(toMIF, ... ~ period, value.var="value")
-  if(length(toMIF) < length(miffile)){
-    toMIF[, V25 := ""]
-  }
 
-  fwrite(toMIF, name_mif, append=T, sep=";")
+  EOL <- if (.Platform$OS.type=="windows") ";\r\n" else ";\n"
+
+  fwrite(toMIF, name_mif, append=T, sep=";", eol=EOL)
   deletePlus(name_mif, writemif=T)
 }
