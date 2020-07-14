@@ -117,6 +117,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   prodFE  <- prodFE[,y,]
   prodSE <- prodSE[,y,]
   vm_cesIO <- vm_cesIO[,y,]
+  if (0 < length(v_prodEs)) v_prodEs <- v_prodEs[,y,]
   vm_otherFEdemand <- vm_otherFEdemand[,y,]
   v33_grindrock_onfield<- v33_grindrock_onfield[,y,]
   
@@ -486,6 +487,17 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     )
   }
   
+  # add Industry electricity share (for SDG targets)
+  tmp0 <- mbind(
+    tmp0,
+    setNames(
+        tmp0[,,'FE|Industry|Electricity (EJ/yr)'] 
+      / tmp0[,,'FE|Industry (EJ/yr)']
+      * 100,
+      'FE|Industry|Electricity|Share (%)')
+  )
+  
+  # ----
   tmp1 <- NULL 
   tmp1 <- mbind(tmp0,
                 setNames(dimSums(prodFE[,,se_Solids],dim=3),  "FE|+|Solids (EJ/yr)"),
