@@ -487,6 +487,17 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     )
   }
   
+  # add Industry electricity share (for SDG targets)
+  tmp0 <- mbind(
+    tmp0,
+    setNames(
+        tmp0[,,'FE|Industry|Electricity (EJ/yr)'] 
+      / tmp0[,,'FE|Industry (EJ/yr)']
+      * 100,
+      'FE|Industry|Electricity|Share (%)')
+  )
+  
+  # ----
   tmp1 <- NULL 
   tmp1 <- mbind(tmp0,
                 setNames(dimSums(prodFE[,,se_Solids],dim=3),  "FE|+|Solids (EJ/yr)"),
