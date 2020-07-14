@@ -228,7 +228,12 @@ reportEDGETransport <- function(output_folder=".",
           "EJ/yr", "V1", "det_veh")))
 
     }
+    ## add World
+    report_w = report[,.(value = sum(value), region = "World"), by = .(model, scenario, variable, unit, period)]
+    report = rbind(report, report_w)
 
+    report_tech_w = report_tech[,.(value = sum(value), region = "World"), by = .(model, scenario, variable, unit, period)]
+    report_tech = rbind(report_tech, report_tech_w)
     return(rbindlist(list(report, report_tech)))
   }
 
@@ -241,7 +246,7 @@ reportEDGETransport <- function(output_folder=".",
     p_ef_dem <- as.data.table(p_ef_dem)[all_enty %in% c("fepet", "fegas", "feelt", "feh2t")]  ## emissions factor for Electricity and Hydrogen are 0, as we are calculating tailpipe emissions
     setnames(p_ef_dem, old = "value", new = "ef")
     ## attribute explicitly fuel used to the FE values
-    emidem = repFE[grepl("Liquids|Gases|Hydrogen|Electricity", variable)]   ## EJ
+    emidem = repFE[grepl("Liquids|Gases|Hydrogen|Electricity", variable) & region != "World"]   ## EJ
     emidem[, all_enty := ifelse(grepl("Liquids", variable), "fepet", NA)]
     emidem[, all_enty := ifelse(grepl("Gases", variable), "fegas", all_enty)]
     emidem[, all_enty := ifelse(grepl("Electricity", variable), "feelt", all_enty)]
