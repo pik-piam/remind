@@ -294,28 +294,28 @@ reportCrossVariables <- function(gdx,output=NULL,regionSubsetList=NULL){
     int_gr[,t,"Intensity Growth|GDP|CO2-equiv (% pa)"] <- 
       ( 
         ( 
-          (tmp[,t,"Intensity|GDP|CO2 (Mt CO2-equiv/US$2005)"] / setYears(tmp[,(which(getYears(tmp)==t)-1),"Intensity|GDP|CO2 (Mt CO2-equiv/US$2005)"],t))
+          (tmp[,t,"Intensity|GDP|GHG (Mt CO2-equiv/US$2005)"] / setYears(tmp[,(which(getYears(tmp)==t)-1),"Intensity|GDP|GHG (Mt CO2-equiv/US$2005)"],t))
           ^ (1 / ( getYears(tmp[,t,],as.integer=TRUE) - getYears(tmp[,(which(getYears(tmp)==t)-1),],as.integer=TRUE) ) )
         ) - 1
       ) * 100
     int_gr[,t,"Intensity Growth|GDP|CO2-equiv to 2005 (% pa)"] <- 
       ( 
         ( 
-          (tmp[,t,"Intensity|GDP|CO2 (Mt CO2-equiv/US$2005)"] / setYears(tmp[,2005,"Intensity|GDP|CO2 (Mt CO2-equiv/US$2005)"],t))
+          (tmp[,t,"Intensity|GDP|GHG (Mt CO2-equiv/US$2005)"] / setYears(tmp[,2005,"Intensity|GDP|GHG (Mt CO2-equiv/US$2005)"],t))
           ^ (1 / ( getYears(tmp[,t,],as.integer=TRUE) - 2005 ) )
         ) - 1
       ) * 100
     int_gr[,t,"Intensity Growth|Final Energy|CO2-equiv (% pa)"] <- 
       ( 
         ( 
-          (tmp[,t,"Intensity|Final Energy|CO2 (Mt CO2-equiv/EJ)"] / setYears(tmp[,(which(getYears(tmp)==t)-1),"Intensity|Final Energy|CO2 (Mt CO2-equiv/EJ)"],t))
+          (tmp[,t,"Intensity|Final Energy|GHG (Mt CO2-equiv/EJ)"] / setYears(tmp[,(which(getYears(tmp)==t)-1),"Intensity|Final Energy|GHG (Mt CO2-equiv/EJ)"],t))
           ^ (1 / ( getYears(tmp[,t,],as.integer=TRUE) - getYears(tmp[,(which(getYears(tmp)==t)-1),],as.integer=TRUE) ) )
         ) - 1
       ) * 100
     int_gr[,t,"Intensity Growth|Final Energy|CO2-equiv to 2005 (% pa)"] <- 
       ( 
         ( 
-          (tmp[,t,"Intensity|Final Energy|CO2 (Mt CO2-equiv/EJ)"] / setYears(tmp[,2005,"Intensity|Final Energy|CO2 (Mt CO2-equiv/EJ)"],t))
+          (tmp[,t,"Intensity|Final Energy|GHG (Mt CO2-equiv/EJ)"] / setYears(tmp[,2005,"Intensity|Final Energy|GHG (Mt CO2-equiv/EJ)"],t))
           ^ (1 / ( getYears(tmp[,t,],as.integer=TRUE) - 2005 ) )
         ) - 1
       ) * 100
