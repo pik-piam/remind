@@ -112,6 +112,9 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     tran_mod = "complex"
   }
 
+  if (buil_mod %in% c("services_putty", "services_with_capital")){
+    p36_floorspace <- readGDX(gdx,"p36_floorspace")
+  }
   ####### calculate minimal temporal resolution #####
   y <- Reduce(intersect,list(getYears(prodFE),getYears(prodSE)))
   prodFE  <- prodFE[,y,]
@@ -166,7 +169,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   
   if (buil_mod %in% c("services_putty", "services_with_capital")){
     
-    
+    p36_floorspace <- p36_floorspace[,y,]
     vm_demFeForEs = vm_demFeForEs[fe2es]
     
     ces_elec = c(grep("elb$", ppfen_build, value = T),grep("hpb$", ppfen_build, value = T))
@@ -280,6 +283,10 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                                             "FE|Buildings|Space Heating|Hydrogen (EJ/yr)")],dim=3),        "FE|Buildings|Space Heating (EJ/yr)")
                   
     )
+    
+    tmp0 <-  mbind(tmp0,
+                   setNames(p36_floorspace,        "Energy Service|Buildings|Floor Space (bn m2/yr)")
+                   )
   }
   
 
