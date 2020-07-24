@@ -255,8 +255,8 @@ reportEDGETransport <- function(output_folder=".",
     emidem = emidem[p_ef_dem, on = "all_enty"]
     ## calculate emissions and attribute variable and unit names
     emidem[, value := value*ef][, c("variable", "unit") := list(gsub("FE", "Emi\\|CO2", variable), "Mt CO2/yr")]
-    ## the emissions are to be labeled as "Demand"
-    emidem[, variable := paste0(variable, "|Demand")]
+    ## the emissions are to be labeled as "Tailpipe"
+    emidem[, variable := paste0(variable, "|Tailpipe")]
 
     emidem[, c("ef", "V3", "V2", "all_enty") := NULL]
     ## aggregate removing the fuel dependency
@@ -484,8 +484,8 @@ reportEDGETransport <- function(output_folder=".",
           .(variable="ES|Transport|Pass|Road",
             unit="bn pkm/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")],
-    toMIF[grep("Emi\\|CO2\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+\\|Demand$", variable),
-          .(variable="Emi|CO2|Transport|Pass|Road|Demand",
+    toMIF[grep("Emi\\|CO2\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+\\|Tailpipe$", variable),
+          .(variable="Emi|CO2|Transport|Pass|Road|Tailpipe",
             unit="Mt CO2/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("FE\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+$", variable),
@@ -499,12 +499,12 @@ reportEDGETransport <- function(output_folder=".",
           .(variable="FE|Transport|Road",
             unit="EJ/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")],
-    toMIF[grep("Emi\\|CO2\\|Transport\\|(Pass|Freight)\\|Road\\|Demand$", variable),
-          .(variable="Emi|CO2|Transport|Road|Demand",
+    toMIF[grep("Emi\\|CO2\\|Transport\\|(Pass|Freight)\\|Road\\|Tailpipe$", variable),
+          .(variable="Emi|CO2|Transport|Road|Tailpipe",
             unit="Mt CO2/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")],
-    toMIF[grep("Emi\\|CO2\\|Transport\\|(Pass|Freight)\\|Rail\\|Demand$", variable),
-          .(variable="Emi|CO2|Transport|Rail|Demand",
+    toMIF[grep("Emi\\|CO2\\|Transport\\|(Pass|Freight)\\|Rail\\|Tailpipe$", variable),
+          .(variable="Emi|CO2|Transport|Rail|Tailpipe",
             unit="Mt CO2/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("FE\\|Transport\\|(Pass|Freight)\\|Rail$", variable),
