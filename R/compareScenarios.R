@@ -2200,7 +2200,7 @@ compareScenarios <- function(mif, hist,
 
   items<- c(
     "ES|Transport|Pass (bn pkm/yr)",
-    "ES|Transport|Pass|LDV (bn pkm/yr)",
+    "ES|Transport|Pass|Road|LDV (bn pkm/yr)",
     "ES|Transport|Pass|non-LDV (bn pkm/yr)")
 
   p <- lineplots_perCap(data, items, 1e3, "Mobility Demand per Cap. (km/yr)",
