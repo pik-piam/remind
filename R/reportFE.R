@@ -573,7 +573,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                   setNames(dimSums(demFE[,,"apCarElT"],dim=3),           "FE|Transport|Pass|Road|LDV|Electricity (EJ/yr)"),    
                   setNames(dimSums(prodFE[,,FE_Transp_fety35],dim=3) 
                            -dimSums(demFE[,,LDV35],dim=3) - vm_otherFEdemand[,,'fedie'],               "FE|Transport|non-LDV (EJ/yr)"),
-                  setNames(dimSums(vm_cesIO[,,name_trsp_LDV],dim=3) * p35_passLDV_ES_efficiency,            "ES|Transport|Pass|LDV (bn pkm/yr)"),
+                  setNames(dimSums(vm_cesIO[,,name_trsp_LDV],dim=3) * p35_passLDV_ES_efficiency,            "ES|Transport|Pass|Road|LDV (bn pkm/yr)"),
                   setNames(dimSums(vm_cesIO[,,name_trsp_LDV],dim=3),            "UE|Transport|LDV (EJ/yr)"),
                   setNames(dimSums(vm_cesIO[,,name_trsp_HDV],dim=3),            "UE|Transport|HDV (EJ/yr)"),
                   NULL
@@ -728,7 +728,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     )  
 
     tmp4 <- mbind(tmp3,
-                  setNames(tmp3[,,"ES|Transport|Pass|LDV (bn pkm/yr)"] + tmp3[,,"ES|Transport|Pass|non-LDV (bn pkm/yr)"],"ES|Transport|Pass (bn pkm/yr)")
+                  setNames(tmp3[,,"ES|Transport|Pass|Road|LDV (bn pkm/yr)"] + tmp3[,,"ES|Transport|Pass|non-LDV (bn pkm/yr)"],"ES|Transport|Pass (bn pkm/yr)")
     )     
   }else{
     # we add no entries here for now. *TODO* check if these entries are used, e.g., in exoGAINSairpollutants, to sum up fes.
