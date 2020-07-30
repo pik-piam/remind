@@ -34,7 +34,7 @@ reportEDGETransport <- function(output_folder=".",
   RegionCode <- CountryCode <- cfg <- `.` <- sector <- subsector_L3 <- region <- year <- NULL
   subsector_L2 <- subsector_L1 <- aggr_mode <- vehicle_type <- det_veh <- aggr_nonmot <- NULL
   demand_F <- demand_EJ <- remind_rep <- V25 <- aggr_veh <- technology <- NULL
-  variable <- value <- NULL
+  variable <- value <- demand_VKM <- loadFactor <- NULL
   all_enty <- ef <- variable_agg <- model <- scenario <- period <- NULL
   Region <- Variable <- allEl <- co2 <- co2val <- elh2 <- elh2Dir <- elh2Syn <- fe <- fosh2  <- NULL
   fosh2Dir <- fosh2Syn <- int <- pe <- se <- sec  <- sharesec  <- syn <- te  <- tech <-  val <- el <- share <- NULL
@@ -53,7 +53,7 @@ reportEDGETransport <- function(output_folder=".",
   load_factor <- readRDS(datapath(fname = "loadFactor.RDS"))
   demand_vkm <- merge(demand_km, load_factor, by=c("year", "iso", "vehicle_type"))
   demand_vkm[, demand_VKM := demand_F/loadFactor * 1e-3] ## billion vkm
-  
+
   demand_ej <- readRDS(datapath(fname = "demandF_plot_EJ.RDS")) ## detailed final energy demand, EJ
 
   name_mif = list.files(output_folder, pattern = "REMIND_generic", full.names = F)
@@ -320,10 +320,12 @@ reportEDGETransport <- function(output_folder=".",
     return(emidem)
   }
 
-  toMIF <- rbindlist(list(
-    reportingESandFE(
+  repFE <- reportingESandFE(
       demand_ej,
-      mode ="FE"),
+    mode ="FE")
+
+  toMIF <- rbindlist(list(
+    repFE,
     reportingESandFE(
       datatable=demand_km,
       mode="ES"),
@@ -342,7 +344,7 @@ reportEDGETransport <- function(output_folder=".",
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("Emi\\|CO2\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+\\|Tailpipe$", variable),
           .(variable="Emi|CO2|Transport|Pass|Road|Tailpipe",
-            unit="Mt CO2/yr", value=sum(value))
+            unit="Mt CO2/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("ES\\|Transport\\|VKM\\|Pass\\|Road\\|[A-Za-z-]+$", variable),
           .(variable="ES|Transport|VKM|Pass|Road",
@@ -364,7 +366,7 @@ reportEDGETransport <- function(output_folder=".",
           .(variable="ES|Transport|VKM|Rail",
             unit="bn vkm/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")]
-    ))
+    ), use.names = TRUE)
 
   toMIF <- rbindlist(list(
     toMIF,
