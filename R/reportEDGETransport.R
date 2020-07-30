@@ -50,7 +50,10 @@ reportEDGETransport <- function(output_folder=".",
   ## load input data from last EDGE run
   demand_km <- readRDS(datapath(fname = "demandF_plot_pkm.RDS"))[
     , demand_F := demand_F * 1e-3] ## million -> billion pkm
-
+  load_factor <- readRDS(datapath(fname = "loadFactor.RDS"))
+  demand_vkm <- merge(demand_km, load_factor, by=c("year", "iso", "vehicle_type"))
+  demand_vkm[, demand_VKM := demand_F/loadFactor * 1e-3] ## billion vkm
+  
   demand_ej <- readRDS(datapath(fname = "demandF_plot_EJ.RDS")) ## detailed final energy demand, EJ
 
   name_mif = list.files(output_folder, pattern = "REMIND_generic", full.names = F)
@@ -113,7 +116,10 @@ reportEDGETransport <- function(output_folder=".",
       yrs <- c(seq(2005, 2060, 5), seq(2070, 2110, 10), 2130, 2150)
       remind_scenario <- cfg$title
 
-      prefix <- ifelse(mode == "ES", "ES|Transport|", "FE|Transport|")
+      prefix <- switch(mode,
+                       "FE" = "FE|Transport|",
+                       "ES" = "ES|Transport|",
+                       "VKM" = "ES|Transport|VKM|")
 
       ## we only care for non-NA variables (NA is basically *all others*)
       toadd = dt[!is.na(get(varcol)), .(model="REMIND", scenario=remind_scenario, region,
@@ -148,6 +154,23 @@ reportEDGETransport <- function(output_folder=".",
         prepare4MIF(
           datatable[!is.na(det_veh), sum(demand_F, na.rm=T),
                     by = c("region", "year", "det_veh")], "bn pkm/yr", "V1", "det_veh")))
+    }else if(mode == "VKM"){
+      report <- rbindlist(list(
+        prepare4MIF(
+          datatable[sector == "Pass", sum(demand_VKM, na.rm=T),
+                    by = c("region", "year", "aggr_mode")],
+          "bn vkm/yr", "V1", "aggr_mode"),
+        prepare4MIF(
+          datatable[sector == "Freight" & !is.na(aggr_veh), sum(demand_VKM, na.rm=T),
+                    by = c("region", "year", "aggr_veh")],
+          "bn vkm/yr", "V1", "aggr_veh"),
+        prepare4MIF(
+          datatable[sector == "Pass" & !is.na(aggr_veh), sum(demand_VKM, na.rm=T),
+                    by = c("region", "year", "aggr_veh")],
+          "bn vkm/yr", "V1", "aggr_veh"),
+        prepare4MIF(
+          datatable[!is.na(det_veh), sum(demand_VKM, na.rm=T),
+                    by = c("region", "year", "det_veh")], "bn vkm/yr", "V1", "det_veh")))
     }else{
       report <- rbindlist(list(
         prepare4MIF(
@@ -199,6 +222,35 @@ reportEDGETransport <- function(output_folder=".",
                               by = c("region", "year", "det_veh", "remind_rep")
                               ][, det_veh := paste0(det_veh, "|", remind_rep)],
                     "bn pkm/yr", "V1", "det_veh")))
+    }else if(mode == "VKM"){
+      ## for energy services, it is better to refer to the actual technologies
+      ## and not the fuel types (-> LCA)
+      techmap[, remind_rep := technology]
+      techmap["LA-BEV", remind_rep := "BEV"]
+      techmap["NG", remind_rep := "Gases"]
+
+      datatable <- datatable[techmap, on="technology"]
+
+      report_tech <- rbindlist(list(
+        prepare4MIF(
+          datatable[sector == "Pass", sum(demand_VKM, na.rm=T),
+                    by = c("region", "year", "aggr_mode", "remind_rep")
+                    ][, aggr_mode := paste0(aggr_mode, "|", remind_rep)],
+          "bn vkm/yr", "V1", "aggr_mode"),
+        prepare4MIF(
+          datatable[sector == "Freight" & !is.na(aggr_veh), sum(demand_VKM, na.rm=T),
+                    by = c("region", "year", "aggr_veh", "remind_rep")
+                    ][, aggr_veh := paste0(aggr_veh, "|", remind_rep)],
+          "bn vkm/yr", "V1", "aggr_veh"),
+        prepare4MIF(
+          datatable[sector == "Pass" & !is.na(aggr_veh), sum(demand_VKM, na.rm=T),
+                    by = c("region", "year", "aggr_veh", "remind_rep")
+                    ][, aggr_veh := paste0(aggr_veh, "|", remind_rep)],
+          "bn vkm/yr", "V1", "aggr_veh"),
+        prepare4MIF(datatable[!is.na(det_veh), sum(demand_VKM, na.rm=T),
+                              by = c("region", "year", "det_veh", "remind_rep")
+                              ][, det_veh := paste0(det_veh, "|", remind_rep)],
+                    "bn vkm/yr", "V1", "det_veh")))
     }else{
       techmap["BEV", remind_rep := "Electricity"]
       techmap["Electric", remind_rep := "Electricity"]
@@ -268,15 +320,16 @@ reportEDGETransport <- function(output_folder=".",
     return(emidem)
   }
 
-  repFE <- reportingESandFE(
-    demand_ej,
-    mode ="FE")
-
   toMIF <- rbindlist(list(
+    reportingESandFE(
+      demand_ej,
+      mode ="FE"),
     reportingESandFE(
       datatable=demand_km,
       mode="ES"),
-    repFE,
+    reportingESandFE(
+      datatable=demand_vkm,
+      mode="VKM"),
     reportingEmi(repFE = repFE, gdx = gdx, miffile = miffile)
   ))
 
@@ -289,12 +342,29 @@ reportEDGETransport <- function(output_folder=".",
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("Emi\\|CO2\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+\\|Tailpipe$", variable),
           .(variable="Emi|CO2|Transport|Pass|Road|Tailpipe",
+          by=c("model", "scenario", "region", "period")],
             unit="Mt CO2/yr", value=sum(value)),
+    toMIF[grep("ES\\|Transport\\|VKM\\|Pass\\|Road\\|[A-Za-z-]+$", variable),
+          .(variable="ES|Transport|VKM|Pass|Road",
+            unit="bn vkm/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("FE\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+$", variable),
           .(variable="FE|Transport|Pass|Road",
             unit="EJ/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")]), use.names = TRUE)
+
+  ## VKM totals, Road and Rail
+  toMIF <- rbindlist(list(
+    toMIF,
+    toMIF[grep("ES\\|Transport\\|VKM\\|(Pass|Freight)\\|Road$", variable),
+          .(variable="ES|Transport|VKM|Road",
+            unit="bn vkm/yr", value=sum(value)),
+          by=c("model", "scenario", "region", "period")],
+    toMIF[grep("ES\\|Transport\\|VKM\\|(Pass|Freight)\\|Rail$", variable),
+          .(variable="ES|Transport|VKM|Rail",
+            unit="bn vkm/yr", value=sum(value)),
+          by=c("model", "scenario", "region", "period")]
+    ))
 
   toMIF <- rbindlist(list(
     toMIF,
