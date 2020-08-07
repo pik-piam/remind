@@ -180,7 +180,7 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
   
   # join capacity additions with LCOE
   df.LCOE.dC.join <- df.LCOE.in %>%
-                      filter( type == "New Plant") %>% 
+                      filter( type == "marginal") %>% 
                       rename(LCOE = value) %>%
                       left_join(df.dC) %>% 
                       gather(variable, value, LCOE, vm_deltaCap) %>%   
@@ -262,7 +262,7 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
                          limits = c(ylimit.lo,ylimit.up),
                          sec.axis = sec_axis(~ . * sec.axis.limit / ylimit.up,
                                              name = paste0("Capacity Additions in GW/yr\n(15-year average)")))+  
-      ggtitle(paste0(plot.scen,", ",plot.reg,":\nNew plant LCOE and capacity additions of ", plot.output," technologies"))
+      ggtitle(paste0(plot.scen,", ",plot.reg,":\nMarginal LCOE and capacity additions of ", plot.output," technologies"))
     
     swfigure(sw,print,p.LCOE, sw_option="height=20,width=35", dpi=1800)
     
