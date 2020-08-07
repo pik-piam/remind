@@ -91,7 +91,7 @@ reportCapitalStock <- function(gdx,regionSubsetList=NULL) {
     }
     
     ## report industry energy efficiency capital stocks
-    if (!is.null(ppfKap_Ind)) {
+    if (!is.null(ppfKap_Ind) & 0 < length(ppfKap_Ind)) {
       mixer <- tribble(
         ~pf,                     ~name,
         'kap_cement',            'Cement',
@@ -104,6 +104,11 @@ reportCapitalStock <- function(gdx,regionSubsetList=NULL) {
         warning(paste('Unknown ppfKap_industry_dyn37 entity.',
                       'Adjust remind::reportCapitalStock()'))
       }
+      
+      if (0 != length(setdiff(mixer$pf, ppfKap_Ind))) {
+        warning(paste('Missing ppfKap_industry_dyn37 entity.',
+                      'Adjust remind::reportCapitalStock()'))
+      } 
       
       eek_Ind <- setNames(vm_cesIO[,y,ppfKap_Ind],
                           paste0('Capital|Energy Efficiency|Industry|', 
