@@ -192,34 +192,55 @@ reportCrossVariables <- function(gdx,output=NULL,regionSubsetList=NULL){
   }
   
   # variables that are calculated for all regions including GLO in the same way
-  tmp <- mbind(tmp,setNames(
-                  output[,,"FE (EJ/yr)"] * 1000
-                / output[,,"GDP|MER (billion US$2005/yr)"],           "Intensity|GDP|Final Energy (MJ/US$2005)"))
-  tmp <- mbind(tmp,setNames(
-                  output[,,"GDP|MER (billion US$2005/yr)"] 
-                / output[,,"FE (EJ/yr)"],           "Productivity|GDP|MER|Final Energy (US$2005/GJ)"))
-  tmp <- mbind(tmp,setNames(
-                  output[,,"GDP|PPP (billion US$2005/yr)"] 
-                / output[,,"FE (EJ/yr)"],           "Productivity|GDP|PPP|Final Energy (US$2005/GJ)"))
-  tmp <- mbind(tmp,setNames(
-                  (output[,,"Emi|CO2|Fossil Fuels and Industry (Mt CO2/yr)"] - output[,,"Emi|CO2|Fossil Fuels and Industry|Cement process (Mt CO2/yr)"])
-                / output[,,"FE (EJ/yr)"],                 "Intensity|Final Energy|CO2 (Mt CO2/EJ)"))
-  tmp <- mbind(tmp,setNames(
-                  output[,,"Emi|GHGtot (Mt CO2-equiv/yr)"]
-                / output[,,"GDP|MER (billion US$2005/yr)"],                 "Intensity|GDP|CO2 (Mt CO2-equiv/US$2005)"))
-  tmp <- mbind(tmp,setNames(
-                  output[,,"Emi|GHGtot (Mt CO2-equiv/yr)"]
-                / output[,,"FE (EJ/yr)"],                 "Intensity|Final Energy|CO2 (Mt CO2-equiv/EJ)"))
-  tmp <- mbind(tmp,setNames(
-                  output[,,"GDP|MER (billion US$2005/yr)"]
-                / output[,,"Population (million)"],                 "GDP|per capita|MER (kUS$2005/per capita)"))
-  tmp <- mbind(tmp,setNames(
-                  output[,,"GDP|PPP (billion US$2005/yr)"]
-                / output[,,"Population (million)"],                 "GDP|per capita|PPP (kUS$2005/per capita)")) 
-  tmp <- mbind(tmp,setNames(
-    output[,,"Welfare|Real and undiscounted|Yearly (arbitrary unit/yr)"]
-    / output[,,"Population (million)"],                 "Welfare|per capita|Real and undiscounted|Yearly (arbitrary unit/yr)")) 
-
+  tmp <- mbind(
+    tmp,
+    
+    setNames(
+        output[,,"FE (EJ/yr)"] * 1000
+      / output[,,"GDP|MER (billion US$2005/yr)"],
+      "Intensity|GDP|Final Energy (MJ/US$2005)"),
+    
+    setNames(
+        output[,,"GDP|MER (billion US$2005/yr)"] 
+      / output[,,"FE (EJ/yr)"],
+      "Productivity|GDP|MER|Final Energy (US$2005/GJ)"),
+    
+    setNames(
+        output[,,"GDP|PPP (billion US$2005/yr)"] 
+      / output[,,"FE (EJ/yr)"],
+      "Productivity|GDP|PPP|Final Energy (US$2005/GJ)"),
+    
+    setNames(
+        ( output[,,"Emi|CO2|Fossil Fuels and Industry (Mt CO2/yr)"] 
+        - output[,,"Emi|CO2|Fossil Fuels and Industry|Cement process (Mt CO2/yr)"]
+        )
+      / output[,,"FE (EJ/yr)"],
+      "Intensity|Final Energy|CO2 (Mt CO2/EJ)"),
+    
+    setNames(
+        output[,,"Emi|GHGtot (Mt CO2-equiv/yr)"]
+      / output[,,"FE (EJ/yr)"],
+      "Intensity|Final Energy|GHG (Mt CO2-equiv/EJ)"),
+    
+    setNames(
+        output[,,"Emi|GHGtot (Mt CO2-equiv/yr)"]
+      / output[,,"GDP|MER (billion US$2005/yr)"],
+      "Intensity|GDP|GHG (Mt CO2-equiv/US$2005)"),
+    
+    setNames(
+        output[,,"GDP|MER (billion US$2005/yr)"]
+      / output[,,"Population (million)"],
+      "GDP|per capita|MER (kUS$2005/per capita)"),
+    
+    setNames(
+        output[,,"GDP|PPP (billion US$2005/yr)"]
+      / output[,,"Population (million)"],
+      "GDP|per capita|PPP (kUS$2005/per capita)"),
+    
+    setNames(
+        output[,,"Welfare|Real and undiscounted|Yearly (arbitrary unit/yr)"]
+      / output[,,"Population (million)"],
+      "Welfare|per capita|Real and undiscounted|Yearly (arbitrary unit/yr)"))
   
   # Energy shares
   tmp <- mbind(tmp,setNames(       # assume 8% for transmission losses and autoconsumption of power plants
@@ -273,28 +294,28 @@ reportCrossVariables <- function(gdx,output=NULL,regionSubsetList=NULL){
     int_gr[,t,"Intensity Growth|GDP|CO2-equiv (% pa)"] <- 
       ( 
         ( 
-          (tmp[,t,"Intensity|GDP|CO2 (Mt CO2-equiv/US$2005)"] / setYears(tmp[,(which(getYears(tmp)==t)-1),"Intensity|GDP|CO2 (Mt CO2-equiv/US$2005)"],t))
+          (tmp[,t,"Intensity|GDP|GHG (Mt CO2-equiv/US$2005)"] / setYears(tmp[,(which(getYears(tmp)==t)-1),"Intensity|GDP|GHG (Mt CO2-equiv/US$2005)"],t))
           ^ (1 / ( getYears(tmp[,t,],as.integer=TRUE) - getYears(tmp[,(which(getYears(tmp)==t)-1),],as.integer=TRUE) ) )
         ) - 1
       ) * 100
     int_gr[,t,"Intensity Growth|GDP|CO2-equiv to 2005 (% pa)"] <- 
       ( 
         ( 
-          (tmp[,t,"Intensity|GDP|CO2 (Mt CO2-equiv/US$2005)"] / setYears(tmp[,2005,"Intensity|GDP|CO2 (Mt CO2-equiv/US$2005)"],t))
+          (tmp[,t,"Intensity|GDP|GHG (Mt CO2-equiv/US$2005)"] / setYears(tmp[,2005,"Intensity|GDP|GHG (Mt CO2-equiv/US$2005)"],t))
           ^ (1 / ( getYears(tmp[,t,],as.integer=TRUE) - 2005 ) )
         ) - 1
       ) * 100
     int_gr[,t,"Intensity Growth|Final Energy|CO2-equiv (% pa)"] <- 
       ( 
         ( 
-          (tmp[,t,"Intensity|Final Energy|CO2 (Mt CO2-equiv/EJ)"] / setYears(tmp[,(which(getYears(tmp)==t)-1),"Intensity|Final Energy|CO2 (Mt CO2-equiv/EJ)"],t))
+          (tmp[,t,"Intensity|Final Energy|GHG (Mt CO2-equiv/EJ)"] / setYears(tmp[,(which(getYears(tmp)==t)-1),"Intensity|Final Energy|GHG (Mt CO2-equiv/EJ)"],t))
           ^ (1 / ( getYears(tmp[,t,],as.integer=TRUE) - getYears(tmp[,(which(getYears(tmp)==t)-1),],as.integer=TRUE) ) )
         ) - 1
       ) * 100
     int_gr[,t,"Intensity Growth|Final Energy|CO2-equiv to 2005 (% pa)"] <- 
       ( 
         ( 
-          (tmp[,t,"Intensity|Final Energy|CO2 (Mt CO2-equiv/EJ)"] / setYears(tmp[,2005,"Intensity|Final Energy|CO2 (Mt CO2-equiv/EJ)"],t))
+          (tmp[,t,"Intensity|Final Energy|GHG (Mt CO2-equiv/EJ)"] / setYears(tmp[,2005,"Intensity|Final Energy|GHG (Mt CO2-equiv/EJ)"],t))
           ^ (1 / ( getYears(tmp[,t,],as.integer=TRUE) - 2005 ) )
         ) - 1
       ) * 100
