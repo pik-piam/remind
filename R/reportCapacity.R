@@ -46,7 +46,7 @@ reportCapacity <- function(gdx,regionSubsetList=NULL) {
   tmp1 <- mbind(tmp1,setNames(dimSums(vm_cap[,,c("spv","csp")],dim=3),  "Cap|Electricity|Solar (GW)"))
   tmp1 <- mbind(tmp1,setNames(dimSums(vm_cap[,,"wind"],dim=3),          "Cap|Electricity|Wind (GW)"))
   tmp1 <- mbind(tmp1,setNames(dimSums(vm_cap[,,"hydro"],dim=3),         "Cap|Electricity|Hydro (GW)"))
-  tmp1 <- mbind(tmp1,setNames(dimSums(vm_cap[,,"dot"],dim=3),           "Cap|Electricity|Oil|w/o CCS (GW)"))
+  tmp1 <- mbind(tmp1,setNames(dimSums(vm_cap[,,"dot"],dim=3),           "Cap|Electricity|Oil (GW)"))
   tmp1 <- mbind(tmp1,setNames(dimSums(vm_cap[,,c("igcc","pc","coalchp","igccc","pco","pcc")],dim=3),"Cap|Electricity|Coal (GW)"))
   tmp1 <- mbind(tmp1,setNames(dimSums(vm_cap[,,c("ngcc","ngt","gaschp","ngccc")],dim=3),     "Cap|Electricity|Gas (GW)"))
   tmp1 <- mbind(tmp1,setNames(dimSums(vm_cap[,,c("bioigccc","biochp","bioigcc")],dim=3),            "Cap|Electricity|Biomass (GW)"))
@@ -66,11 +66,12 @@ reportCapacity <- function(gdx,regionSubsetList=NULL) {
   tmp <- mbind(tmp,setNames(dimSums(vm_cap[,,c("ngcc","ngt","gaschp")],dim=3),"Cap|Electricity|Gas|w/o CCS (GW)"))
   tmp <- mbind(tmp,setNames(dimSums(vm_cap[,,c("bioigccc")],dim=3),         "Cap|Electricity|Biomass|w/ CCS (GW)"))
   tmp <- mbind(tmp,setNames(dimSums(vm_cap[,,c("biochp","bioigcc")],dim=3), "Cap|Electricity|Biomass|w/o CCS (GW)"))
+  tmp <- mbind(tmp,setNames(dimSums(vm_cap[,,"dot"],dim=3),           "Cap|Electricity|Oil|w/o CCS (GW)"))
   tmp <- mbind(tmp,setNames(dimSums(vm_cap[,,"spv"],dim=3),                 "Cap|Electricity|Solar|PV (GW)"))
   tmp <- mbind(tmp,setNames(dimSums(vm_cap[,,"csp"],dim=3),                 "Cap|Electricity|Solar|CSP (GW)"))
   tmp <- mbind(tmp,setNames(dimSums(vm_cap[,,"wind"],dim=3),                "Cap|Electricity|Wind|Onshore (GW)"))
-  tmp <- mbind(tmp,setNames(dimSums(vm_cap[,,"storspv"],dim=3) * 3,             "Cap|Electricity|Storage|Battery|For PV (GW)"))
-  tmp <- mbind(tmp,setNames(dimSums(vm_cap[,,"storwind"],dim=3) * 0.3,          "Cap|Electricity|Storage|Battery|For Wind (GW)"))
+  tmp <- mbind(tmp,setNames(dimSums(vm_cap[,,"storspv"],dim=3) * 3,         "Cap|Electricity|Storage|Battery|For PV (GW)"))
+  tmp <- mbind(tmp,setNames(dimSums(vm_cap[,,"storwind"],dim=3) * 0.3,      "Cap|Electricity|Storage|Battery|For Wind (GW)"))
   
   
   
@@ -81,9 +82,10 @@ reportCapacity <- function(gdx,regionSubsetList=NULL) {
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("bioigccc","biochp","bioigcc")],dim=3),             "New Cap|Electricity|Biomass (GW)"))
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("geohdr","hydro","spv","csp","wind")],dim=3),       "New Cap|Electricity|Non-Biomass Renewables (GW)"))
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("tnrs","fnrs")],dim=3),  "New Cap|Electricity|Nuclear (GW)"))
-  tmp2_a <- dimSums(vm_deltaCap[,,"dot"],dim=3)
-  tmp2 <- mbind(tmp2,setNames(dimSums(mbind(tmp2,tmp2_a),dim=3),              "New Cap|Electricity (GW)"))
+  tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"dot"],dim=3),                      "New Cap|Electricity|Oil (GW)"))
+  tmp2 <- mbind(tmp2,setNames(dimSums(tmp2,dim=3),              "New Cap|Electricity (GW)"))
   
+  tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"geohdr"],dim=3),         "New Cap|Electricity|Geothermal (GW)"))
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"igccc"],dim=3),          "New Cap|Electricity|Coal|IGCC|w/ CCS (GW)"))
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"igcc"],dim=3),           "New Cap|Electricity|Coal|IGCC|w/o CCS (GW)"))
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"ngccc"],dim=3),          "New Cap|Electricity|Gas|CC|w/ CCS (GW)"))
@@ -98,12 +100,12 @@ reportCapacity <- function(gdx,regionSubsetList=NULL) {
   if ("h2turb" %in% magclass::getNames(vm_cap,dim=1) ) {tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"h2turb"],dim=3),            "New Cap|Electricity|Hydrogen (GW)"))}
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("igccc","pco","pcc")],dim=3),   "New Cap|Electricity|Coal|w/ CCS (GW)"))
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("igcc","pc","coalchp")],dim=3), "New Cap|Electricity|Coal|w/o CCS (GW)"))
-  tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"bioigccc"],dim=3),       "New Cap|Electricity|Biomass|w/ CCS (GW)"))
+  tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"bioigccc"],dim=3),               "New Cap|Electricity|Biomass|w/ CCS (GW)"))
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("biochp","bioigcc")],dim=3),    "New Cap|Electricity|Biomass|w/o CCS (GW)"))
-  tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("spv","csp")],dim=3),   "New Cap|Electricity|Solar (GW)"))
-  tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"wind"],dim=3),           "New Cap|Electricity|Wind|Onshore (GW)"))
-  tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"storspv"],dim=3) * 3,             "New Cap|Electricity|Storage|Battery|For PV (GW)"))
-  tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"storwind"],dim=3) * 0.3,          "New Cap|Electricity|Storage|Battery|For Wind (GW)"))
+  tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("spv","csp")],dim=3),           "New Cap|Electricity|Solar (GW)"))
+  tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"wind"],dim=3),                   "New Cap|Electricity|Wind|Onshore (GW)"))
+  tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"storspv"],dim=3) * 3,            "New Cap|Electricity|Storage|Battery|For PV (GW)"))
+  tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"storwind"],dim=3) * 0.3,         "New Cap|Electricity|Storage|Battery|For Wind (GW)"))
   # Newly built capacities hydrogen
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("bioh2c","bioh2")],dim=3),   "New Cap|Hydrogen|Biomass (GW)"))
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"elh2"],dim=3),                "New Cap|Hydrogen|Electricity (GW)"))
@@ -128,7 +130,8 @@ reportCapacity <- function(gdx,regionSubsetList=NULL) {
                        "Cap|Electricity|Coal (GW)",
                        "Cap|Electricity|Biomass (GW)",
                        "Cap|Electricity|Hydrogen (GW)",
-                       "Cap|Electricity|Geothermal (GW)")
+                       "Cap|Electricity|Geothermal (GW)",
+                       "Cap|Electricity|Oil (GW)")
   names_capacities = intersect(names_capacities,getNames(tmp1))
   
   tmp_aux <- mbind(tmp_aux,setNames(dimSums(tmp1[,,names_capacities],dim=3) + 0.6 * tmp1[,,"Cap|Electricity|Hydro (GW)"] + tmp[,,"Cap|Electricity|Storage|Battery (GW)"], 
