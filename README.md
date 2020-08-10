@@ -26,7 +26,7 @@ a <- convGDX2MIF("/<repository>/inst/extdata/old.gdx")
 a <- convGDX2MIF(system.file("extdata", "old.gdx", package = "remind"))
 ```
 
-and proceed with `lucode::buildlibrary()` as usual.
+and proceed with `lucode2::buildlibrary()` as usual.
 
 
 As an alternative, if you want to get familiar with how testing works
@@ -40,5 +40,5 @@ my_gdxs <- c("/path/to/fulldata.gdx", "../../inst/extdata/old.gdx")
 - In RStudio hit Ctr+Shift+T or run `devtools::test()` in the command
   line
 
-If testing was successful proceed with `lucode::buildlibrary()` as
+If testing was successful proceed with `lucode2::buildlibrary()` as
 usual.
