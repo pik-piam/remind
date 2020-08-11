@@ -1,8 +1,8 @@
 Package: remind
 Type: Package
 Title: The REMIND R package
-Version: 36.171.0
-Date: 2020-08-10
+Version: 36.171.1
+Date: 2020-08-11
 Authors@R: as.person(c(
 	   "Anastasis Giannousakis <giannou@pik-potsdam.de> [aut,cre]",
 	   "Michaja Pehl [aut]"))
@@ -45,5 +45,5 @@ RoxygenNote: 7.1.1
 Suggests:
 	testthat,
 	sr15data
-ValidationKey: 6685847640
+
 VignetteBuilder: knitr
