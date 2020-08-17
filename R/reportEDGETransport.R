@@ -52,7 +52,7 @@ reportEDGETransport <- function(output_folder=".",
     , demand_F := demand_F * 1e-3] ## million -> billion pkm
   load_factor <- readRDS(datapath(fname = "loadFactor.RDS"))
   demand_vkm <- merge(demand_km, load_factor, by=c("year", "iso", "vehicle_type"))
-  demand_vkm[, demand_VKM := demand_F/loadFactor * 1e-3] ## billion vkm
+  demand_vkm[, demand_VKM := demand_F/loadFactor] ## billion vkm
 
   demand_ej <- readRDS(datapath(fname = "demandF_plot_EJ.RDS")) ## detailed final energy demand, EJ
 
