@@ -287,9 +287,18 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     p_share_fegas_b <-  setNames(collapseNames(output[,y,"FE|Buildings|Gases (EJ/yr)"] / output[,y,"FE|Buildings and Industry|Gases (EJ/yr)"]),
                                  "fegas")
     p_share_fegas_i <- 1 - p_share_fegas_b
-    p_share_fehes_b <- setNames(collapseNames(output[,y,"FE|Buildings|Heat (EJ/yr)"] / output[,y,"FE|Buildings and Industry|Heat (EJ/yr)"]),
-                                "fehes")
+    
+    p_share_fehes_b <- setNames(
+      collapseNames(
+        output[,y,"FE|Buildings|Heat (EJ/yr)"] 
+      / output[,y,"FE|Buildings and Industry|Heat (EJ/yr)"]
+      ),
+      "fehes")
     p_share_fehes_i <- 1 - p_share_fehes_b
+    
+    p_share_fehes_b <- replace_non_finite(p_share_fehes_b, 0)
+    p_share_fehes_i <- replace_non_finite(p_share_fehes_i, 0)
+    
     p_share_feh2s_b <- setNames(collapseNames(output[,y,"FE|Buildings|Hydrogen (EJ/yr)"] / output[,y,"FE|Buildings and Industry|Hydrogen (EJ/yr)"]),
                                "feh2s")
     p_share_feh2s_i <- 1 - p_share_feh2s_b
@@ -513,18 +522,18 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
 
   
   tmp <- mbind(tmp, 
-               setNames(tmp[,,"Emi|CO2|Energy|Supply|Electricity|w/ couple prod (Mt CO2/yr)"] +  tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Supply|Electricity|w/ couple prod (Mt CO2/yr)"],
-                        "Emi|CO2|Energy|Supply|Electricity|Gross|w/ couple prod (Mt CO2/yr)"), 
+    setNames(tmp[,,"Emi|CO2|Energy|Supply|Electricity|w/ couple prod (Mt CO2/yr)"] +  tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Supply|Electricity|w/ couple prod (Mt CO2/yr)"],
+             "Emi|CO2|Energy|Supply|Electricity|Gross|w/ couple prod (Mt CO2/yr)"), 
                setNames(tmp[,,"Emi|CO2|Energy|Supply|Heat|w/ couple prod (Mt CO2/yr)"] +  tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Supply|Heat|w/ couple prod (Mt CO2/yr)"],
-                        "Emi|CO2|Energy|Supply|Heat|Gross|w/ couple prod (Mt CO2/yr)"),
-               setNames(tmp[,,"Emi|CO2|Energy|Supply|Hydrogen|w/ couple prod (Mt CO2/yr)"] +  tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Supply|Hydrogen|w/ couple prod (Mt CO2/yr)"],
-                        "Emi|CO2|Energy|Supply|Hydrogen|Gross|w/ couple prod (Mt CO2/yr)"),
-               setNames(tmp[,,"Emi|CO2|Energy|SupplyandDemand|Liquids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] +  tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Supply|Liquids|w/ couple prod (Mt CO2/yr)"],
-                        "Emi|CO2|Energy|SupplyandDemand|Liquids|Gross|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"),
-               setNames(tmp[,,"Emi|CO2|Energy|SupplyandDemand|Gases|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] +  tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Supply|Gases|w/ couple prod (Mt CO2/yr)"],
-                        "Emi|CO2|Energy|SupplyandDemand|Gases|Gross|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"),
-               setNames(tmp[,,"Emi|CO2|Energy|SupplyandDemand|Solids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"],
-                        "Emi|CO2|Energy|SupplyandDemand|Solids|Gross|w/ couple prod|Before IndustryCCS (Mt CO2/yr)")
+    "Emi|CO2|Energy|Supply|Heat|Gross|w/ couple prod (Mt CO2/yr)"),
+    setNames(tmp[,,"Emi|CO2|Energy|Supply|Hydrogen|w/ couple prod (Mt CO2/yr)"] +  tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Supply|Hydrogen|w/ couple prod (Mt CO2/yr)"],
+             "Emi|CO2|Energy|Supply|Hydrogen|Gross|w/ couple prod (Mt CO2/yr)"),
+    setNames(tmp[,,"Emi|CO2|Energy|SupplyandDemand|Liquids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] +  tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Supply|Liquids|w/ couple prod (Mt CO2/yr)"],
+             "Emi|CO2|Energy|SupplyandDemand|Liquids|Gross|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"),
+    setNames(tmp[,,"Emi|CO2|Energy|SupplyandDemand|Gases|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] +  tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Supply|Gases|w/ couple prod (Mt CO2/yr)"],
+             "Emi|CO2|Energy|SupplyandDemand|Gases|Gross|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"),
+    setNames(tmp[,,"Emi|CO2|Energy|SupplyandDemand|Solids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"],
+             "Emi|CO2|Energy|SupplyandDemand|Solids|Gross|w/ couple prod|Before IndustryCCS (Mt CO2/yr)")
   )
   
   tmp <- mbind(tmp, 
@@ -898,16 +907,16 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
 
   ### share of captured carbon that is biogenic
   # technology (pe2se technology cco2 + industry cco2 biomass)/captured co2
-  p_share_cco2_bio <- (
-    (dimSums(v_emi[,,pebio][,,"cco2"], dim=3) + 
-      collapseNames(tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Energy|Demand|Industry (Mt CO2/yr)"]/
-                      GtC_2_MtCO2))/
-      vm_co2capture)
+  p_share_cco2_bio <- replace_non_finite(
+    ( dimSums(v_emi[,,pebio][,,"cco2"], dim=3) 
+    + collapseNames(
+        tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Energy|Demand|Industry (Mt CO2/yr)"]
+      / GtC_2_MtCO2)
+    )
+  / vm_co2capture)
   
   # share of captured carbon from DAC
-  p_share_cco2_DAC <- (
-    v33_emiDAC /
-      vm_co2capture)
+  p_share_cco2_DAC <- replace_non_finite(v33_emiDAC / vm_co2capture)
   
   # LUC CDR, report only negative values of CO2 LUC as CDR
   CDRco2luc <- new.magpie(getRegions(vm_eminegregi),getYears(vm_eminegregi),magclass::getNames(vm_eminegregi),fill=0)

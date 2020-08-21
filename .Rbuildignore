@@ -3,3 +3,4 @@
 ^\.git$
 ^inst/extdata/old\.gdx$
 ^\.buildlibrary$
+^.*\.zenodo.json$
