@@ -2,11 +2,6 @@
 #' 
 #' Replaces all instances of non-finite data (`NA`, `NaN`, `Inf`, and `-Inf`). 
 #' 
-#' [`magpie`][magclass::magclass] objects do not support arithmetic functions 
-#' with a `na.rm` parameter (like [`sum()`]), making it impossible to prevent 
-#' non-finite results from arising and difficult to remove them, even when it 
-#' is known that they might occure.
-#'
 #' @param x A vector or [`magpie`][magclass::magclass] object.
 #' @param replace A value to replace non-finite data with.
 #'
