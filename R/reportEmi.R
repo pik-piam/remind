@@ -16,7 +16,8 @@
 #'   \dontrun{reportEmi(gdx)}
 #' @export
 #' @importFrom gdx readGDX
-#' @importFrom magclass getNames<- getYears collapseNames mbind getYears new.magpie getRegions setYears dimSums mselect 
+#' @importFrom magclass getNames<- getYears collapseNames mbind getYears 
+#'   new.magpie getRegions setYears dimSums mselect replace_non_finite
 #' @importFrom dplyr inner_join select filter group_by summarise ungroup mutate
 #'             tbl_df rename
 #' @importFrom tidyr complete nesting unite matches
