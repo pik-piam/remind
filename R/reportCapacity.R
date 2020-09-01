@@ -51,7 +51,7 @@ reportCapacity <- function(gdx,regionSubsetList=NULL) {
   tmp1 <- mbind(tmp1,setNames(dimSums(vm_cap[,,c("ngcc","ngt","gaschp","ngccc")],dim=3),     "Cap|Electricity|Gas (GW)"))
   tmp1 <- mbind(tmp1,setNames(dimSums(vm_cap[,,c("bioigccc","biochp","bioigcc")],dim=3),            "Cap|Electricity|Biomass (GW)"))
   tmp1 <- mbind(tmp1,setNames(dimSums(vm_cap[,,"geohdr"],dim=3),        "Cap|Electricity|Geothermal (GW)"))
-  if ("h2turb" %in% magclass::getNames(vm_cap,dim=1) ) {tmp1 <- mbind(tmp1,setNames(dimSums(vm_cap[,,c("h2turb","h2turbVRE")],dim=3), "Cap|Electricity|Hydrogen (GW)"))  }
+  if (all(c("h2turbVRE","h2turb") %in% magclass::getNames(vm_cap,dim=1))) {tmp1 <- mbind(tmp1,setNames(dimSums(vm_cap[,,c("h2turb","h2turbVRE")],dim=3), "Cap|Electricity|Hydrogen (GW)"))  }
   tmp1 <- mbind(tmp1,setNames(dimSums(tmp1,dim=3),                      "Cap|Electricity (GW)"))
   
 
@@ -97,7 +97,7 @@ reportCapacity <- function(gdx,regionSubsetList=NULL) {
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"ngccc"],dim=3),          "New Cap|Electricity|Gas|w/ CCS (GW)"))
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("ngcc","ngt","gaschp")],dim=3), "New Cap|Electricity|Gas|w/o CCS (GW)"))
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"ngt"],dim=3),            "New Cap|Electricity|Gas|CT (GW)"))
-  if ("h2turb" %in% magclass::getNames(vm_cap,dim=1) ) {tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("h2turb","h2turbVRE")],dim=3),            "New Cap|Electricity|Hydrogen (GW)"))}
+  if (all(c("h2turbVRE","h2turb") %in% magclass::getNames(vm_cap,dim=1))) {tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("h2turb","h2turbVRE")],dim=3),            "New Cap|Electricity|Hydrogen (GW)"))}
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("igccc","pco","pcc")],dim=3),   "New Cap|Electricity|Coal|w/ CCS (GW)"))
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("igcc","pc","coalchp")],dim=3), "New Cap|Electricity|Coal|w/o CCS (GW)"))
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"bioigccc"],dim=3),               "New Cap|Electricity|Biomass|w/ CCS (GW)"))
