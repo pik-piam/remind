@@ -485,10 +485,13 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
       
       setNames(
         ( dimSums(vm_cesIO[,,c(ppfen_build, ppfen_ind)], dim = 3)
-          + vm_otherFEdemand[,,'feels'] 
-          + vm_otherFEdemand[,,'fegas'] 
-          + vm_otherFEdemand[,,'feh2s']
-          + vm_otherFEdemand[,,'fedie']
+        + ifelse(length(vm_demFeForEs),
+                 dimSums(vm_demFeForEs[,,esty_build], dim = 3),
+                 0)
+        + vm_otherFEdemand[,,'feels'] 
+        + vm_otherFEdemand[,,'fegas'] 
+        + vm_otherFEdemand[,,'feh2s']
+        + vm_otherFEdemand[,,'fedie']
         ),
         'FE|Other Sector (EJ/yr)')
     )
