@@ -116,8 +116,34 @@ reportCapacity <- function(gdx,regionSubsetList=NULL) {
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("gash2c","coalh2c")],dim=3), "New Cap|Hydrogen|Fossil|w/ CCS (GW)"))
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("gash2","coalh2")],dim=3),   "New Cap|Hydrogen|Fossil|w/o CCS (GW)"))
   # Newly built capacities liquids
-  tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c(refineries,"coalftrec","coalftcrec","bioftrec","bioftcrec","biodiesel","bioeths","bioethl")],dim=3), 
-                              "New Cap|Liquids (GW)"))
+  if ("MeOH" %in% getNames(vm_deltaCap, dim=1)) {
+    tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c(refineries,"coalftrec","coalftcrec","bioftrec","bioftcrec","biodiesel","bioeths","bioethl","MeOH")],dim=3), 
+                                "New Cap|Liquids (GW)"))
+    tmp2 <- mbind(tmp2, setNames(dimSums(vm_deltaCap[,,c(refineries,"coalftrec","coalftcrec")],dim=3), 
+                                 "New Cap|Liquids|Fossil (GW)"))
+    tmp2 <- mbind(tmp2, setNames(dimSums(vm_deltaCap[,,c("bioftrec","bioftcrec","biodiesel","bioeths","bioethl")],dim=3), 
+                                 "New Cap|Liquids|Biomass (GW)"))
+    tmp2 <- mbind(tmp2, setNames(dimSums(vm_deltaCap[,,c("MeOH")],dim=3), 
+                                 "New Cap|Liquids|Hydrogen (GW)"))
+  } else {
+    tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c(refineries,"coalftrec","coalftcrec","bioftrec","bioftcrec","biodiesel","bioeths","bioethl")],dim=3), 
+                                "New Cap|Liquids (GW)"))
+  }
+  # Newly built capacities gases
+  if ("h22ch4" %in% getNames(vm_deltaCap, dim=1)) {
+    tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("gastr","coalgas","biogas","h22ch4")],dim=3), 
+                                "New Cap|Gases (GW)"))
+    tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("gastr","coalgas")],dim=3), 
+                                "New Cap|Gases|Fossil (GW)"))
+    tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("biogas")],dim=3), 
+                                "New Cap|Gases|Biomass (GW)"))
+    tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("h22ch4")],dim=3), 
+                                "New Cap|Gases|Hydrogen (GW)"))
+  } else {
+    tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("gastr","coalgas","biogas")],dim=3), 
+                                "New Cap|Gases (GW)"))
+  }
+
 
   # add terms calculated from previously calculated capacity values
   tmp_aux <- NULL
