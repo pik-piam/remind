@@ -1767,7 +1767,8 @@ compareScenarios <- function(mif, hist,
              "SE|Liquids|Coal|w/ CCS (EJ/yr)",
              "SE|Liquids|Coal|w/o CCS (EJ/yr)",
              "SE|Liquids|Gas|w/ CCS (EJ/yr)",
-             "SE|Liquids|Gas|w/o CCS (EJ/yr)")
+             "SE|Liquids|Gas|w/o CCS (EJ/yr)",
+             "SE|Liquids|Hydrogen (EJ/yr)")
   var <- data[,,intersect(items,getNames(data,dim=3))]
 
   p <- mipArea(var[mainReg,,],scales="free_y")
@@ -1794,7 +1795,8 @@ compareScenarios <- function(mif, hist,
              "SE|Gases|Biomass|w/ CCS (EJ/yr)",
              "SE|Gases|Biomass|w/o CCS (EJ/yr)",
              "SE|Gases|Coal|w/ CCS (EJ/yr)",
-             "SE|Gases|Coal|w/o CCS (EJ/yr)")
+             "SE|Gases|Coal|w/o CCS (EJ/yr)",
+             "SE|Gases|Hydrogen (EJ/yr)")
   var <- data[,,intersect(items,getNames(data,dim=3))]
 
   p <- mipArea(var[mainReg,,],scales="free_y")
