@@ -484,7 +484,8 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
         ( dimSums(vm_cesIO[,,ppfen_ind], dim = 3) ),  'FE|Industry (EJ/yr)'),
       
       setNames(
-        ( dimSums(vm_cesIO[,,c(ppfen_build, ppfen_ind)], dim = 3)
+        ( dimSums(vm_cesIO[,,c(ppfen_ind)], dim = 3) 
+          + tmp0[,,'FE|Buildings (EJ/yr)']
           + vm_otherFEdemand[,,'feels'] 
           + vm_otherFEdemand[,,'fegas'] 
           + vm_otherFEdemand[,,'feh2s']
