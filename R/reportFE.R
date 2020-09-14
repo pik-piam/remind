@@ -396,7 +396,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
       'Steel|Secondary' = 'feel_steel_secondary',
 
       'other' = c('feso_otherInd', 'feli_otherInd', 'fega_otherInd', 
-                  'feh2_otherInd', 'feh2_otherInd', 'feelhth_otherInd', 
+                  'feh2_otherInd', 'fehe_otherInd', 'feelhth_otherInd', 
                   'feelwlth_otherInd')
     )
 
