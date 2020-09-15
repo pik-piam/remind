@@ -186,7 +186,8 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   
   vm_macBaseInd    <- readGDX(gdx, c('vm_macBaseInd', "v37_macBaseInd"), field = "l", format = "first_found")
   vm_emiIndCCS     <- readGDX(gdx, 'vm_emiIndCCS', field = 'l', format = 'first_found')
-  v37_emiIndCCSmax <- readGDX(gdx, 'v37_emiIndCCSmax', field = 'l', format = 'first_found')
+  v37_emiIndCCSmax <- readGDX(gdx, 'v37_emiIndCCSmax', field = 'l', 
+                              format = 'first_found', react = 'silent')
   pm_macSwitch     <- readGDX(gdx, "pm_macSwitch", field = "l",format="first_found")
   pm_macAbatLev    <- readGDX(gdx, "pm_macAbatLev", field = "l",format="first_found")
   
@@ -554,10 +555,13 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   
   if (is.null(v37_emiIndCCSmax)) {   # if not enough data for calculation
     tmp2 <- new.magpie(
-      getRegions(tmp), getYears(tmp), 
-      c(paste0('Emi|CO2|Carbon Capture and Storage|IndustryCCS|', 
+      cells_and_regions = getRegions(tmp), 
+      years = getYears(tmp), 
+      names = c(
+        paste0('Emi|CO2|Carbon Capture and Storage|IndustryCCS|', 
                c('fesos', 'fehos', 'fegas'), ' (Mt CO2/yr)'),
-        'Emi|CO2|Carbon Capture and Storage|IndustryCCS|Process (Mt CO2/yr)'))
+        'Emi|CO2|Carbon Capture and Storage|IndustryCCS|Process (Mt CO2/yr)'),
+      fill = 0)
   } else {
     tmp2 <- vm_macBaseInd %>%   # baseline emissions from fuel burning
       as.quitte() %>%
@@ -1084,12 +1088,17 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     # is used. See issue #2399
     tmp <- mbind(tmp,
       setNames(
-      ( dimSums(( p_ef_dem[,,FE_Stat_fety]
-                * (1 - p_bioshare[,,FE_Stat_fety])
-                * p_share_fety_i[,,FE_Stat_fety]
-        )
-        * dimSums(mselect(vm_prodFe, all_enty1 = FE_Stat_fety), dim = c(3.1, 3.3)), dim = 3)
-        - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS (Mt CO2/yr)"]), "Emi|CO2|Industry|Direct|BeforeTradBiomassCorr (Mt CO2/yr)")
+        ( dimSums(
+            ( p_ef_dem[,,FE_Stat_fety]
+            * (1 - p_bioshare[,,FE_Stat_fety])
+            * p_share_fety_i[,,FE_Stat_fety]
+            )
+          * dimSums(mselect(vm_prodFe, all_enty1 = FE_Stat_fety), 
+                    dim = c(3.1, 3.3)), 
+          dim = 3)
+        - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS (Mt CO2/yr)"]
+        ), 
+        "Emi|CO2|Industry|Direct|BeforeTradBiomassCorr (Mt CO2/yr)")
     )
     
     tmp <- mbind(
