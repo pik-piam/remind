@@ -19,7 +19,7 @@
 #' @importFrom magclass getNames<- getYears collapseNames mbind getYears 
 #'   new.magpie getRegions setYears dimSums mselect replace_non_finite
 #' @importFrom dplyr inner_join select filter group_by summarise ungroup mutate
-#'             tbl_df rename
+#'             as_tibble rename
 #' @importFrom tidyr complete nesting unite matches
 #' @importFrom quitte as.quitte character.data.frame
 #' @importFrom rlang .data
@@ -186,8 +186,9 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   
   vm_macBaseInd    <- readGDX(gdx, c('vm_macBaseInd', "v37_macBaseInd"), field = "l", format = "first_found")
   vm_emiIndCCS     <- readGDX(gdx, 'vm_emiIndCCS', field = 'l', format = 'first_found')
-  v37_emiIndCCSmax <- readGDX(gdx, 'v37_emiIndCCSmax', field = 'l', 
-                              format = 'first_found', react = 'silent')
+  v37_emiIndCCSmax <- readGDX(gdx, 'v37_emiIndCCSmax', field = 'l')
+  getSets(v37_emiIndCCSmax) <- sub('all_enty', 'emiInd37', 
+                                   getSets(v37_emiIndCCSmax))
   pm_macSwitch     <- readGDX(gdx, "pm_macSwitch", field = "l",format="first_found")
   pm_macAbatLev    <- readGDX(gdx, "pm_macAbatLev", field = "l",format="first_found")
   
@@ -484,9 +485,14 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                           * vm_fuelex[,,"pecoal"][cintbyfuel], dim=3)
     ) * GtC_2_MtCO2,                                                                 "Emi|CO2|Fossil Fuels and Industry|Coal|Before IndustryCCS (Mt CO2/yr)"),
     ### please note: at the end of this file, regional FFI demand emissions are reduced by bunker emission values
-    setNames( dimSums( (p_ef_dem[,,fety]*(1-p_bioshare[,,fety]))
-                       * dimSums(mselect(vm_prodFe,all_enty1=fety),dim=c(3.1,3.3))
-                       ,dim=3) ,                                     "Emi|CO2|Fossil Fuels and Industry|Demand|Before IndustryCCS (Mt CO2/yr)"),
+    setNames(
+      dimSums(
+        ( p_ef_dem[,,fety]
+        * (1 - p_bioshare[,,fety])
+        )
+      * dimSums(mselect(vm_prodFe, all_enty1 = fety), dim = c(3.1, 3.3))
+      , dim = 3),
+      "Emi|CO2|Fossil Fuels and Industry|Demand|Before IndustryCCS (Mt CO2/yr)"),
     ### please note: at the end of this file, regional Gross FFI emissions are reduced by bunker emission values
     setNames((vm_emiengregi[,,"co2"] + vm_eminegregi[,,"co2cement_process"]) * GtC_2_MtCO2
              + (dimSums(mselect(v_emi,all_enty=pebio,all_enty2="cco2"),dim=3)) * GtC_2_MtCO2,    "Emi|CO2|Gross Fossil Fuels and Industry (Mt CO2/yr)"),
@@ -609,10 +615,10 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
           
           v37_emiIndCCSmax %>% 
             as.quitte() %>% 
-            select(.data$period, .data$region, .data$all_enty, 
+            select(.data$period, .data$region, .data$emiInd37, 
                    v37_emiIndCCSmax = .data$value),
           
-          c('period', 'region', 'all_enty')
+          c('period', 'region', 'all_enty' = 'emiInd37')
         ) %>% 
           mutate(slack = ifelse(.data$v37_emiIndCCSmax, 
                                 .data$vm_emiIndCCS / .data$v37_emiIndCCSmax, 0),
@@ -622,7 +628,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
         
         c('period', 'region', 'emiInd37')
       ) %>% 
-      tbl_df() %>%
+      as_tibble() %>%
       group_by(.data$period, .data$region, .data$fety) %>%
       summarise(
         value = sum(.data$value * .data$pm_macSwitch * .data$pm_macAbatLev * .data$slack)) %>%
@@ -656,7 +662,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
             
             v37_emiIndCCSmax %>% 
               as.quitte() %>% 
-              filter('co2cement' == .data$all_enty,
+              filter('co2cement' == .data$emiInd37,
                      .data$period %in% as.numeric(sub('^y', '', y))) %>% 
               select(.data$period, .data$region, v37_emiIndCCSmax = .data$value),
             
@@ -737,13 +743,22 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   rm(tmp2)
 
   ### please note: at the end of this file, regional  FFI demand emissions are reduced by bunker emission values
-  tmp <- mbind(tmp, 
-    setNames(tmp[,,"Emi|CO2|Fossil Fuels and Industry|Demand|Before IndustryCCS (Mt CO2/yr)"] - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS (Mt CO2/yr)"],
-                        "Emi|CO2|Fossil Fuels and Industry|Demand|After IndustryCCS (Mt CO2/yr)")
-  )
-  tmp <- mbind(tmp,
-    setNames(tmp[,,"Emi|CO2|Fossil Fuels and Industry (Mt CO2/yr)"] - tmp[,,"Emi|CO2|Fossil Fuels and Industry|Demand|After IndustryCCS (Mt CO2/yr)"] - (vm_eminegregi[,,"co2cement_process"] * GtC_2_MtCO2),
-                        "Emi|CO2|Fossil Fuels and Industry|Energy Supply (Mt CO2/yr)"),
+  tmp <- mbind(
+    tmp, 
+    setNames(
+        tmp[,,"Emi|CO2|Fossil Fuels and Industry|Demand|Before IndustryCCS (Mt CO2/yr)"] 
+      - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS (Mt CO2/yr)"],
+      "Emi|CO2|Fossil Fuels and Industry|Demand|After IndustryCCS (Mt CO2/yr)")
+    )
+  
+  tmp <- mbind(
+    tmp,
+    setNames(
+        tmp[,,"Emi|CO2|Fossil Fuels and Industry (Mt CO2/yr)"] 
+      - tmp[,,"Emi|CO2|Fossil Fuels and Industry|Demand|After IndustryCCS (Mt CO2/yr)"] 
+      - (vm_eminegregi[,,"co2cement_process"] * GtC_2_MtCO2),
+      "Emi|CO2|Fossil Fuels and Industry|Energy Supply (Mt CO2/yr)"
+      ),
                  
                # setNames( vm_emiengregi[,,"co2"] * GtC_2_MtCO2
                #           - dimSums( (p_ef_dem[,,fety]*(1-p_bioshare[,,fety]))
@@ -1042,11 +1057,13 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                    "Emi|CO2|Energy|Supply|Non-Elec|Gross (Mt CO2/yr)")
   )
   
-  tmp <- mbind(tmp,
-               setNames(tmp[,,"Emi|CO2|Fossil Fuels and Industry|Energy Supply (Mt CO2/yr)"] -
-                          tmp[,,"Emi|CO2|Energy|Supply|Electricity (Mt CO2/yr)"],
-                        "Emi|CO2|Energy|Supply|Non-Elec (Mt CO2/yr)")
-  )
+  tmp <- mbind(
+    tmp,
+    setNames(
+        tmp[,,"Emi|CO2|Fossil Fuels and Industry|Energy Supply (Mt CO2/yr)"] 
+      - tmp[,,"Emi|CO2|Energy|Supply|Electricity (Mt CO2/yr)"],
+      "Emi|CO2|Energy|Supply|Non-Elec (Mt CO2/yr)")
+    )
   
   
   tmp <- mbind(tmp,
