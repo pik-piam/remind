@@ -876,7 +876,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
       ) * GtC_2_MtCO2,                                                        "Emi|CO2|Transport|Pass|Road|LDV (Mt CO2/yr)"),
       setNames( dimSums(p_ef_dem[,,FE_Transp_fety35][fe2ue]
                         * dimSums(mselect(vm_demFe,all_enty=FE_Transp_fety35,all_te=LDV35),dim=c(3.2,3.3))[fe2ue]
-                       ,dim=3) ,                                         "Emi|CO2|Transport|Pass|Road|LDV|Demand (Mt CO2/yr)"),
+                       ,dim=3) ,                                         "Emi|CO2|Transport|Pass|Road|LDV|Tailpipe (Mt CO2/yr)"),
       setNames( p35_share_seel_t_ldv  * dimSums(mselect(v_emi,all_enty1="seel",all_enty2="co2")[pe2se],dim=3)
                * GtC_2_MtCO2,                                                         "Emi|CO2|Transport|Pass|Road|LDV|Electricity (Mt CO2/yr)"),
       setNames( p35_share_seh2_t_ldv  * dimSums(mselect(v_emi,all_enty1="seh2",all_enty2="co2")[pe2se],dim=3)
