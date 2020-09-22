@@ -186,9 +186,11 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   
   vm_macBaseInd    <- readGDX(gdx, c('vm_macBaseInd', "v37_macBaseInd"), field = "l", format = "first_found")
   vm_emiIndCCS     <- readGDX(gdx, 'vm_emiIndCCS', field = 'l', format = 'first_found')
-  v37_emiIndCCSmax <- readGDX(gdx, 'v37_emiIndCCSmax', field = 'l')
-  getSets(v37_emiIndCCSmax) <- sub('all_enty', 'emiInd37', 
-                                   getSets(v37_emiIndCCSmax))
+  v37_emiIndCCSmax <- readGDX(gdx, 'v37_emiIndCCSmax', field = 'l', 
+                              react = 'silent')
+  if (!is.null(v37_emiIndCCSmax))
+    getSets(v37_emiIndCCSmax) <- sub('all_enty', 'emiInd37', 
+                                     getSets(v37_emiIndCCSmax))
   pm_macSwitch     <- readGDX(gdx, "pm_macSwitch", field = "l",format="first_found")
   pm_macAbatLev    <- readGDX(gdx, "pm_macAbatLev", field = "l",format="first_found")
   
