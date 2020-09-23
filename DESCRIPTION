@@ -1,7 +1,7 @@
 Package: remind
 Type: Package
 Title: The REMIND R package
-Version: 36.173.2
+Version: 36.173.3
 Date: 2020-09-23
 Authors@R: as.person(c(
 	   "Anastasis Giannousakis <giannou@pik-potsdam.de> [aut,cre]",

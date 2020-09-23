@@ -915,10 +915,14 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
         + p35_share_sega_psm * dimSums(mselect(v_emi,all_enty1=se_Gas,all_enty2="co2")[pe2se],dim=3)
       ) * GtC_2_MtCO2, "Emi|CO2|Transport|Pass|Short-Medium Distance (Mt CO2/yr)"),
       ## Demand Side Emissions
-      setNames( dimSums(p_ef_dem[,,FE_Transp_fety35] * dimSums(vm_demFeForEs_trnsp[,, "pass_sm", pmatch=T], dim=c(3.2, 3.3))[,,FE_Transp_fety35], dim=3), "Emi|CO2|Transport|Pass|Short-Medium Distance|Demand (Mt CO2/yr)"),
-      setNames( dimSums(p_ef_dem[,,c("fedie", "feelt", "fegat")] * dimSums(vm_demFeForEs_trnsp[,, "frgt_sm", pmatch=T], dim=c(3.2, 3.3))[,,c("fedie", "feelt", "fegat")], dim=3), "Emi|CO2|Transport|Freight|Short-Medium Distance|Demand (Mt CO2/yr)"),
-      setNames( dimSums(p_ef_dem[,,"fedie"] * dimSums(vm_demFeForEs_trnsp[,, "pass_lo", pmatch=T], dim=c(3.2, 3.3))[,,"fedie"], dim=3), "Emi|CO2|Transport|Pass|Long Distance|Demand (Mt CO2/yr)"),
-      setNames( dimSums(p_ef_dem[,,"fedie"] * dimSums(vm_demFeForEs_trnsp[,, "frgt_lo", pmatch=T], dim=c(3.2, 3.3))[,,"fedie"], dim=3), "Emi|CO2|Transport|Freight|Long Distance|Demand (Mt CO2/yr)"))
+      setNames( dimSums(p_ef_dem[,,FE_Transp_fety35]*(1-p_bioshare[,,FE_Transp_fety35]) * dimSums(vm_demFeForEs_trnsp[,, "pass_sm", pmatch=T], dim=c(3.2, 3.3))[,,FE_Transp_fety35], dim=3), "Emi|CO2|Transport|Pass|Short-Medium Distance|Demand (Mt CO2/yr)"),
+      setNames( dimSums(p_ef_dem[,,c("fedie", "feelt", "fegat")]*(1-p_bioshare[,,c("fedie", "feelt", "fegat")]) * dimSums(vm_demFeForEs_trnsp[,, "frgt_sm", pmatch=T], dim=c(3.2, 3.3))[,,c("fedie", "feelt", "fegat")], dim=3), "Emi|CO2|Transport|Freight|Short-Medium Distance|Demand (Mt CO2/yr)"),
+      setNames( dimSums(p_ef_dem[,,"fedie"]*(1-p_bioshare[,,"fedie"]) * dimSums(vm_demFeForEs_trnsp[,, "pass_lo", pmatch=T], dim=c(3.2, 3.3))[,,"fedie"], dim=3), "Emi|CO2|Transport|Pass|Long Distance|Demand (Mt CO2/yr)"),
+      setNames( dimSums(p_ef_dem[,,"fedie"]*(1-p_bioshare[,,"fedie"]) * dimSums(vm_demFeForEs_trnsp[,, "frgt_lo", pmatch=T], dim=c(3.2, 3.3))[,,"fedie"], dim=3), "Emi|CO2|Transport|Freight|Long Distance|Demand (Mt CO2/yr)"),
+      setNames( dimSums(p_ef_dem[,,FE_Transp_fety35] * dimSums(vm_demFeForEs_trnsp[,, "pass_sm", pmatch=T], dim=c(3.2, 3.3))[,,FE_Transp_fety35], dim=3), "Emi|CO2|Transport|Pass|Short-Medium Distance|Tailpipe (Mt CO2/yr)"),
+      setNames( dimSums(p_ef_dem[,,c("fedie", "feelt", "fegat")] * dimSums(vm_demFeForEs_trnsp[,, "frgt_sm", pmatch=T], dim=c(3.2, 3.3))[,,c("fedie", "feelt", "fegat")], dim=3), "Emi|CO2|Transport|Freight|Short-Medium Distance|Tailpipe (Mt CO2/yr)"),
+      setNames( dimSums(p_ef_dem[,,"fedie"] * dimSums(vm_demFeForEs_trnsp[,, "pass_lo", pmatch=T], dim=c(3.2, 3.3))[,,"fedie"], dim=3), "Emi|CO2|Transport|Pass|Long Distance|Tailpipe (Mt CO2/yr)"),
+      setNames( dimSums(p_ef_dem[,,"fedie"] * dimSums(vm_demFeForEs_trnsp[,, "frgt_lo", pmatch=T], dim=c(3.2, 3.3))[,,"fedie"], dim=3), "Emi|CO2|Transport|Freight|Long Distance|Tailpipe (Mt CO2/yr)"))
     
   }
   
