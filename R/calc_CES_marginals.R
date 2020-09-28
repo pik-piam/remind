@@ -32,23 +32,27 @@ calc_CES_marginals <- function(gdxName, id = 'file') {
     id <- 'file'
   }
   
+  gdxName <- path.expand(gdxName)
+  
   .calc_CES_marginals <- function(gdxName, id) {
     # ---- read required items from gdx ----
     pm_cesdata <- read.gdx(gdxName, 'pm_cesdata', factors = FALSE,
                            colNames = c('t', 'regi', 'pf', 'param', 'value'))
     
-    vm_cesIO <- read.gdx(gdxName, 'vm_cesIO', colNames = c('t', 'regi', 'pf', 'value'),
-                         factors = FALSE)
+    vm_effGr <- read.gdx(gdxName, 'vm_effGr', factors = FALSE,
+                         colNames = c('t', 'regi', 'pf', 'effGr'))
     
-    cesOut2cesIn <- read.gdx(gdxName, 'cesOut2cesIn', colNames = c('pf.out', 'pf.in'),
-                             factors = FALSE)
+    vm_cesIO <- read.gdx(gdxName, 'vm_cesIO', factors = FALSE,
+                         colNames = c('t', 'regi', 'pf', 'value'))
+    
+    cesOut2cesIn <- read.gdx(gdxName, 'cesOut2cesIn', factors = FALSE,
+                             colNames = c('pf.out', 'pf.in'))
     
     # ---- calculate marginals ----
     marginals <- cesOut2cesIn %>% 
       left_join(
         pm_cesdata %>% 
-          filter(2100 >= !!sym('t'),
-                 !!sym('param') %in% c('xi', 'eff', 'effgr')) %>% 
+          filter(!!sym('param') %in% c('xi', 'eff')) %>% 
           pivot_wider(names_from = 'param') %>% 
           drop_na(),
         
@@ -60,6 +64,11 @@ calc_CES_marginals <- function(gdxName, id = 'file') {
           select(-'param', 'rho' = 'value'),
         
         c('t', 'regi', 'pf.out' = 'pf')
+      ) %>% 
+      left_join(
+        vm_effGr,
+        
+        c('t', 'regi', 'pf.in' = 'pf')
       ) %>% 
       left_join(
         vm_cesIO %>% 
@@ -76,7 +85,7 @@ calc_CES_marginals <- function(gdxName, id = 'file') {
       mutate(
         # ^ !!sym() doesn't work, so use the explicit function call
         !!sym('marginal') := !!sym('xi') 
-                           * (!!sym('eff') * !!sym('effgr')) ^ (!!sym('rho'))
+                           * (!!sym('eff') * !!sym('effGr')) ^ (!!sym('rho'))
                            * `^`(!!sym('value.out'), !!sym('rho'))
                            * `^`(!!sym('value.in'), !!sym('rho') - 1))
     
