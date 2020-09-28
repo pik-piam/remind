@@ -143,8 +143,8 @@ reportCrossVariables <- function(gdx,output=NULL,regionSubsetList=NULL){
   if(tran_mod == "complex"){
       tmp <- mbind(tmp,setNames(
                            output[r,,"FE|Transport|Pass|Road|LDV|Liquids (EJ/yr)"] 
-                           * output[r,,"SE|Liquids|Biomass (EJ/yr)"]
-                           / output[r,,"SE|Liquids (EJ/yr)"],                     "FE|Transport|Pass|Road|LDV|Liquids|Biomass (EJ/yr)"))
+                           * output[r,,"FE|Transport|Pass|Liquids|Biomass (EJ/yr)"]
+                           / output[r,,"FE|Transport|Pass|Liquids (EJ/yr)"],                     "FE|Transport|Pass|Road|LDV|Liquids|Biomass (EJ/yr)"))
       tmp <- mbind(tmp,setNames(
                            output[r,,"FE|Transport|Pass|Road|LDV|Liquids (EJ/yr)"] 
                            * output[r,,"SE|Liquids|Coal (EJ/yr)"]
