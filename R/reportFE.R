@@ -683,7 +683,9 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                  setNames(dimSums(prodFE[,,"segabio.fegas.tdbiogas"],dim=3),"FE|Other Sector|Gases|Biomass (EJ/yr)"),
                  setNames(dimSums(prodFE[,,"segafos.fegas.tdfosgas"],dim=3),"FE|Other Sector|Gases|Non-Biomass (EJ/yr)"),
                  setNames(dimSums(prodFE[,,c("seliqbio.fedie.tdbiodie", "seliqbio.fepet.tdbiopet")],dim=3),"FE|Transport|Liquids|Biomass (EJ/yr)"),
-                 setNames(dimSums(prodFE[,,c("seliqfos.fedie.tdfosdie", "seliqfos.fepet.tdfospet")],dim=3),"FE|Transport|Liquids|Non-Biomass (EJ/yr)")
+                 setNames(dimSums(prodFE[,,c("seliqfos.fedie.tdfosdie", "seliqfos.fepet.tdfospet")],dim=3),"FE|Transport|Liquids|Non-Biomass (EJ/yr)"),
+                 setNames(dimSums(prodFE[,,"seliqbio.fedie.tdbiodie"],dim=3),"FE|Transport|Freight|Liquids|Biomass (EJ/yr)"),
+                 setNames(dimSums(prodFE[,,"seliqbio.fepet.tdbiopet"],dim=3),"FE|Transport|Pass|Liquids|Biomass (EJ/yr)")
                  )
     }
 
