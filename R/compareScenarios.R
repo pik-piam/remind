@@ -2199,68 +2199,99 @@ compareScenarios <- function(mif, hist,
   ## ---- ES passenger transport per capita (time domain, line graph)----
 
   swlatex(sw,"\\subsubsection{Energy Services for Passenger Transport (per Capita, year)}")
-
-  items<- c(
-    "ES|Transport|Pass (bn pkm/yr)",
-    "ES|Transport|Pass|Road|LDV (bn pkm/yr)",
-    "ES|Transport|Pass|non-LDV (bn pkm/yr)")
-
-  p <- lineplots_perCap(data, items, 1e3, "Mobility Demand per Cap. (km/yr)",
-                        global = T, per_gdp = F)
-
-  swfigure(sw,print,p,sw_option="height=9,width=16")
-
-  p <- lineplots_perCap(data, items, 1e3, "Mobility Demand per Cap. (km/yr)",
-                        global = F, per_gdp = F)
-  swfigure(sw,print,p,sw_option="height=9,width=16")
-
-
+  
+  tryCatch(
+    expr = {
+      items<- c(
+        "ES|Transport|Pass (bn pkm/yr)",
+        "ES|Transport|Pass|Road|LDV (bn pkm/yr)",
+        "ES|Transport|Pass|non-LDV (bn pkm/yr)")
+      
+      p <- lineplots_perCap(data, items, 1e3, "Mobility Demand per Cap. (km/yr)",
+                            global = T, per_gdp = F)
+      
+      swfigure(sw,print,p,sw_option="height=9,width=16")
+      
+      p <- lineplots_perCap(data, items, 1e3, "Mobility Demand per Cap. (km/yr)",
+                            global = F, per_gdp = F)
+      swfigure(sw,print,p,sw_option="height=9,width=16")
+    },
+    error = function(e) {
+      swlatex(sw, paste('\\texttt{', e, '} \\newpage'))
+      NULL
+    }
+  )
+  
   ## ---- ES per capita for transport (GDP domain)----
-
+  
   swlatex(sw,"\\subsubsection{Energy Services for Transport (per Capita, GDP)}")
-
-  p <- lineplots_perCap(data, items, 1e3, "Mobility Demand per Cap. (km/yr)",
-                        global = T, per_gdp = T)
-  swfigure(sw,print,p,sw_option="height=9,width=16")
-
-  p <- lineplots_perCap(data, items, 1e3, "Mobility Demand per Cap. (km/yr)",
-                        global = F, per_gdp = T)
-  swfigure(sw,print,p,sw_option="height=9,width=16")
-
+  
+  tryCatch(
+    expr = {
+      p <- lineplots_perCap(data, items, 1e3, "Mobility Demand per Cap. (km/yr)",
+                            global = T, per_gdp = T)
+      swfigure(sw,print,p,sw_option="height=9,width=16")
+      
+      p <- lineplots_perCap(data, items, 1e3, "Mobility Demand per Cap. (km/yr)",
+                            global = F, per_gdp = T)
+      swfigure(sw,print,p,sw_option="height=9,width=16")
+    },
+    error = function(e) {
+      swlatex(sw, paste('\\texttt{', e, '} \\newpage'))
+      NULL
+    }
+  )
+  
 
   ## ---- ES freight transport per capita (time domain, line graph)----
-
+  
   swlatex(sw,"\\subsubsection{Energy Services for Freight Transport (per Capita, year)}")
-
-  items<- c(
-    "ES|Transport|Freight (bn tkm/yr)")
-
-  p <- lineplots_perCap(data, items, 1e3, "Freight Demand per Cap. (tkm/yr)",
-                        global = T, per_gdp = F)
-
-  swfigure(sw,print,p,sw_option="height=9,width=16")
-
-  p <- lineplots_perCap(data, items, 1e3, "Freight Demand per Cap. (tkm/yr)",
-                        global = F, per_gdp = F)
-
-  swfigure(sw,print,p,sw_option="height=9,width=16")
-
-
+  
+  tryCatch(
+    expr = {
+      items<- c(
+        "ES|Transport|Freight (bn tkm/yr)")
+      
+      p <- lineplots_perCap(data, items, 1e3, "Freight Demand per Cap. (tkm/yr)",
+                            global = T, per_gdp = F)
+      
+      swfigure(sw,print,p,sw_option="height=9,width=16")
+      
+      p <- lineplots_perCap(data, items, 1e3, "Freight Demand per Cap. (tkm/yr)",
+                            global = F, per_gdp = F)
+      
+      swfigure(sw,print,p,sw_option="height=9,width=16")
+    },
+    error = function(e) {
+      swlatex(sw, paste('\\texttt{', e, '} \\newpage'))
+      NULL
+    }
+  )
+  
+  
   ## ---- ES per capita for transport (GDP domain)----
-
+  
   swlatex(sw,"\\subsubsection{Energy Services for Freight Transport (per Capita, GDP)}")
-
-  p <- lineplots_perCap(data, items, 1e3, "Freight Demand per Cap. (tkm/yr)",
-                        global = T, per_gdp = T)
-  swfigure(sw,print,p,sw_option="height=9,width=16")
-
-  p <- lineplots_perCap(data, items, 1e3, "Freight Demand per Cap. (tkm/yr)",
-                        global = F, per_gdp = T)
-
-  swfigure(sw,print,p,sw_option="height=9,width=16")
-
+  tryCatch(
+    expr = {
+      
+      p <- lineplots_perCap(data, items, 1e3, "Freight Demand per Cap. (tkm/yr)",
+                            global = T, per_gdp = T)
+      swfigure(sw,print,p,sw_option="height=9,width=16")
+      
+      p <- lineplots_perCap(data, items, 1e3, "Freight Demand per Cap. (tkm/yr)",
+                            global = F, per_gdp = T)
+      
+      swfigure(sw,print,p,sw_option="height=9,width=16")
+      
+    },
+    error = function(e) {
+      swlatex(sw, paste('\\texttt{', e, '} \\newpage'))
+      NULL
+    }
+  )
   swlatex(sw,"\\twocolumn")
-
+  
 
 
   ## ---- ++++ C L I M A T E ++++ ----
