@@ -95,12 +95,12 @@ reportEDGETransport <- function(output_folder=".",
     datatable[subsector_L3 == "International Aviation", aggr_veh := "Pass|Aviation|International"]
 
     ## High Detail: Ecoinvent-Compatible Output
-    datatable[grepl("Compact|Subcompact", vehicle_type),
+    datatable[grepl("Subcompact", vehicle_type),
               det_veh := "Pass|Road|LDV|Small"]
     datatable[grepl("Mini|Three-Wheeler", vehicle_type),
               det_veh := "Pass|Road|LDV|Mini"]
-    datatable[vehicle_type == "Midsize Car", det_veh := "Pass|Road|LDV|Medium"]
-    datatable[vehicle_type == "Large Car", det_veh := "Pass|Road|LDV|Large"]
+    datatable[vehicle_type == "Compact", det_veh := "Pass|Road|LDV|Medium"]
+    datatable[vehicle_type == "Large Car|Midsize Car", det_veh := "Pass|Road|LDV|Large"]
     datatable[grepl("SUV", vehicle_type),
               det_veh := "Pass|Road|LDV|SUV"]
     datatable[grepl("Van|Multipurpose", vehicle_type),
