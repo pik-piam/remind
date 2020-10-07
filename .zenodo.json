@@ -1,6 +1,6 @@
 {
   "title": "remind: The REMIND R package",
-  "version": "36.173.7",
+  "version": "36.173.8",
   "description": "<p>Contains the REMIND-specific routines for data and model output manipulation.<\/p>",
   "creators": [
     {
