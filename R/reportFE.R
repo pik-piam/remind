@@ -683,12 +683,18 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                  )
     if("segabio" %in% se_Gas){
       ## Bioshare in FEDIE and FEPET
+    if("seliqbio" %in% getNames(prodFE, dim=1)) {
       fedie_bioshare <- dimSums(prodFE[,,"seliqbio.fedie.tdbiodie"] /
-                                (prodFE[,,"seliqbio.fedie.tdbiodie"] +
-                                 prodFE[,, "seliqfos.fedie.tdfosdie"]),dim=3)
+                                  (prodFE[,,"seliqbio.fedie.tdbiodie"] +
+                                     prodFE[,, "seliqfos.fedie.tdfosdie"]),dim=3)
       fepet_bioshare <- dimSums(prodFE[,,"seliqbio.fepet.tdbiopet"] /
-                                (prodFE[,,"seliqbio.fepet.tdbiopet"] +
-                                 prodFE[,, "seliqfos.fepet.tdfospet"]),dim=3)
+                                  (prodFE[,,"seliqbio.fepet.tdbiopet"] +
+                                     prodFE[,, "seliqfos.fepet.tdfospet"]),dim=3)
+    } else {
+      fedie_bioshare <- NA
+      fepet_bioshare <- NA
+    }
+
       tmp2 <- mbind(tmp2,
                  setNames(dimSums(prodFE[,,"segabio.fegas.tdbiogas"],dim=3),"FE|Other Sector|Gases|Biomass (EJ/yr)"),
                  setNames(dimSums(prodFE[,,"segafos.fegas.tdfosgas"],dim=3),"FE|Other Sector|Gases|Non-Biomass (EJ/yr)"))
