@@ -930,22 +930,43 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   
   ### CDR/CCU emissions ##########################################################################################  
   ### moved here to include industry CCS
-
+  
   
   # calculate CCU/CDR share parameters
-
+  
   ### share of captured carbon that is biogenic
   # technology (pe2se technology cco2 + industry cco2 biomass)/captured co2
-  p_share_cco2_bio <- replace_non_finite(
-    ( dimSums(v_emi[,,pebio][,,"cco2"], dim=3) 
-    + collapseNames(
-        tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Energy|Demand|Industry (Mt CO2/yr)"]
-      / GtC_2_MtCO2)
-    )
-  / vm_co2capture)
+  p_share_cco2_bio <- (
+    (dimSums(v_emi[,,pebio][,,"cco2"], dim=3) + 
+       collapseNames(tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Energy|Demand|Industry (Mt CO2/yr)"]/
+                       GtC_2_MtCO2))/
+      vm_co2capture)
+  p_share_cco2_bio[is.na(p_share_cco2_bio)] <- 0
+  
+  # share of captured carbon from pe2se technologies
+  p_share_cco2_pe2se <- collapseNames(dimSums(v_emi[,,][,,"cco2"], dim=3)/ 
+                                        vm_co2capture)
+  p_share_cco2_pe2se[is.na(p_share_cco2_pe2se)] <- 0
+  
+  #share of biogenic captured carbon from pe2se technologies
+  p_share_cco2_bio_pe2se <- collapseNames(dimSums(v_emi[,,pebio][,,"cco2"], dim=3)/ 
+                                            vm_co2capture)
+  p_share_cco2_bio_pe2se[is.na(p_share_cco2_bio_pe2se)] <- 0
+  
+  
   
   # share of captured carbon from DAC
   p_share_cco2_DAC <- replace_non_finite(v33_emiDAC / vm_co2capture)
+  
+  # share of captured carbon from industry
+  p_share_cco2_ind <- dimSums(vm_emiIndCCS[,y,], dim=3) / vm_co2capture
+  p_share_cco2_ind[is.na(p_share_cco2_ind)] <- 0
+  
+  # share of captured fossil carbon from industry
+  p_share_cco2_ind_fos <- (dimSums(vm_emiIndCCS[,y,], dim=3)-tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Energy|Demand|Industry (Mt CO2/yr)"]/
+                             GtC_2_MtCO2) / vm_co2capture
+  p_share_cco2_ind_fos[is.na(p_share_cco2_ind_fos)] <- 0
+  
   
   # LUC CDR, report only negative values of CO2 LUC as CDR
   CDRco2luc <- new.magpie(getRegions(vm_eminegregi),getYears(vm_eminegregi),magclass::getNames(vm_eminegregi),fill=0)
@@ -961,8 +982,8 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     # bioenergy carbon capture: pe2se technology cco2 + industry cco2 biomass
     setNames(
       (dimSums(mselect(v_emi, all_enty = pebio, all_enty2 = "cco2"), dim = 3)
-      * GtC_2_MtCO2 
-      + collapseNames(tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Energy|Demand|Industry (Mt CO2/yr)"]))*(-1), 
+       * GtC_2_MtCO2 
+       + collapseNames(tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Energy|Demand|Industry (Mt CO2/yr)"]))*(-1), 
       "Emi|CO2|BECC (Mt CO2/yr)"),
     # bioenergy carbon capture: pe2se technology cco2 + industry cco2 biomass
     setNames(
@@ -997,7 +1018,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                 dim = 3) 
               - collapseNames(tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Energy|Demand|Industry (Mt CO2/yr)"]/
                                 GtC_2_MtCO2)
-                
+              
         )
         * p_share_carbonCapture_stor
         )
@@ -1030,8 +1051,29 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     setNames(
       dimSums(vm_co2CCUshort,dim=3) * (1-p_share_cco2_DAC-p_share_cco2_bio) *
         GtC_2_MtCO2,
-      "Carbon Sequestration|CCU|Fossil (Mt CO2/yr)")
+      "Carbon Sequestration|CCU|Fossil (Mt CO2/yr)"),
     
+    setNames(
+      dimSums(vm_co2CCUshort,dim=3) * p_share_cco2_ind *
+        GtC_2_MtCO2,
+      "Carbon Sequestration|CCU|Industry (Mt CO2/yr)"),
+    
+    setNames(
+      dimSums(vm_co2CCUshort,dim=3) * p_share_cco2_ind_fos *
+        GtC_2_MtCO2,
+      "Carbon Sequestration|CCU|Industry|Fossil (Mt CO2/yr)"),
+    setNames(
+      dimSums(vm_co2CCUshort,dim=3) * (p_share_cco2_ind - p_share_cco2_ind_fos) *
+        GtC_2_MtCO2,
+      "Carbon Sequestration|CCU|Industry|Biomass (Mt CO2/yr)"),
+    setNames(
+      dimSums(vm_co2CCUshort,dim=3) * p_share_cco2_bio_pe2se *
+        GtC_2_MtCO2,
+      "Carbon Sequestration|CCU|Pe2Se|Biomass (Mt CO2/yr)"),
+    setNames(
+      dimSums(vm_co2CCUshort,dim=3) * (p_share_cco2_pe2se - p_share_cco2_bio_pe2se) *
+        GtC_2_MtCO2,
+      "Carbon Sequestration|CCU|Pe2Se|Fossil (Mt CO2/yr)")
   )
   # cumulative CDR emissions
   tmp <- mbind(tmp, 
