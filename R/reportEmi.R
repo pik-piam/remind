@@ -956,7 +956,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   
   
   # share of captured carbon from DAC
-  p_share_cco2_DAC <- replace_non_finite(v33_emiDAC / vm_co2capture)
+  p_share_cco2_DAC <- replace_non_finite(-v33_emiDAC / vm_co2capture)
   
   # share of captured carbon from industry
   p_share_cco2_ind <- dimSums(vm_emiIndCCS[,y,], dim=3) / vm_co2capture
