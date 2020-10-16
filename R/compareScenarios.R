@@ -309,7 +309,7 @@ compareScenarios <- function(mif, hist,
 
   tot <-"Emi|CO2 (Mt CO2/yr)"
   items <- c("Emi|CO2|Land-Use Change (Mt CO2/yr)",
-             "Emi|CO2|Energy|Supply|Non-Elec (Mt CO2/yr)",
+             "Emi|CO2|Energy|Supply|Non-Elec|Gross (Mt CO2/yr)",
              "Emi|CO2|Energy|Supply|Electricity|Gross (Mt CO2/yr)",
              "Emi|CO2|Energy|Demand|Industry|Gross (Mt CO2/yr)",
              "Emi|CO2|FFaI|Industry|Process (Mt CO2/yr)",
