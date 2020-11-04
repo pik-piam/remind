@@ -86,8 +86,8 @@ calc_CES_marginals <- function(gdxName, id = 'file') {
         # ^ !!sym() doesn't work, so use the explicit function call
         !!sym('marginal') := !!sym('xi') 
                            * (!!sym('eff') * !!sym('effGr')) ^ (!!sym('rho'))
-                           * `^`(!!sym('value.out'), !!sym('rho'))
-                           * `^`(!!sym('value.in'), !!sym('rho') - 1))
+                           * `^`(!!sym('value.out'), 1 - !!sym('rho'))
+                           * `^`(!!sym('value.in'),  !!sym('rho') - 1))
     
     # ---- calculate prices recursively using the chain rule ----
     CES_root <- setdiff(cesOut2cesIn$pf.out, cesOut2cesIn$pf.in)
