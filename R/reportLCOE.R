@@ -478,6 +478,15 @@ reportLCOE <- function(gdx, output.type = "both"){
   `CCS Cost` <- NULL
   type <- NULL
   FlexTax <- NULL
+  data <- NULL
+  sector <- NULL
+  NotBuilt <- NULL
+  FlexPriceShare <- NULL
+  all_in <- NULL
+  FEtax <- NULL
+  `Flex Tax` <- NULL
+  `FE Tax` <- NULL
+  
   
   ##############################################
   

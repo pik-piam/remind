@@ -1,6 +1,6 @@
 # The REMIND R package
 
-R package **remind**, version **36.174.1**
+R package **remind**, version **36.175.0**
 
   
 
