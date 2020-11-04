@@ -27,7 +27,7 @@
 #' @export
 calc_CES_marginals <- function(gdxName, id = 'file') {
   
-  if (!id %in% c('file', 'scenario')) {
+  if (all(!is.null(id), !id %in% c('file', 'scenario'))) {
     warning('id must be either "file" or "scenario".  Defaulting to "file".')
     id <- 'file'
   }
@@ -163,12 +163,12 @@ calc_CES_marginals <- function(gdxName, id = 'file') {
   # ---- bind results for all valid input files together ----
   r <- bind_rows(
     lapply(gdxName, function(gdxName) {
-      .calc_CES_marginals(gdxName, id = id == 'scenario') %>% 
+      .calc_CES_marginals(gdxName, id = all(!is.null(id), id == 'scenario')) %>% 
         mutate(file = gdxName)
     })
   )
   
-  if ('file' != id) {
+  if (any(is.null(id), 'file' != id)) {
     r <- r %>% 
       select(-file)
   }
