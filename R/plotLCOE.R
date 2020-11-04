@@ -18,6 +18,7 @@
 #' @importFrom quitte order.levels sum_total getRegs revalue.levels
 #' @importFrom tidyr spread gather
 #' @importFrom data.table frollmean
+#' @importFrom gdx readGDX
 
 
 plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_regi",fileName="LCOE_plots.pdf") {
@@ -131,7 +132,10 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
                  "@")
 
   
-  ylimit.up <- 300 # y axis max
+  ylimit.up <- 250 # y axis max
+  ylimit.lo <- -150 # y axes min
+  plot.cost <- c( "Flex Tax","Second Fuel Cost",  "CO2 Tax Cost", "Fuel Cost",
+                  "OMV Cost" , "OMF Cost", "Investment Cost","Total LCOE")
   plot.period <- y
   plot.scen <- getScenarios(df.LCOE.in)
   #plot.period <- c(2020,2030,2040,2050)
@@ -148,11 +152,26 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
   #                                  legend.text = element_text(size=20),
   #                                  legend.key.size = unit(2,"line"))
   # colors of cost components
+  # cost.colors <- c("Investment Cost" = "azure4", "OMF Cost" = "darkcyan", "OMV Cost" = "cyan",
+  #                  "Fuel Cost" = "orange3", "CO2 Tax Cost" = "indianred", "CO2 Provision Cost" = "slategray1",
+  #                  "Second Fuel Cost" = "sandybrown", "VRE Storage Cost" = "mediumpurple3",
+  #                  "Grid Cost" = "darkseagreen3", "CCS Tax Cost" = "chartreuse4",
+  #                  "CCS Cost" = "darkblue", "Flex Tax" = "yellow1")
+  
   cost.colors <- c("Investment Cost" = "azure4", "OMF Cost" = "darkcyan", "OMV Cost" = "cyan",
-                   "Fuel Cost" = "orange3", "CO2 Tax Cost" = "indianred", "CO2 Provision Cost" = "slategray1",
-                   "Second Fuel Cost" = "sandybrown", "VRE Storage Cost" = "mediumpurple3",
-                   "Grid Cost" = "darkseagreen3", "CCS Tax Cost" = "chartreuse4", 
-                   "CCS Cost" = "darkblue", "Flex Tax" = "yellow1")
+                   "Fuel Cost" = "orange3", "CO2 Tax Cost" = "indianred", 
+                   "Second Fuel Cost" = "sandybrown", "Flex Tax" = "yellow1")
+  
+  
+  # relabel outputs and only plot most important technologies per output
+  relabel.outputs <- c("seliqfos" = "seliq", "seliqbio" = "seliq", 
+                       "segafos" = "segas", "segabio" = "segas")
+  
+  plot.outputs <- c("seel","seliq","segas","seh2")
+  plot.techs <- c("pc", "igcc", "ngt","ngcc", "ngccc","tnrs","hydro","spv","wind","csp", "biochp","bioigccc",
+                  "refliq","biodiesel","bioftrec","bioftcrec", "MeOH",
+                  "gastr", "biogas","h22ch4",
+                  "elh2","elh2VRE", "bioh2", "bioh2c", "gash2c", "coalh2c")
   
   ### end plot settings
   
@@ -169,28 +188,61 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
     mutate( vm_deltaCap = frollmean(vm_deltaCap, 3, align = "center", fill = NA)) %>% 
     ungroup() 
   
-  
-  # relabel outputs and only plot most important technologies per output
-  relabel.outputs <- c("seliqfos" = "seliq", "seliqbio" = "seliq", "segafos" = "segas", "segabio" = "segas")
-  
-  plot.outputs <- c("seel","seliq","segas")
-  plot.techs <- c("pc", "igcc", "ngt","ngcc", "ngccc","tnrs","hydro","spv","wind","csp", "biochp","bioigccc",
-                  "refliq","biodiesel","bioftrec","bioftcrec", "MeOH",
-                  "gastr", "biogas","h22ch4")
-  
-  # join capacity additions with LCOE
-  df.LCOE.dC.join <- df.LCOE.in %>%
-                      filter( type == "marginal") %>% 
-                      rename(LCOE = value) %>%
-                      left_join(df.dC) %>% 
-                      gather(variable, value, LCOE, vm_deltaCap) %>%   
-                      revalue.levels(output = relabel.outputs) %>% 
-                      # do away with cost dimension for vm_deltaCap to save memory, filter for periods
-                      filter( cost == "Investment Cost" | variable == "LCOE",
-                              period %in% plot.period,
-                              output %in% plot.outputs, tech %in% plot.techs)
+  # calculate prices
+  tdptwyr2dpgj <- 31.71   #TerraDollar per TWyear to Dollar per GJ
+  qBalSe.m <- readGDX(gdx, "q_balSe", field = "m", restore_zeros = F)
+  qBalSeel.m <- readGDX(gdx,"q32_balSe",field="m", restore_zeros = F) 
+  budget.m <- readGDX(gdx,'qm_budget',field = "m")[,getYears(qBalSe.m),]
+  vm_prodSe <- readGDX(gdx, "vm_prodSe", field = "l", restore_zeros = F)
   
 
+  
+  vm_prodSe_output <- dimSums(vm_prodSe, dim=c(3.1,3.3), na.rm = T) # sum SE over all technologies per output type
+  qBalSe.m <- mbind(qBalSeel.m, qBalSe.m) # bind marginals from seel balanace to marginal from other se balance eqation
+  SePrice <- qBalSe.m / (budget.m+1e-10) * tdptwyr2dpgj * 1.2 * 3.66 # calculate SE Prices in USD2015/Mwh
+  
+  # calculate gases and liquids prices as demand-weighted average of biofuel and fossil fuel
+  SePrice <- mbind(SePrice,
+                   setNames(
+                     SePrice[,,"seliqfos"]*vm_prodSe_output[,,"seliqfos"]+
+                     SePrice[,,"seliqbio"]*vm_prodSe_output[,,"seliqbio"] /
+                     (vm_prodSe_output[,,"seliqfos"]+vm_prodSe_output[,,"seliqbio"]),
+                     "seliq"),
+                   setNames(
+                     SePrice[,,"segafos"]*vm_prodSe_output[,,"segafos"]+
+                     SePrice[,,"segabio"]*vm_prodSe_output[,,"segabio"] /
+                       (vm_prodSe_output[,,"segafos"]+vm_prodSe_output[,,"segabio"]),
+                     "segas"))
+  
+  # convert SE prices to dataframe, calculate 15-year moving average
+  df.SePrice <- as.quitte(SePrice) %>% 
+                  rename(output = all_enty, Price = value) %>%
+                  select(region, period, output, Price) %>% 
+                  # moving average
+                  group_by(region, output) %>% 
+                  mutate( Price = frollmean(Price, 3, align = "center", fill = NA)) %>% 
+                  ungroup() 
+ 
+  # join LCOE with capacity additions and SE prices
+  df.LCOE.dC.join <- df.LCOE.in %>%
+                      filter( type == "marginal") %>% 
+                      revalue.levels(output = relabel.outputs) %>% 
+                      rename(LCOE = value) %>%
+                      left_join(df.dC) %>% 
+                      left_join(df.SePrice) %>% 
+                      gather(variable, value, LCOE, vm_deltaCap, Price) %>%   
+                      # do away with cost dimension for non LCOE variables
+                      filter( cost == "Investment Cost" | variable == "LCOE",
+                              period %in% plot.period,
+                              output %in% plot.outputs, 
+                              tech %in% plot.techs,
+                              cost %in% plot.cost) %>% 
+                      mutate( tech = as.factor(tech)) %>%  
+                      order.levels(plot.tech)
+  
+
+  df.LCOE.dC.join <- df.LCOE.dC.join %>% 
+                      filter(region %in% c("USA"))
   ### loop to plot LCOE and capacity additions per region and energy output
   
   # have to do plotting loop with lapply such that variable scale of second y axes works 
@@ -201,6 +253,9 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
     # region and output
     plot.reg <- getRegs(df.LCOE.grouped)
     plot.output <- unique(df.LCOE.grouped$output)
+    
+    print(plot.reg)
+    print(plot.output)
     
     # remove LCOE that are higher than y axis limit
     df.LCOE.plot <- df.LCOE.grouped %>% 
@@ -218,7 +273,8 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
     # the two cost components that can be negative
                     filter(cost %in% c("CO2 Tax Cost","Second Fuel Cost"))
     
-    ylimit.lo <- min(df.LCOE.min$value, na.rm = T)-50 # y axis min.
+    #ylimit.lo <- min(df.LCOE.min$value, na.rm = T)-50 # y axis min.
+ 
     
     # maximum capacity addition in plot
     df.dC.max <- df.LCOE.plot %>% 
@@ -235,9 +291,7 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
                             value)) %>% 
                           # remove Total LCOE
                           filter( cost != "Total LCOE") %>% 
-                          order.levels(cost = c("Flex Tax","CCS Cost","CCS Tax Cost","Grid Cost","VRE Storage Cost","Second Fuel Cost","CO2 Provision Cost",
-                            "CO2 Tax Cost", "Fuel Cost", "OMV Cost", 
-                            "OMF Cost", "Investment Cost"))
+                          order.levels(cost = plot.cost)
     
     df.LCOE.total <- df.LCOE.plot %>% 
                       filter(cost == "Total LCOE")
@@ -247,22 +301,32 @@ plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_
       geom_col(data=df.LCOE.plot.out %>% filter(variable == "LCOE"),
                aes(tech, value, fill=cost), alpha=0.7) +
       geom_point(data=df.LCOE.plot.out %>% filter(variable == "vm_deltaCap"),
-                 aes(tech, value), 
-                 alpha=1, size=7, shape=1, color="black",stroke = 3) +
-      geom_point(data=df.LCOE.plot.out %>% filter(variable == "vm_deltaCap"),
-                 aes(tech, value), 
-                 alpha=0.9, size=5, color="white") +
+                 aes(tech, value, color=variable), 
+                 alpha=0.8, size=9) +
+      # geom_point(data=df.LCOE.plot.out %>% filter(variable == "vm_deltaCap"),
+      #            aes(tech, value), 
+      #            alpha=0.9, size=5, color="white") +
+      geom_hline(data=df.LCOE.plot.out %>% filter(variable == "Price"), 
+                  aes(yintercept=value, color=variable), size=2, alpha=0.7) +
       geom_errorbar(data=df.LCOE.total, aes(x=tech, ymin=value, ymax=value, linetype="solid"), size=2) +
       scale_linetype_identity(name = '', guide = 'legend',labels = c('Total LCOE')) +
+      #scale_color_identity(name = '', guide = 'legend',labels = c('REMIND Price')) +
+      scale_color_manual(values=c("Price"="blue", "vm_deltaCap" = "firebrick")) +
       facet_wrap(~period) +
       plot_theme +
       scale_fill_manual(values=cost.colors, name="LCOE components") +
       scale_x_discrete("Technology") +
-      scale_y_continuous("LCOE (USD2015/MWh)",
+      scale_y_continuous("LCOE and REMIND Price (USD2015/MWh)",
                          limits = c(ylimit.lo,ylimit.up),
+                         breaks = seq(round(ylimit.lo,digits = -1),
+                                      round(ylimit.up, digits = -1),
+                                            50),
                          sec.axis = sec_axis(~ . * sec.axis.limit / ylimit.up,
                                              name = paste0("Capacity Additions in GW/yr\n(15-year average)")))+  
       ggtitle(paste0(plot.scen,", ",plot.reg,":\nMarginal LCOE and capacity additions of ", plot.output," technologies"))
+    
+    
+  
     
     swfigure(sw,print,p.LCOE, sw_option="height=20,width=35", dpi=1800)
     
