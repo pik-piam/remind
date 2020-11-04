@@ -36,8 +36,9 @@ reportEDGETransport <- function(output_folder=".",
   demand_F <- demand_EJ <- remind_rep <- V25 <- aggr_veh <- technology <- NULL
   variable <- value <- demand_VKM <- loadFactor <- NULL
   all_enty <- ef <- variable_agg <- model <- scenario <- period <- NULL
-  Region <- Variable <- allEl <- co2 <- co2val <- elh2 <- elh2Dir <- elh2Syn <- fe <- fosh2  <- NULL
-  fosh2Dir <- fosh2Syn <- int <- pe <- se <- sec  <- sharesec  <- syn <- te  <- tech <-  val <- el <- share <- NULL
+  Region <- Variable <- co2 <- co2val <- elh2 <- fe  <- NULL
+  int <- se <- sec  <- sharesec <- te  <- tech <-  val <- share <- NULL
+  eff <- sharebio <- sharesyn <- totseliq <- type <- NULL
 
   load(file.path(output_folder, "config.Rdata"))
 
@@ -52,7 +53,7 @@ reportEDGETransport <- function(output_folder=".",
     , demand_F := demand_F * 1e-3] ## million -> billion pkm
   load_factor <- readRDS(datapath(fname = "loadFactor.RDS"))
   demand_vkm <- merge(demand_km, load_factor, by=c("year", "iso", "vehicle_type"))
-  demand_vkm[, demand_VKM := demand_F/loadFactor * 1e-3] ## billion vkm
+  demand_vkm[, demand_VKM := demand_F/loadFactor] ## billion vkm
 
   demand_ej <- readRDS(datapath(fname = "demandF_plot_EJ.RDS")) ## detailed final energy demand, EJ
 
@@ -95,12 +96,12 @@ reportEDGETransport <- function(output_folder=".",
     datatable[subsector_L3 == "International Aviation", aggr_veh := "Pass|Aviation|International"]
 
     ## High Detail: Ecoinvent-Compatible Output
-    datatable[grepl("Compact|Subcompact", vehicle_type),
+    datatable[grepl("Subcompact", vehicle_type),
               det_veh := "Pass|Road|LDV|Small"]
     datatable[grepl("Mini|Three-Wheeler", vehicle_type),
               det_veh := "Pass|Road|LDV|Mini"]
-    datatable[vehicle_type == "Midsize Car", det_veh := "Pass|Road|LDV|Medium"]
-    datatable[vehicle_type == "Large Car", det_veh := "Pass|Road|LDV|Large"]
+    datatable[vehicle_type == "Compact", det_veh := "Pass|Road|LDV|Medium"]
+    datatable[vehicle_type == "Large Car|Midsize Car", det_veh := "Pass|Road|LDV|Large"]
     datatable[grepl("SUV", vehicle_type),
               det_veh := "Pass|Road|LDV|SUV"]
     datatable[grepl("Van|Multipurpose", vehicle_type),
@@ -292,7 +293,6 @@ reportEDGETransport <- function(output_folder=".",
   ## Demand emissions
   reportingEmi <- function(repFE, gdx, miffile){
 
-    #### Tailpipe emissions ####
     ## load emission factors for fossil fuels
     p_ef_dem <- readGDX(gdx, "p_ef_dem")  ## MtCO2/EJ
     p_ef_dem <- as.data.table(p_ef_dem)[all_enty %in% c("fepet", "fegas", "feelt", "feh2t")]  ## emissions factor for Electricity and Hydrogen are 0, as we are calculating tailpipe emissions
@@ -307,10 +307,75 @@ reportEDGETransport <- function(output_folder=".",
     emidem = emidem[p_ef_dem, on = "all_enty"]
     ## calculate emissions and attribute variable and unit names
     emidem[, value := value*ef][, c("variable", "unit") := list(gsub("FE", "Emi\\|CO2", variable), "Mt CO2/yr")]
-    ## the emissions are to be labeled as "Tailpipe"
-    emidem[, variable := paste0(variable, "|Tailpipe")]
 
-    emidem[, c("ef", "V3", "V2", "all_enty") := NULL]
+    emidem = rbind(emidem[region %in% unique(emidem$region)][,type := "tailpipe"], emidem[region %in% unique(emidem$region)][,type := "demand"])
+
+    ## create corresponding entries with share of biofuels+synfuels in total liquids, for passenger SM, LO, freight SM, LO
+    TWa_2_EJ <- 31.536
+    ## demSe: secondary energy demand, secondary energy carrier units
+    demSe <- readgdx(gdx, "vm_demSe")[, value := value*TWa_2_EJ]
+    setnames(demSe, c("year", "region", "se", "fe", "te", "value"))
+    ## prodSe: secondary energy production, secondary energy carrier units
+    prodSe <- readgdx(gdx, "vm_prodSe")[, value := value*TWa_2_EJ]
+    setnames(prodSe, c("year", "region", "pe", "se", "te", "value"))
+    ## energy conversion for the different technologies
+    etaconv = readgdx(gdx, "pm_eta_conv")
+    setnames(etaconv, c("year", "region", "te", "eff"))
+    ## separately see MeOH conversion
+    convMeOH = unique(etaconv[te == "MeOH", eff])
+
+    ## calculate the shares of seliqfos for the two sectors, transport and stationary (in seliqfos units)
+    shareLiqSec = demSe[se == "seliqfos"]
+    shareLiqSec[, sec := ifelse(fe %in% c("fepet", "fedie"), "trsp", "st")]
+    shareLiqSec = shareLiqSec[, .(value = sum(value)), by = .(region, year, sec)]
+    shareLiqSec[, share := value/sum(value), by =.(region, year)]
+    shareLiqSec[, c("value") := NULL]
+
+    ## create pathway in demSe for synfuels to transport and synfuels to stationary
+    demSeSyn = merge(demSe[fe == "seliqfos" & te == "MeOH", .(year, region, value)], shareLiqSec, all = TRUE, by = c("region", "year"))
+    demSeSyn[is.na(value), value := 0]
+    demSeSyn[, value := share*value*convMeOH]  ## convert in seliqfos values
+    demSeSyn[, share := NULL]
+    demSeSyn[, fe := ifelse(sec == "trsp", "fesynt", "fesyns")]
+    demSeSyn[, se := "seliqfos"]
+
+
+    ## calculate the seliqfos from synfuels as a share of the total seliqfos
+    demSeLiq = demSe[se =="seliqfos"]
+    demSeLiq = demSeLiq[, sec := ifelse(fe %in% c("fepet", "fedie"), "trsp", "st")]
+    demSeLiq = demSeLiq[,.(totseliq = sum(value)), by = c("year", "region", "sec")]
+    demSeLiq = merge(demSeLiq, demSeSyn, by = c("region", "year", "sec"))
+    demSeLiq[, sharesyn := value/(totseliq)]
+    demSeLiq = demSeLiq[, .(sharesyn = sum(sharesyn)), .(region, year, sec)]
+    setnames(demSeLiq, old = "year", new = "period")
+    demSeLiq[, period := as.numeric(period)]
+
+    ## calculate share of biofuels on total seliqfos+seliqbio
+    shareBioSec = demSe[se %in% c("seliqfos", "seliqbio")]
+    shareBioSec[, sec := ifelse(fe %in% c("fepet", "fedie"), "trsp", "st")]
+    shareBioSec = shareBioSec[sec == "trsp"]
+    shareBioSec = shareBioSec[, sharebio := value/sum(value), by = .(region, year)]
+    shareBioSec = shareBioSec[,.(sharebio = sum(sharebio)), .(region, year, se)]
+    shareBioSec = shareBioSec[se == "seliqbio"]
+    shareBioSec[, c("se") := NULL]
+    setnames(shareBioSec, old = "year", new = "period")
+    shareBioSec[, period := as.numeric(period)]
+
+    ## decrease the "demand" entries of the amount of biofuels
+    emidem = merge(emidem, shareBioSec, by = c("region", "period"))
+    emidem[type == "demand" & all_enty %in% c("fedie", "fepet"), value := value*(1-sharebio)]
+
+    ## merge demand and shares of synfuels+biofuels
+    emidem = merge(emidem, demSeLiq[sec == "trsp"][, sec := NULL], by = c("region", "period"))
+    emidem[type == "demand", value := value*(1-sharesyn)]
+
+    ## the taipipe emissions are to be labeled as "Tailpipe"
+    emidem[type == "tailpipe", variable := paste0(variable, "|Tailpipe")]
+    ## the demand emissions are to be labeled as "Demand"
+    emidem[type == "demand", variable := paste0(variable, "|Demand")]
+
+    emidem[, c("sharesyn", "sharebio", "type", "ef", "V3", "V2", "all_enty") := NULL]
+
     ## aggregate removing the fuel dependency
     emidem[, variable_agg := gsub("\\|Liquids|\\|Electricity|\\|Hydrogen|\\|Gases", "", variable)]
     emidem = emidem[, .(value = sum(value)), by = c("model", "scenario", "region", "unit", "period", "variable_agg")]
@@ -344,6 +409,10 @@ reportEDGETransport <- function(output_folder=".",
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("Emi\\|CO2\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+\\|Tailpipe$", variable),
           .(variable="Emi|CO2|Transport|Pass|Road|Tailpipe",
+            unit="Mt CO2/yr", value=sum(value)),
+          by=c("model", "scenario", "region", "period")],
+    toMIF[grep("Emi\\|CO2\\|Transport\\|Pass\\|Road\\|[A-Za-z-]+\\|Demand$", variable),
+          .(variable="Emi|CO2|Transport|Pass|Road|Demand",
             unit="Mt CO2/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("ES\\|Transport\\|VKM\\|Pass\\|Road\\|[A-Za-z-]+$", variable),
@@ -380,6 +449,14 @@ reportEDGETransport <- function(output_folder=".",
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("Emi\\|CO2\\|Transport\\|(Pass|Freight)\\|Rail\\|Tailpipe$", variable),
           .(variable="Emi|CO2|Transport|Rail|Tailpipe",
+            unit="Mt CO2/yr", value=sum(value)),
+          by=c("model", "scenario", "region", "period")],
+    toMIF[grep("Emi\\|CO2\\|Transport\\|(Pass|Freight)\\|Road\\|Demand$", variable),
+          .(variable="Emi|CO2|Transport|Road|Demand",
+            unit="Mt CO2/yr", value=sum(value)),
+          by=c("model", "scenario", "region", "period")],
+    toMIF[grep("Emi\\|CO2\\|Transport\\|(Pass|Freight)\\|Rail\\|Demand$", variable),
+          .(variable="Emi|CO2|Transport|Rail|Demand",
             unit="Mt CO2/yr", value=sum(value)),
           by=c("model", "scenario", "region", "period")],
     toMIF[grep("FE\\|Transport\\|(Pass|Freight)\\|Rail$", variable),

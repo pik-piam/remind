@@ -396,7 +396,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
       'Steel|Secondary' = 'feel_steel_secondary',
 
       'other' = c('feso_otherInd', 'feli_otherInd', 'fega_otherInd', 
-                  'feh2_otherInd', 'feh2_otherInd', 'feelhth_otherInd', 
+                  'feh2_otherInd', 'fehe_otherInd', 'feelhth_otherInd', 
                   'feelwlth_otherInd')
     )
 
@@ -484,7 +484,8 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
         ( dimSums(vm_cesIO[,,ppfen_ind], dim = 3) ),  'FE|Industry (EJ/yr)'),
       
       setNames(
-        ( dimSums(vm_cesIO[,,c(ppfen_build, ppfen_ind)], dim = 3)
+        ( dimSums(vm_cesIO[,,c(ppfen_ind)], dim = 3) 
+          + tmp0[,,'FE|Buildings (EJ/yr)']
           + vm_otherFEdemand[,,'feels'] 
           + vm_otherFEdemand[,,'fegas'] 
           + vm_otherFEdemand[,,'feh2s']
@@ -560,10 +561,13 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
 
     demFE <- readGDX(gdx,name=c("v_demFe","vm_demFe"),field="l",restore_zeros=FALSE,format="first_found")*TWa_2_EJ
     demFE <- demFE[fe2ue]
+    demFEdieTrsp <- dimSums(demFE[,, "fedie"], dim=3) - vm_otherFEdemand[,,'fedie']
 
     tmp1 <- mbind(tmp1,
-                  setNames(dimSums(demFE[,, "fepet"],dim=3),             "FE|Transport|Pass|Liquids (EJ/yr)" ),
-                  setNames(dimSums(demFE[,, "fedie"] - vm_otherFEdemand[,,'fedie'],dim=3),             "FE|Transport|Freight|Liquids (EJ/yr)" ),
+                  setNames(dimSums(demFE[,, "fepet"], dim=3) + demFEdieTrsp  * p35_pass_FE_share_transp,
+                           "FE|Transport|Pass|Liquids (EJ/yr)" ),
+                  setNames(demFEdieTrsp * (1-p35_pass_FE_share_transp),
+                           "FE|Transport|Freight|Liquids (EJ/yr)" ),
                   setNames(dimSums(demFE[,, "feh2t"],dim=3),             "FE|Transport|Pass|Hydrogen (EJ/yr)" ),
                   setNames(dimSums(demFE[,, "feelt"],dim=3),             "FE|Transport|Pass|Electricity (EJ/yr)" ),
                   setNames(dimSums(demFE[setTrainEl],dim=3),             "FE|Transport|Pass|Train|Electricity (EJ/yr)" ),
@@ -678,12 +682,40 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                  setNames(tmp1[,,"FE|Buildings|Heat (EJ/yr)"] + tmp1[,,"FE|Industry|Heat (EJ/yr)"],"FE|Other Sector|Heat (EJ/yr)")
                  )
     if("segabio" %in% se_Gas){
+      ## Bioshare in FEDIE and FEPET
+    if("seliqbio" %in% getNames(prodFE, dim=1)) {
+      fedie_bioshare <- dimSums(prodFE[,,"seliqbio.fedie.tdbiodie"] /
+                                  (prodFE[,,"seliqbio.fedie.tdbiodie"] +
+                                     prodFE[,, "seliqfos.fedie.tdfosdie"]),dim=3)
+      fepet_bioshare <- dimSums(prodFE[,,"seliqbio.fepet.tdbiopet"] /
+                                  (prodFE[,,"seliqbio.fepet.tdbiopet"] +
+                                     prodFE[,, "seliqfos.fepet.tdfospet"]),dim=3)
+    } else {
+      fedie_bioshare <- NA
+      fepet_bioshare <- NA
+    }
+
       tmp2 <- mbind(tmp2,
                  setNames(dimSums(prodFE[,,"segabio.fegas.tdbiogas"],dim=3),"FE|Other Sector|Gases|Biomass (EJ/yr)"),
-                 setNames(dimSums(prodFE[,,"segafos.fegas.tdfosgas"],dim=3),"FE|Other Sector|Gases|Non-Biomass (EJ/yr)"),
-                 setNames(dimSums(prodFE[,,c("seliqbio.fedie.tdbiodie", "seliqbio.fepet.tdbiopet")],dim=3),"FE|Transport|Liquids|Biomass (EJ/yr)"),
-                 setNames(dimSums(prodFE[,,c("seliqfos.fedie.tdfosdie", "seliqfos.fepet.tdfospet")],dim=3),"FE|Transport|Liquids|Non-Biomass (EJ/yr)")
-                 )
+                 setNames(dimSums(prodFE[,,"segafos.fegas.tdfosgas"],dim=3),"FE|Other Sector|Gases|Non-Biomass (EJ/yr)"))
+      if(tran_mod == "edge_esm"){
+        p35_pass_FE_share_transp <- dimSums(vm_demFeForEs_trnsp[,,"esdie_pass_",pmatch=TRUE], dim=3) /
+          dimSums(vm_demFeForEs_trnsp[,,"esdie_",pmatch=TRUE], dim=3)
+      }
+
+      tmp2 <- mbind(
+        tmp2,
+        setNames((dimSums(prodFE[,,"fedie"], dim=3) - vm_otherFEdemand[,,'fedie'])* fedie_bioshare * p35_pass_FE_share_transp +
+                 dimSums(prodFE[,,"fepet"], dim=3) * fepet_bioshare,
+                 "FE|Transport|Pass|Liquids|Biomass (EJ/yr)"),
+        setNames((dimSums(prodFE[,,"fedie"], dim=3) - vm_otherFEdemand[,,'fedie']) * (1-p35_pass_FE_share_transp) * fedie_bioshare,
+                 "FE|Transport|Freight|Liquids|Biomass (EJ/yr)"))
+      tmp2 <- mbind(tmp2,
+                    setNames(
+                      tmp2[,,"FE|Transport|Pass|Liquids|Biomass (EJ/yr)"] +
+                      tmp2[,,"FE|Transport|Freight|Liquids|Biomass (EJ/yr)"],
+                      "FE|Transport|Liquids|Biomass (EJ/yr)"
+                    ))
     }
 
     if("fegat" %in% fety && "segabio" %in% se_Gas){

@@ -1,44 +1,61 @@
-# remind
+# The REMIND R package
+
+R package **remind**, version **36.174.1**
+
+  
+
+## Purpose and Functionality
+
 Contains the REMIND-specific routines for data and model output manipulation.
 
-## Testing
 
-Due to software limitations on the PIK cluster, our R packages --- which
-includes the package "remind", that post-processes our REMIND results
---- are currently not being installed under the condition of
-successful testing each time a new commit happens (packages are being
-tested but the installation happens regardless of the result).  This
-means that if a user commits a version of **remind** that does not
-work, then all REMIND runs happening at that moment will fail to report results, 
-until the next working version is installed.  To avoid
-this situation, until further notice, you are advised to run the tests
-manually before committing a new version of this R package.  To do so,
-use the `fulldata.gdx` from your most recent REMIND run (if you don't
-have a very recent one, simply start one -- it's always good to keep up
-with using the model) and the `old.gdx` distributed with this package.
+## Installation
 
-Simply run the following command twice with the location of each GDX as argument:
+For installation of the most recent package version an additional repository has to be added in R:
 
-```{r}
-a <- convGDX2MIF("/where/the/first/GDX/is/fulldata.gdx")
-a <- convGDX2MIF("/<repository>/inst/extdata/old.gdx")
-## this might also work if the working directory is the repository main folder
-a <- convGDX2MIF(system.file("extdata", "old.gdx", package = "remind"))
+```r
+options(repos = c(CRAN = "@CRAN@", pik = "https://rse.pik-potsdam.de/r/packages"))
+```
+The additional repository can be made available permanently by adding the line above to a file called `.Rprofile` stored in the home folder of your system (`Sys.glob("~")` in R returns the home directory).
+
+After that the most recent version of the package can be installed using `install.packages`:
+
+```r 
+install.packages("remind")
 ```
 
-and proceed with `lucode::buildlibrary()` as usual.
+Package updates can be installed using `update.packages` (make sure that the additional repository has been added before running that command):
 
-
-As an alternative, if you want to get familiar with how testing works
-in R, follow these steps:
-
-- In `tests/testthat/test-convGDX2mif.R` add the location of the two GDX's. Example:
-```{r}
-my_gdxs <- c("/path/to/fulldata.gdx", "../../inst/extdata/old.gdx")
-
+```r 
+update.packages()
 ```
-- In RStudio hit Ctr+Shift+T or run `devtools::test()` in the command
-  line
 
-If testing was successful proceed with `lucode::buildlibrary()` as
-usual.
+## Tutorial
+
+The package comes with a vignette describing the basic functionality of the package and how to use it. You can load it with the following command (the package needs to be installed):
+
+```r
+vignette("remind_summary") # Adding plots to the REMIND_summary.pdf
+```
+
+## Questions / Problems
+
+In case of questions / problems please contact Anastasis Giannousakis <giannou@pik-potsdam.de>.
+
+## Citation
+
+To cite package **remind** in publications use:
+
+Giannousakis A, Pehl M (2020). _remind: The REMIND R package_. R package version 36.174.1.
+
+A BibTeX entry for LaTeX users is
+
+ ```latex
+@Manual{,
+  title = {remind: The REMIND R package},
+  author = {Anastasis Giannousakis and Michaja Pehl},
+  year = {2020},
+  note = {R package version 36.174.1},
+}
+```
+
