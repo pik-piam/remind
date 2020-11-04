@@ -17,12 +17,14 @@
 #' 
 #' \dontrun{reportPrices(gdx)}
 #' 
-#' @export
-#' @importFrom magclass mbind getYears getRegions setNames dimSums new.magpie lowpass complete_magpie
+#' @importFrom dplyr %>% case_when distinct filter_ inner_join tibble
 #' @importFrom gdx readGDX
-#' @importFrom dplyr %>% filter_ distinct inner_join
+#' @importFrom luscale speed_aggregate
+#' @importFrom magclass mbind getYears getRegions setNames dimSums new.magpie lowpass complete_magpie
+#' @importFrom quitte df.2.named.vector getColValues
 #' @importFrom readr read_csv
-#' @importFrom quitte getColValues
+
+#' @export
 reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
   if(is.null(output)){
     output <- reportPE(gdx,regionSubsetList)
@@ -74,42 +76,6 @@ reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
     return(mobj_prices)
     
   }
-  
-  compute_CES_derivatives = function(cesIO,vm_effGr,pm_cesdata,cesOut2cesIn,cesLevel2cesIO,pm_delta_kap,y){
-    #Compute the prices with the CES derivatives
-    .derivatives = do.call(mbind,
-                           lapply(unique(cesOut2cesIn[["all_in"]]), function(.in){
-                             
-                             .out = cesOut2cesIn[cesOut2cesIn$all_in == .in,"all_out"]
-                             rho = pm_cesdata[,y,.out][,,"rho"]
-                             eff = pm_cesdata[,y,.in][,,"eff"]
-                             effGr = vm_effGr[,y,.in]
-                             xi =  pm_cesdata[,y,.in][,,"xi"]
-                             
-                             derivative = xi * eff * effGr * cesIO[,y,.out]^(1 - rho) *
-                               (eff * effGr * cesIO[,y,.in])^(rho - 1 )
-                             
-                             getNames(derivative) <-  paste(.out,.in, sep = ".")
-                             getSets(derivative) = c(getSets(derivative)[1:2], "all_out","all_in")
-                             
-                             return(derivative)
-                           })
-    )
-    
-    #Propagate price down the CES tree
-    for (i in 2:nrow(cesLevel2cesIO)){ # the first level is inco, where there is no derivative
-      .out = cesLevel2cesIO[i,"all_in"]
-      .ins = cesOut2cesIn[cesOut2cesIn$all_out == .out, "all_in"]
-      for ( .in in .ins){
-        .derivatives = mbind(.derivatives,
-                             setNames(.derivatives[,,paste("inco",.out,sep = ".")]
-                                      *.derivatives[,,paste(.out,.in,sep = ".")],
-                                      paste("inco",.in,sep = ".")))
-      }
-    }
-    
-    return(.derivatives)
-  }
   #---- End of Functions
   
   ####### get realisations #########
@@ -143,9 +109,6 @@ reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
   }
   ppfenfromes    <- readGDX(gdx,name=c("ppfEnFromEs","ppfenfromes"),types="sets",format="first_found", react = "silent")
   finenbalfehos  <- finenbal %>% filter_(~all_enty == "fehos")
-  cesOut2cesIn <- readGDX(gdx,c("cesOut2cesIn","ces"), format = "first_found", react = "silent")
-  colnames(cesOut2cesIn) = c("all_out","all_in")
-  cesLevel2cesIO <- readGDX(gdx,"cesLevel2cesIO")
   ppfKap  <- readGDX(gdx,"ppfKap")
   
   ppfen_stat <- readGDX(gdx,c("ppfen_stationary_dyn38","ppfen_stationary_dyn28","ppfen_stationary"),format="first_found", react = "silent")
@@ -193,8 +156,7 @@ reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
   pm_taxCO2eq    <- readGDX(gdx,name=c("pm_taxCO2eq","pm_tau_CO2_tax"),format="first_found")
   pm_taxCO2eqPower <- readGDX(gdx,name=c("pm_taxCO2eqPower"),format="first_found")
   pm_taxCO2eqSCC     <- readGDX(gdx,name='pm_taxCO2eqSCC',format="first_found")
-  pm_cesdata = readGDX(gdx,"pm_cesdata")
-  pm_delta_kap = readGDX(gdx,c("pm_delta_kap","p_delta_kap"), format = "first_found")
+  pm_delta_kap <- readGDX(gdx, c("pm_delta_kap", "p_delta_kap"), format = "first_found")
   if(is.null(getNames(pm_delta_kap))) pm_delta_kap = setNames(pm_delta_kap,"kap")
   ## variables
   pric_emu       <- readGDX(gdx,name="vm_pebiolc_price",field="l",format="first_found")
@@ -202,7 +164,6 @@ reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
   prodSE         <- readGDX(gdx,name='vm_prodSe',field="l",format="first_found",restore_zeros = FALSE)
   demSe          <- readGDX(gdx,name=c("vm_demSe","v_demSe"),types="variables",field="l",format="first_found",restore_zeros=FALSE)
   cesIO          <- readGDX(gdx,name='vm_cesIO',types="variables",field="l",format="first_found",restore_zeros=FALSE)
-  vm_effGr       <- readGDX(gdx, c("vm_effGr"), field = "l")
   
   fe_taxCES  <- readGDX(gdx, name=c('p21_tau_fe_tax','pm_tau_fe_tax'), format="first_found", react = F)[ppfen_stat_build_ind]
   fe_subCES  <- readGDX(gdx, name=c('p21_tau_fe_sub','pm_tau_fe_sub'), format="first_found", react = F)[ppfen_stat_build_ind]
@@ -623,79 +584,95 @@ reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
   x4 <- dimSums(cesIO[,,ppfenfromes],dim=3) / TWa_2_EJ
   tmp <- mbind(tmp,setNames((x1 + x2)/(x3 + x4),                                                              "Average price for energy|CES (US$2005/GJ)"))
   
-  #Compute the prices from the CES derivatives and add prices to the output
-  derivatives = compute_CES_derivatives(cesIO,vm_effGr,pm_cesdata,cesOut2cesIn,cesLevel2cesIO,pm_delta_kap,y)
-  ppf_4_derivatives = c(ppfKap,ppfen_build,ppfen_ind)
-  if (buil_mod %in% c("services_putty", "services_with_capital")) {
-    ppf_4_derivatives = unique(c(ppf_4_derivatives, c("ueswb","uescb","ueshb","uealb","uecwb")))
-  }
-  tmp = mbind(tmp,
-              do.call (mbind,
-                       lapply (ppf_4_derivatives,
-                               function(input){
-                                 #Energy input have a different unit as for capital inputs
-                                 if (!input %in% ppfKap){
-                                   .tmp = setNames(derivatives[,,paste("inco",input,sep = ".")] * tdptwyr2dpgj ,
-                                                   paste0("Price|CES_input|",input," (US$2005/GJ)"))
-                                 } else{
-                                   .tmp = setNames(derivatives[,,paste("inco",input,sep = ".")]
-                                                   -pm_delta_kap[,,input],  # Withdraw the depreciation rate to get the net return. Concerns only capital stocks
-                                                   paste0("Price|CES_input|",input," (Net of depreciation)"))
-                                 }
-                               }
-                       )
-              ) 
-  )
-  prices_ces_names = grep("Price\\|CES_input",getNames(tmp),value = T)
-  int2ext_prices_ces = gsub("^Price\\|","",prices_ces_names)
-  int2ext_prices_ces = gsub("\\(US\\$2005/GJ\\)","(EJ/yr)",int2ext_prices_ces)
-  int2ext_prices_ces = gsub("\\(Net of depreciation\\)","(billion US$2005)",int2ext_prices_ces)
-  names(int2ext_prices_ces) = prices_ces_names
+  # ---- compute CES prices ----
+  tmp <- mbind(
+    tmp,
+    
+    calc_CES_marginals(gdx, NULL) %>% 
+      select('regi', 't', 'pf', 'price') %>% 
+      left_join(
+        pm_delta_kap %>% 
+          as.data.frame() %>% 
+          select('regi' = 'Region', 'pf' = 'Data1', 
+                 'pm_delta_kap' = 'Value') %>% 
+          filter(0 != !!sym('pm_delta_kap')),
+        
+        c('regi', 'pf')
+      ) %>% 
+      mutate(
+        !!sym('price') := case_when(
+          # subtract depriciation rate from capital prices
+          !!sym('pf') %in% !!sym('ppfKap')  ~ (
+            !!sym('price') - !!sym('pm_delta_kap')),
+          # convert unit of energy prices
+          !!sym('pf') %in% !!sym('ppfen_stat_build_ind') ~ (
+            !!sym('price') * tdptwyr2dpgj),
+          # keep all other prices
+          TRUE ~ !!sym('price')
+        ),
+        !!sym('pf') := paste0(
+          'Price|CES_input|', !!sym('pf'), ' ', 
+          case_when(
+            !!sym('pf') %in% !!sym('ppfKap') ~ '(Net of depreciation)',
+            !!sym('pf') %in% !!sym('ppfen_stat_build_ind') ~ '(US$2005/GJ)',
+            TRUE ~ '()'))) %>%
+      select(-'pm_delta_kap') %>% 
+      as.magpie())
   
-    # mapping of weights for the variables for global aggregation
+  # find weights for prices for global aggregation
+  int2ext_prices_ces <- tibble(
+    intensive = grep('Price\\|CES_input', getNames(tmp), value = TRUE)) %>% 
+    mutate(!!sym('extensive') := sub('^Price\\|', '', !!sym('intensive')),
+           !!sym('extensive') := sub('\\(US\\$2005/GJ\\)', '(EJ/yr)', 
+                                    !!sym('extensive')),
+           !!sym('extensive') := sub('\\(Net of depreciation\\)', 
+                                    '(billion US$2005)', !!sym('extensive'))) %>% 
+    filter(!!sym('extensive') %in% getNames(output)) %>% 
+    df.2.named.vector()
+  
+  # ---- mapping of weights for the variables for global aggregation ----
   int2ext <- c(
-                "Price|Biomass|Primary Level (US$2005/GJ)"                = "PE|+|Biomass (EJ/yr)",
-                "Price|Biomass|Primary Level|Moving Avg (US$2005/GJ)"     = "PE|+|Biomass (EJ/yr)",
-                "Price|Biomass|Emulator presolve (US$2005/GJ)"            = "Primary Energy Production|Biomass|Energy Crops MAgPIE (EJ/yr)",
-                "Price|Biomass|Emulator presolve shifted (US$2005/GJ)"    = "Primary Energy Production|Biomass|Energy Crops MAgPIE (EJ/yr)",
-                "Price|Biomass|Emulator shifted (US$2005/GJ)"             = "Primary Energy Production|Biomass|Energy Crops (EJ/yr)",
-                "Price|Biomass|MAgPIE (US$2005/GJ)"                       = "Primary Energy Production|Biomass|Energy Crops MAgPIE (EJ/yr)",
-                "Price|Biomass|Bioenergy tax (US$2005/GJ)"                = "Primary Energy Production|Biomass|Energy Crops (EJ/yr)",
-                "Price|N2O (US$2005/t N2O)"                               = "Emi|N2O (kt N2O/yr)",
-                "Price|CH4 (US$2005/t CH4)"                               = "Emi|CH4 (Mt CH4/yr)",
-                "Price|Coal|Primary Level (US$2005/GJ)"                   = "PE|+|Coal (EJ/yr)",
-                "Price|Coal|Secondary Level (US$2005/GJ)"                 = "PE|+|Coal (EJ/yr)",
-                "Price|Crude Oil|Primary Level (US$2005/GJ)"              = "PE|+|Oil (EJ/yr)",
-                "Price|Natural Gas|Primary Level (US$2005/GJ)"            = "PE|+|Gas (EJ/yr)",
-                "Price|Natural Gas|Primary Level|Moving Avg (US$2005/GJ)" = "PE|+|Gas (EJ/yr)",
-                "Price|Natural Gas|Secondary Level (US$2005/GJ)"          = "PE|+|Gas (EJ/yr)",
-                "Price|Final Energy|Liquids (US$2005/GJ)"                 = "FE|+|Liquids (EJ/yr)",
-                "Price|Final Energy|Electricity|Transport (US$2005/GJ)"   = "FE|Transport|Electricity (EJ/yr)",
-                "Price|Final Energy|Electricity|Transport|Moving Avg (US$2005/GJ)" = "FE|Transport|Electricity (EJ/yr)",
-                "Price|Final Energy|Hydrogen|Transport (US$2005/GJ)"      = "FE|Transport|Hydrogen (EJ/yr)",
-                "Price|Final Energy|Liquids|Transport (US$2005/GJ)"       = "FE|Transport|Liquids (EJ/yr)",
-                "Price|Final Energy|Liquids|Transport|Moving Avg (US$2005/GJ)"= "FE|Transport|Liquids (EJ/yr)",
-                "Price|Final Energy|Transport (US$2005/GJ)"       = "FE|Transport (EJ/yr)",
-                "Price|Final Energy|Transport|Moving Avg (US$2005/GJ)"       = "FE|Transport (EJ/yr)",
-               "Price|Energy Service|Transport LDV (US$2005/GJ)"         = "CES_input|fepet (EJ/yr)",  ## TODO: check units 
-                "Price|Energy Service|Transport nonLDV (US$2005/GJ)"      = "CES_input|fedie (EJ/yr)",  ## TODO: check units 
-                "Average price for transport energy|FE (US$2005/GJ)"      = "FE|Transport (EJ/yr)",
-                "Average price for transport energy|SE (US$2005/GJ)"      = "FE|Transport (EJ/yr)",     
-                "Average price for liquid transport energy|FE (US$2005/GJ)" = "FE|Transport|Liquids (EJ/yr)",
-                "Average price for liquid transport energy|SE (US$2005/GJ)" = "FE|Transport|Liquids (EJ/yr)",
-                "Price|Uranium|Primary Level (US$2005/GJ)"                = "PE|+|Nuclear (EJ/yr)",
-                "Price|Secondary Energy|Electricity (US$2005/GJ)"         = "SE|Electricity (EJ/yr)",
-                "Price|Secondary Energy|Electricity|Moving Avg (US$2005/GJ)" = "SE|Electricity (EJ/yr)",
-                "Price|Secondary Energy|Biomass (US$2005/GJ)"             = "SE|Biomass (EJ/yr)",
-                "Price|Secondary Energy|Hydrogen (US$2005/GJ)"            = "SE|Hydrogen (EJ/yr)",
-                "Price|Secondary Energy|Solids (US$2005/GJ)"              = "SE|Solids (EJ/yr)",
-                "Price|Secondary Energy|Gases (US$2005/GJ)"               = "SE|Gases (EJ/yr)",
-                "Price|Secondary Energy|Heat (US$2005/GJ)"                = "SE|Heat (EJ/yr)",
-                "Price|Secondary Energy|Liquids|Biomass (US$2005/GJ)"     = "SE|Liquids|Biomass (EJ/yr)"
-              )
+    "Price|Biomass|Primary Level (US$2005/GJ)"                = "PE|+|Biomass (EJ/yr)",
+    "Price|Biomass|Primary Level|Moving Avg (US$2005/GJ)"     = "PE|+|Biomass (EJ/yr)",
+    "Price|Biomass|Emulator presolve (US$2005/GJ)"            = "Primary Energy Production|Biomass|Energy Crops MAgPIE (EJ/yr)",
+    "Price|Biomass|Emulator presolve shifted (US$2005/GJ)"    = "Primary Energy Production|Biomass|Energy Crops MAgPIE (EJ/yr)",
+    "Price|Biomass|Emulator shifted (US$2005/GJ)"             = "Primary Energy Production|Biomass|Energy Crops (EJ/yr)",
+    "Price|Biomass|MAgPIE (US$2005/GJ)"                       = "Primary Energy Production|Biomass|Energy Crops MAgPIE (EJ/yr)",
+    "Price|Biomass|Bioenergy tax (US$2005/GJ)"                = "Primary Energy Production|Biomass|Energy Crops (EJ/yr)",
+    "Price|N2O (US$2005/t N2O)"                               = "Emi|N2O (kt N2O/yr)",
+    "Price|CH4 (US$2005/t CH4)"                               = "Emi|CH4 (Mt CH4/yr)",
+    "Price|Coal|Primary Level (US$2005/GJ)"                   = "PE|+|Coal (EJ/yr)",
+    "Price|Coal|Secondary Level (US$2005/GJ)"                 = "PE|+|Coal (EJ/yr)",
+    "Price|Crude Oil|Primary Level (US$2005/GJ)"              = "PE|+|Oil (EJ/yr)",
+    "Price|Natural Gas|Primary Level (US$2005/GJ)"            = "PE|+|Gas (EJ/yr)",
+    "Price|Natural Gas|Primary Level|Moving Avg (US$2005/GJ)" = "PE|+|Gas (EJ/yr)",
+    "Price|Natural Gas|Secondary Level (US$2005/GJ)"          = "PE|+|Gas (EJ/yr)",
+    "Price|Final Energy|Liquids (US$2005/GJ)"                 = "FE|+|Liquids (EJ/yr)",
+    "Price|Final Energy|Electricity|Transport (US$2005/GJ)"   = "FE|Transport|Electricity (EJ/yr)",
+    "Price|Final Energy|Electricity|Transport|Moving Avg (US$2005/GJ)" = "FE|Transport|Electricity (EJ/yr)",
+    "Price|Final Energy|Hydrogen|Transport (US$2005/GJ)"      = "FE|Transport|Hydrogen (EJ/yr)",
+    "Price|Final Energy|Liquids|Transport (US$2005/GJ)"       = "FE|Transport|Liquids (EJ/yr)",
+    "Price|Final Energy|Liquids|Transport|Moving Avg (US$2005/GJ)"= "FE|Transport|Liquids (EJ/yr)",
+    "Price|Final Energy|Transport (US$2005/GJ)"       = "FE|Transport (EJ/yr)",
+    "Price|Final Energy|Transport|Moving Avg (US$2005/GJ)"       = "FE|Transport (EJ/yr)",
+    "Price|Energy Service|Transport LDV (US$2005/GJ)"         = "CES_input|fepet (EJ/yr)",  ## TODO: check units 
+    "Price|Energy Service|Transport nonLDV (US$2005/GJ)"      = "CES_input|fedie (EJ/yr)",  ## TODO: check units 
+    "Average price for transport energy|FE (US$2005/GJ)"      = "FE|Transport (EJ/yr)",
+    "Average price for transport energy|SE (US$2005/GJ)"      = "FE|Transport (EJ/yr)",     
+    "Average price for liquid transport energy|FE (US$2005/GJ)" = "FE|Transport|Liquids (EJ/yr)",
+    "Average price for liquid transport energy|SE (US$2005/GJ)" = "FE|Transport|Liquids (EJ/yr)",
+    "Price|Uranium|Primary Level (US$2005/GJ)"                = "PE|+|Nuclear (EJ/yr)",
+    "Price|Secondary Energy|Electricity (US$2005/GJ)"         = "SE|Electricity (EJ/yr)",
+    "Price|Secondary Energy|Electricity|Moving Avg (US$2005/GJ)" = "SE|Electricity (EJ/yr)",
+    "Price|Secondary Energy|Biomass (US$2005/GJ)"             = "SE|Biomass (EJ/yr)",
+    "Price|Secondary Energy|Hydrogen (US$2005/GJ)"            = "SE|Hydrogen (EJ/yr)",
+    "Price|Secondary Energy|Solids (US$2005/GJ)"              = "SE|Solids (EJ/yr)",
+    "Price|Secondary Energy|Gases (US$2005/GJ)"               = "SE|Gases (EJ/yr)",
+    "Price|Secondary Energy|Heat (US$2005/GJ)"                = "SE|Heat (EJ/yr)",
+    "Price|Secondary Energy|Liquids|Biomass (US$2005/GJ)"     = "SE|Liquids|Biomass (EJ/yr)"
+  )
   
-  int2ext = c(int2ext,
-              int2ext_prices_ces)
+  int2ext <- c(int2ext, int2ext_prices_ces)
   
   if ("seliq" %in% sety) {
     int2ext <- c(int2ext,
@@ -856,40 +833,38 @@ reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
     }
   }
   
-  # ---- debug infromation for industry/subsectors ----
+  # ---- debug information for industry/subsectors ----
   if ('subsectors' == indu_mod & !is.null(q37_limit_secondary_steel_share.m)) {
-    x <- q37_limit_secondary_steel_share.m[,y,] / budget.m
-    
-    y <- mbind(
-      lapply(
-        list(
-          c('ue_industry',        '',                 'arbitrary unit', 1),
-          c('ue_cement',          '|Cement',          't cement',       1e3),
-          c('ue_chemicals',       '|Chemicals',       'arbitrary unit', 1),
-          c('ue_steel',           '|Steel',           't Steel',        1e3),
-          c('ue_steel_primary',   '|Steel|Primary',   't Steel',        1e3),
-          c('ue_steel_secondary', '|Steel|Secondary', 't Steel',        1e3),
-          c('ue_otherInd',        '|other',           'arbitrary unit', 1)),
-        function(x) {
-          setNames(
-            derivatives[,,paste0('inco.', x[1])] * as.numeric(x[4]), 
-            paste0('Debug|Price|Industry', x[2], ' (US$2005/', x[3], ')'))
-        })
-    )
+    .x <- q37_limit_secondary_steel_share.m[,y,] / budget.m
     
     tmp <- mbind(
       tmp,
       
       # fake some GLO data
       setNames(
-        mbind(x, dimSums(x * NA, dim = 1)),
+        mbind(.x, dimSums(.x * NA, dim = 1)),
         'Debug|Industry|Secondary Steel Premium (US$2005)'),
       
-      mbind(y, dimSums(y, dim = 1) * NA)
+      mbind(
+        lapply(
+          list(
+            c('ue_industry',        '',                 'arbitrary unit', 1),
+            c('ue_cement',          '|Cement',          't cement',       1e3),
+            c('ue_chemicals',       '|Chemicals',       'arbitrary unit', 1),
+            c('ue_steel',           '|Steel',           't Steel',        1e3),
+            c('ue_steel_primary',   '|Steel|Primary',   't Steel',        1e3),
+            c('ue_steel_secondary', '|Steel|Secondary', 't Steel',        1e3),
+            c('ue_otherInd',        '|other',           'arbitrary unit', 1)),
+          function(x) {
+            setNames(
+              ( tmp[,,paste0('Price|CES_input|', x[1], ' ('), pmatch = 'left'] 
+                * as.numeric(x[4])
+              ), 
+              paste0('Debug|Price|Industry', x[2], ' (US$2005/', x[3], ')'))
+          })
+      )
     )
   }
-  
-  
-  
+
   return(tmp)
 }
