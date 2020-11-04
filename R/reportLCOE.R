@@ -1,15 +1,18 @@
 #' Read in GDX and calculate LCOE reporting used in convGDX2MIF_LCOE. 
 #' 
-#' This function provides a post-processing calculation of LCOE based on REMIND modeling output for 
-#' secondary energy generating technologies. It calculates two different types of LCOE: average LCOE (standing system) and marginal LCOE (new plants). 
-#' While the average LCOE reflect the total cost incurred by the technology deployment in a specific time step divided by its output,
-#' the marginal LCOE represent the per-unit lifetime cost of the output if the model added another capacity of that technology in that time step.  
+#' This function provides a post-processing calculation of LCOE (Levelized Cost of Energy) for energy conversion technologies in REMIND. 
+#' In incluldes most technologies that generate secondary energy and the distribution technologies which convert secondary energy to final energy. 
+#' This script calculates two different types of LCOE: average LCOE (standing system) and marginal LCOE (new plant). 
+#' The average LCOE reflect the total cost incurred by the technology deployment in a specific time step divided by its energy output. 
+#' The marginal LCOE estimate the per-unit lifetime cost of the output if the model added another capacity of that technology in the respective time step.  
 #' 
 #' 
 #' 
 #' @param gdx a GDX object as created by readGDX, or the path to a gdx
-#' @param extended.output, if TRUE the function returns a dataframe with the detailed calculation of the
-#' new plant LCOE, useful to check how new plant LCOE were calculated
+#' @param output.type string to determine which output shall be produced. 
+#' Can be either "average" (returns only average LCOE),
+#' "marginal" (returns only marginal LCOE), "both" (returns marginal and average LCOE) and
+#' and "marginal detail" (returns table to trace back how marginal LCOE are calculated). 
 #' @return MAgPIE object - LCOE calculated by model post-processing. Two types a) standing system LCOE b) new plant LCOE. 
 #' @author Felix Schreyer, Robert Pietzcker, Lavinia Baumstark
 #' @seealso \code{\link{convGDX2MIF_LCOE}}
@@ -26,7 +29,14 @@
 #' @importFrom zoo na.locf
 
 
-reportLCOE <- function(gdx, extended.output = F){
+reportLCOE <- function(gdx, output.type = "both"){
+  
+ # test whether output.type defined
+ if (!output.type %in% c("marginal", "average", "both", "marginal detail")) {
+   print("Unknown output type. Please choose either marginal, average, both or marginal detail.")
+   return(new.magpie(cells_and_regions = "GLO", 
+                     years = c(seq(2005,2060,5),seq(2070,2110,10),2130,2150)))
+ }
   
  # check whether key variables are there  
  # LCOE reporting does not make sense for old gdx 
@@ -45,14 +55,13 @@ reportLCOE <- function(gdx, extended.output = F){
                      years = c(seq(2005,2060,5),seq(2070,2110,10),2130,2150)))
  }
 
- # if extended.ouput = T, only calculation table of marginal LCOE generated, 
- # average LCOE calculation not needed  
- if (! extended.output) {
-
+ #initialize output array
+ LCOE.out <- NULL
+ 
  ########################################################
- ### A) Calculation of standing system LCOE ############
+ ### A) Calculation of average (standing system) LCOE ###
  ########################################################
-
+ if (output.type %in% c("both", "average")) {
 
  ####### read in needed data #######################
 
@@ -133,13 +142,17 @@ reportLCOE <- function(gdx, extended.output = F){
  # direct investment cost = directteinv or for past values (before 2005) (v_investcost * deltaCap)
  # annuity represents (total investment cost + interest over lifetime) distributed equally over all years of lifetime
 
- # quick fix for h22ch4 problem
- te <- te[te!="h22ch4"]
+ # # quick fix for h22ch4 problem
+ # if (! "h22ch4" %in% magclass::getNames(p_omeg,dim=2)) {
+ # te <- te[te!="h22ch4"]
+ # }
 
+ # get a representative region
+ reg1 <- getRegions(vm_prodSe)[1]
 
  te_annuity <- new.magpie("GLO",names=magclass::getNames(p_omeg,dim=2))
- for(a in magclass::getNames(p_omeg["EUR",,],dim=2)){
-  te_annuity[,,a] <- 1/dimSums(p_omeg["EUR",,a]/1.06**as.numeric(magclass::getNames(p_omeg["EUR",,a],dim=1)),dim=3.1)
+ for(a in magclass::getNames(p_omeg[reg1,,],dim=2)){
+  te_annuity[,,a] <- 1/dimSums(p_omeg[reg1,,a]/1.06**as.numeric(magclass::getNames(p_omeg[reg1,,a],dim=1)),dim=3.1)
  }
 
  te_inv_annuity <- 1e+12 * te_annuity[,,te] *
@@ -167,13 +180,9 @@ reportLCOE <- function(gdx, extended.output = F){
  # annuity cost = discounted investment cost spread over lifetime
 
 
- # here: static LCOE (standing system)
- # in future posssibly: forward-looking (dynamic) LCOE (see new plant LCOE as approximation below)
- # in future posssibly: discounting engogenous from REMIND?
-
 
  # take 74 tech from p_omeg, although in v_direct_in 114 in total
-te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_inv_annuity[,ttot,]),magclass::getNames(te_inv_annuity[,ttot,]))
+  te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_inv_annuity[,ttot,]),magclass::getNames(te_inv_annuity[,ttot,]))
   # loop over ttot
  for(t0 in ttot){
    for(a in magclass::getNames(te_inv_annuity) ) {
@@ -346,23 +355,23 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
  LCOE.avg <- mbind(
               setNames(te_annual_inv_cost[,getYears(te_annual_fuel_cost),pe2se$all_te]/
                          total_te_energy[,,pe2se$all_te],
-                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te, "|Investment Cost")),
+                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te,"|supply-side", "|Investment Cost")),
               setNames(te_annual_fuel_cost[,,pe2se$all_te]/total_te_energy[,,pe2se$all_te],
-                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te, "|Fuel Cost")),
+                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te,"|supply-side", "|Fuel Cost")),
               setNames(te_annual_OMF_cost[,,pe2se$all_te]/total_te_energy[,,pe2se$all_te],
-                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te, "|OMF Cost")),
+                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te, "|supply-side","|OMF Cost")),
               setNames(te_annual_OMV_cost[,,pe2se$all_te]/total_te_energy[,,pe2se$all_te],
-                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te, "|OMV Cost")),
+                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te, "|supply-side","|OMV Cost")),
               setNames(te_annual_stor_cost[,,pe2se$all_te]/total_te_energy[,,pe2se$all_te],
-                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te, "|Storage Cost")),
+                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te, "|supply-side","|Storage Cost")),
               setNames(te_annual_grid_cost[,,pe2se$all_te]/total_te_energy[,,pe2se$all_te],
-                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te, "|Grid Cost")),
+                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te, "|supply-side","|Grid Cost")),
               setNames(te_annual_ccsInj_cost[,,pe2se$all_te]/total_te_energy[,,pe2se$all_te],
-                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te, "|CCS Cost")),
+                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te, "|supply-side","|CCS Cost")),
               setNames(te_annual_co2_cost[,,pe2se$all_te]/total_te_energy[,,pe2se$all_te],
-                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te, "|CO2 Cost")),
+                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te, "|supply-side","|CO2 Cost")),
               setNames(te_curt_cost[,,pe2se$all_te],
-                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te, "|Curtailment Cost"))
+                       paste0("LCOE|average|",pe2se$all_enty1,"|",pe2se$all_te, "|supply-side","|Curtailment Cost"))
 )*1.2
 
  # convert to better dimensional format
@@ -380,23 +389,32 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
 
  df.lcoe.avg$tech <- strsplit(as.character(df.lcoe.avg$variable), "\\|")
  df.lcoe.avg$tech <- sapply(df.lcoe.avg$tech, "[[", 4)
+ 
+ df.lcoe.avg$sector <- strsplit(as.character(df.lcoe.avg$variable), "\\|")
+ df.lcoe.avg$sector <- sapply(df.lcoe.avg$sector, "[[", 5)
 
  df.lcoe.avg$cost <- strsplit(as.character(df.lcoe.avg$variable), "\\|")
- df.lcoe.avg$cost <- sapply(df.lcoe.avg$cost, "[[", 5)
+ df.lcoe.avg$cost <- sapply(df.lcoe.avg$cost, "[[", 6)
  
  df.lcoe.avg <- df.lcoe.avg %>% 
                   mutate( unit = "US$2015/MWh") %>% 
-                  select(region, period, type, output, tech, unit, cost, value)
+                  select(region, period, type, output, tech, sector, unit, cost, value)
  
  # reconvert to magpie object
- LCOE.avg.out <- as.magpie(df.lcoe.avg, spatial=1, temporal=2, datacol=8) 
- 
+ LCOE.avg.out <- as.magpie(df.lcoe.avg, spatial=1, temporal=2, datacol=9) 
+ # bind to output file
+ LCOE.out <- mbind(LCOE.out, LCOE.avg.out)
  }
 
  ##############################################
+ 
+ ########################################################
+ ### B) Calculation of marginal (new plant) LCOE ########
+ ########################################################
+ 
+ if (output.type %in% c("marginal", "both", "marginal detail")) {
 
-# variable definitions for dplyr operations in next section
-
+# variable definitions for dplyr operations in the following section
   region <- NULL
   period <- NULL
   all_te <- NULL
@@ -459,26 +477,34 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
   `CCS Tax Cost` <- NULL
   `CCS Cost` <- NULL
   type <- NULL
+  FlexTax <- NULL
   
   ##############################################
   
-  ########################################################
-  ### B) Calculation of new plant LCOE ############
-  ########################################################
-   
+
   
-  ### 1. retrieve general sets, mappings, scalars needed from gdx
+  ##### Prepare data for LCOE calculation #######
   
   
-  ### technologies 
-  pe2se <- readGDX(gdx,"pe2se")
+  ### 1. read variables, parameters sets, mappings needed from gdx
+  
+  
+  ### technologies
+  pe2se <- readGDX(gdx,"pe2se") # pe2se technology mappings
   se2se <- readGDX(gdx,"se2se") # hydrogen <--> electricity technologies
-  se2fe <- readGDX(gdx,"se2fe")
+  se2fe <- readGDX(gdx,"se2fe") # se2fe technology mappings
   teStor <- readGDX(gdx, "teStor") # storage technologies for VREs
   teGrid <- readGDX(gdx, "teGrid") # grid technologies for VREs
   ccs2te <-  readGDX(gdx, "ccs2te") # ccsinje technology
   teReNoBio <- readGDX(gdx, "teReNoBio") # renewable technologies without biomass
   teCCS <- readGDX(gdx, "teCCS") # ccs technologies
+  teReNoBio <- c(teReNoBio) # renewables without biomass
+  
+  # energy carriers
+  entyPe <- readGDX(gdx, "entyPe")
+  entySe <- readGDX(gdx, "entySe")
+  entyFe <- readGDX(gdx, "entyFe")
+  
   
   # get module realization
   module2realisation <- readGDX(gdx, "module2realisation")
@@ -487,35 +513,40 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
   s_twa2mwh <- readGDX(gdx,c("sm_TWa_2_MWh","s_TWa_2_MWh","s_twa2mwh"),format="first_found")
   
   
-  se_gen_mapping <- rbind(pe2se, se2se) 
-  colnames(se_gen_mapping) <- c("fuel", "output", "tech")
-  # se_gen_mapping <- rbind(se_gen_mapping, 
-  #                         c("seh2","segafos", "h22ch4"), c("seh2", "seliqfos", "MeOH")) %>% 
-  #   rename( fuel = all_enty, output = all_enty1, tech = all_te)
+  # all technologies to calculate LCOE for
+  te_LCOE <- c(pe2se$all_te, se2se$all_te,se2fe$all_te,"dac")
   
-  
-  # all technologies to calculate investment and O&M LCOE for
-  te_LCOE_Inv <- c(pe2se$all_te, se2se$all_te,
-                   as.vector(teStor), as.vector(teGrid), ccs2te$all_te)
-  #te_LCOE_Inv <- c(pe2se$all_te, se2se$all_te, se2se_ccu39$all_te, teStor, teGrid, ccs2te$all_te,  "h22ch4", "MeOH")
+  # all technologies to calculate investment and O&M LCOE for (needed for CCS, storage, grid cost)
+  te_LCOE_Inv <- c(te_LCOE, as.vector(teStor), as.vector(teGrid), ccs2te$all_te)
+ 
   # technologies to produce SE
   te_SE_gen <- c(pe2se$all_te, se2se$all_te)
-  #te_SE_gen <- c(pe2se$all_te, se2se$all_te,  "h22ch4", "MeOH")
+  
   # auxiliary technologies to calculate other cost parts: grid cost, storage cost, carbon capture and storage
   te_aux_tech <- c( teStor, teGrid, ccs2te$all_te)
-  # renewable technologies without biomass
-  teReNoBio <- c(teReNoBio)
+
+  # mappings
+  se_gen_mapping <- rbind(pe2se, se2se) 
+  colnames(se_gen_mapping) <- c("fuel", "output", "tech")
+  
+  # all energy system technologies mapping
+  en2en <- readGDX(gdx, "en2en") %>% 
+              filter(all_te %in% te_LCOE)
+  colnames(en2en) <- c("fuel", "output", "tech")
+  
+  
   # VRE to storage
   VRE2teStor <- readGDX(gdx, "VRE2teStor") %>% 
                   rename(tech = all_te)
   
-  
-  ### time steps
+    ### time steps
   ttot     <- as.numeric(readGDX(gdx,"ttot"))   
   ttot_from2005 <- paste0("y",ttot[which(ttot >= 2005)])
   
   ### conversion factors
   s_twa2mwh <- as.vector(readGDX(gdx,c("sm_TWa_2_MWh","s_TWa_2_MWh","s_twa2mwh"),format="first_found"))
+  
+  
   
   ### 2. retrieve investment and O&M cost
   
@@ -525,8 +556,9 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
   df.CAPEX <- as.quitte(vm_costTeCapital) %>%  
     select(region, period, all_te, value) %>% 
     rename(tech = all_te, CAPEX = value) %>% 
-    left_join(se_gen_mapping) %>% 
+    left_join(en2en) %>% 
     select(region, period, tech, fuel, output, CAPEX)
+  
   # omf cost 
   pm_data_omf <- readGDX(gdx, "pm_data", restore_zeros = F)[,,"omf"]
   
@@ -546,7 +578,6 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
   # capacity factor of non-renewables
   vm_capFac <- readGDX(gdx, "vm_capFac", field="l", restore_zeros = F)[,ttot_from2005,]
   
-  
   # calculate renewable capacity factors of new plants
   vm_capDistr <- readGDX(gdx, c("vm_capDistr","v_capDistr"), field = "l", restore_zeros = F)
   pm_dataren <- readGDX(gdx, "pm_dataren", restore_zeros = F)
@@ -558,7 +589,7 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
   
   
   # determine worst grade that has non-zero capacities 
-  # (this is the grade where we assume the new plant is built as the best grades are filled first)
+  # (this is the grade where we assume the new plant is built as the best grades are built first)
   # if no capcaities at any grade (full potential reached) -> CF of grade 9
   df.ren.atbound  <- df.CapDistr %>% 
                         group_by(region, period, tech) %>% 
@@ -584,8 +615,6 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
   
   
   
-  
-  
   # CapFac, merge renewble and non renewable Cap Facs
   df.CapFac <- as.quitte(vm_capFac) %>% 
     select(region, period, all_te, value) %>% 
@@ -599,6 +628,8 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
   #discount rate
   r <- 0.06
   
+  # read lifetime of tecnology 
+  # calculate annuity factor to annuitize CAPEX and OMF (annuity factor labeled "disc.fac")
   lt <- readGDX(gdx, name="fm_dataglob", restore_zeros = F)[,,"lifetime"][,,te_LCOE_Inv][,,"lifetime"]
   
   df.lifetime <- as.quitte(lt) %>% 
@@ -623,12 +654,12 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
   
   # Primary Energy Price, convert from tr USD 2005/TWa to USD2015/MWh
   Pe.Price <- qm_pebal[,ttot_from2005,unique(pe2se$all_enty)] / (qm_budget+1e-10)*1e12/s_twa2mwh*1.2
-  # Secondary Energy Electricity Price (for se2se conversions), convert from tr USD 2005/TWa to USD2015/MWh
+  # Secondary Energy Electricity Price (for se2se and se2fe conversions), convert from tr USD 2005/TWa to USD2015/MWh
   Se.Seel.Price <- qm_sebal.seel[,,"seel"]/(qm_budget+1e-10)*1e12/s_twa2mwh*1.2
-  # Secondary Energy Hydrogen Price (for se2se conversions), convert from tr USD 2005/TWa to USD2015/MWh
-  Se.H2.Price <- qm_sebal[,,"seh2"]/(qm_budget+1e-10)*1e12/s_twa2mwh*1.2
+  # Secondary Energy Price (for se2se and se2fe conversions), convert from tr USD 2005/TWa to USD2015/MWh
+  Se.Price <- qm_sebal[,,as.vector(entySe)[as.vector(entySe) != "seel"]]/(qm_budget+1e-10)*1e12/s_twa2mwh*1.2 
   
-  Fuel.Price <- mbind(Pe.Price,Se.Seel.Price, Se.H2.Price )[,,c("peoil","pegas","pecoal","peur","pebiolc","pebios","pebioil","seel","seh2")]
+  Fuel.Price <- mbind(Pe.Price,Se.Seel.Price, Se.Price )
   
   # Fuel price
   df.Fuel.Price <- as.quitte(Fuel.Price) %>%  
@@ -659,7 +690,7 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
     # to save run time, only take p_omeg in ten year time steps only up to lifetimes of 50 years, 
     # erase region dimension, pomeg same across all regions, only se generating technologies
     filter(opTimeYr %in% c(1,seq(5,50,5)), region %in% getRegions(vm_costTeCapital)[1]
-           , tech %in% te_SE_gen) %>% 
+           , tech %in% te_LCOE) %>% 
     select(opTimeYr, tech, pomeg) 
   
   # expanded df.omeg, with additional period dimension combined with opTimeYr dimensions,
@@ -670,7 +701,7 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
     full_join(df.pomeg) %>% 
     mutate( opTimeYr = as.numeric(opTimeYr)) %>% 
     mutate( opTimeYr = ifelse(opTimeYr > 1, opTimeYr + period, period)) %>% 
-    left_join(se_gen_mapping) %>% 
+    left_join(en2en) %>% 
     arrange(tech, period, opTimeYr)
   
   
@@ -696,15 +727,12 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
   
   
   
-  # note: do we still need to discount the fuel price/carbon price before calculating the time average? This is not included. Pomeg only refers to capacity depreciation.  
-  # note: el2VRE does not have p_omeg?
-  # note: What about anticipated fuel prices before 2025 in BAU and NDC run...technically we would need to take the weighted average prices
-  # of those years from BAU and NDC runs because of myopic decision maker
-  
-  
+  # Note: Discuss whether we still need to discount fuel price/carbon price over time. 
+  # Pomeg only refers to capacity depreciation.  
+  # Note: Anticipated prices in NDC and BAU runs before 2025 are different. 
+  # This calculation only anticipates prices within one scenario. No myopic view included. 
   
   ### 10. get fuel conversion efficiencies 
-  
   pm_eta_conv <- readGDX(gdx,"pm_eta_conv", restore_zeros=F)[,ttot_from2005,] # efficiency oftechnologies with time-independent eta
   pm_dataeta <- readGDX(gdx,"pm_dataeta", restore_zeros=F)[,ttot_from2005,]# efficiency of technologies with time-dependent eta
   
@@ -713,13 +741,9 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
     select(region, period, tech, eff) 
   
   ### 11. get emission factors of technologies
-  
   pm_emifac <- readGDX(gdx,"pm_emifac", restore_zeros=F)[,ttot_from2005,"co2"] # co2 emission factor per technology
   pm_emifac_cco2 <- readGDX(gdx,"pm_emifac", restore_zeros=F)[,ttot_from2005,"cco2"] # captured co2 emission factor per technology
-  
-  
-  
-  
+
   df.emiFac <- as.quitte(pm_emifac) %>% 
     # do not need period dimension
     filter(period == 2005) %>% 
@@ -750,6 +774,7 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
   
   
   ### 12. calculate CO2 capture cost
+
   
   # Co2 Capture price, marginal of q_balcapture,  convert from tr USD 2005/GtC to USD2015/tCO2
   qm_balcapture  <- readGDX(gdx,"q_balcapture",field="m", restore_zeros = F)
@@ -761,6 +786,12 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
   df.Co2.Capt.Price <- as.quitte(Co2.Capt.Price) %>% 
     rename(Co2.Capt.Price = value) %>% 
     select(region, period, Co2.Capt.Price) 
+  
+  
+  # Note: co2 capture cost calculation needs to be checked
+  # set to 0 meanwhile
+  df.Co2.Capt.Price <- df.Co2.Capt.Price %>% 
+                          mutate( Co2.Capt.Price = 0)
   
   
   # CO2 required per unit output (for CCU technologies)
@@ -792,7 +823,7 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
     rename( CO2StoreShare = value) %>% 
     select(region, period, CO2StoreShare)
   
-  # Note: This is assuming that this share stays constant over time. 
+  # Note: This is assuming that the CO2 capture to storage share stays constant over time. 
   # Still to do: calculate average over lifetime of plant
   
   ### 14. calculate cost of second fuel (if required) 
@@ -812,9 +843,153 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
     right_join(df.fuel.price.weighted) %>% 
     rename(secfuel.price = fuel.price.weighted.mean)
   
+ #  ### VRE integration cost
+ #  
+ #  # first calculate LCOE of VREs before storage losses (Investment Cost + OMF cost) 
+ #  # (will be done below again, 
+ #  # this is only to calculate the integration cost which are added in the end)
+ #  # also caculate LCOE (investment and OMF cost) of grid (only gridwind used)
+ #  # and storage technologies
+ #  df.LCOE.VRE.preloss <-  df.CAPEX %>% 
+ #                              left_join(df.OMF) %>%
+ #                              left_join(df.CapFac) %>% 
+ #                              left_join(df.lifetime) %>%  
+ #                              filter( tech %in% c(VRE2teStor[,1],  VRE2teStor[,2], "gridwind")) %>% 
+ #                              # conversion from tr USD 2005/TW to USD2015/kW
+ #                              mutate(CAPEX = CAPEX *1.2 * 1e3) %>% 
+ #                              # calculate annuity factor for investment cost 
+ #                              mutate( disc.fac = r * (1+r)^lifetime/(-1+(1+r)^lifetime)) %>%  
+ #                              # investment cost LCOE in USD/MWh
+ #                              mutate( `Investment Cost` = CAPEX * disc.fac / (CapFac*8760)*1e3) %>% 
+ #                              # OMF cost LCOE in USD/MWh
+ #                              mutate( `OMF Cost` = CAPEX * OMF / (CapFac*8760)*1e3) %>% 
+ #                              # calculate pre-loss VRE LCOE as investment cost + OMF cost LCOE
+ #                              mutate( `VRE LCOE preloss` = `Investment Cost` + `OMF Cost`) %>% 
+ #                              select(region, period, tech, CapFac, `VRE LCOE preloss`)
+ #  
+ # 
+ #  
+ # # calculate marginal storloss:
+ # # (Marginal amount of energy that is lost in storage when 
+ # # one more MWh of 'usable seel' (='upgraded seel that is balanced by storage') 
+ # # is produced. Unit: MWh. Can be larger than 1!)
+ #  
+ #  # generation share of technology
+ #  df.shSeEl <- read.gdx(gdx, "v32_shSeEl", fields = "l") %>% 
+ #                  rename(shSeEl = value, tech = all_te, period = ttot, region = all_regi)
+ #  # usable (after storage loss) SE per technology
+ #  df.usableSeTe <- read.gdx(gdx, "vm_usableSeTe", fields = "l") %>% 
+ #                      rename(usableSeTe = value, tech = all_te, period = ttot, region = all_regi) %>% 
+ #                      select(-entySe)
+ #  # usable (after storage loss) SE
+ #  df.usableSe <- read.gdx(gdx, "vm_usableSe", fields = "l") %>% 
+ #                    rename(usableSe = value, period = ttot, region = all_regi) %>% 
+ #                    select(-entySe)
+ #  # storage exponent
+ #  df.storexp <- read.gdx(gdx, "p32_storexp") %>%   
+ #                  rename(storexp = value, tech = all_te, region = all_regi) 
+ #  
+ #  
+ #  # questions: !!
+ #  ## marginal storloss of usable SE partly very high (30 for wind EUR), which unit does this have
+ #  # it is a share, right? Or does it have energy units?
+ #  
+ #  # calculate marginal storloss
+ #  df.marg.storloss <- df.LCOE.VRE.preloss %>% 
+ #                        filter( tech %in% VRE2teStor[,1]) %>% 
+ #                        left_join(df.shSeEl) %>% 
+ #                        left_join(df.usableSeTe) %>% 
+ #                        left_join(df.usableSe) %>% 
+ #                        left_join(df.eff %>% 
+ #                                    right_join(VRE2teStor) %>% 
+ #                                    select(-teStor) ) %>% 
+ #                        left_join(df.storexp) %>% 
+ #                        mutate( loss = 1-eff) %>% 
+ #                        # formula derived by RP:
+ #                        # This formula is an approximation of the marginal change of storage loss 
+ #                        # that was calculated outside ReMIND by hand.
+ #                        mutate( first.term = (loss * (shSeEl^storexp) + 
+ #                                                (usableSeTe * shSeEl^(storexp-1) * 
+ #                                                  (1/usableSe - usableSeTe/(usableSe^2)))) /
+ #                                              ((1-eff)*shSeEl^storexp)) %>% 
+ #                        mutate( second.term = ( loss^2 * shSeEl^storexp * storexp * shSeEl^(storexp-1) *
+ #                                                  (1/usableSe - usableSeTe/(usableSe^2))) /
+ #                                                    (((1-eff)*shSeEl^storexp)^2)) %>%
+ #                        mutate( marg.storloss = first.term + second.term) %>% 
+ #                        mutate( marg.storloss = ifelse(loss == 0, 0, marg.storloss)) %>% 
+ #                        # convert storage loss from usable SE to total SE level
+ #                        mutate(marg.storloss.SE = marg.storloss / (1+marg.storloss)) %>% 
+ #                        # calculate marginal LCOE of storloss
+ #                        mutate( loss.MLCOE = `VRE LCOE preloss` * marg.storloss.SE /
+ #                                  ( 1 - marg.storloss.SE)) %>% 
+ #                        # calculate marginal LCOE postloss
+ #                        mutate( postloss.LCOE = `VRE LCOE preloss` /
+ #                                  ( 1 - marg.storloss.SE)) %>% 
+ #                        # calculate postloss - preloss LCOE -> VRE Storage Loss Cost
+ #                        mutate( storloss.MLCOE = postloss.LCOE-`VRE LCOE preloss`)
+ #  
+ #  # VRE grid weight: how much grid capacities the respective VRE technology needs
+ #  df.VRE2teGrid <- data.frame(tech = c("spv","csp","wind"), GridReq = c(1,1,1.5))
+ #  
+ # 
+ #  # calculate marginal integration cost (cost of building storage and grid for the marginal VRE unit)
+ #  df.IntCost <- df.marg.storloss %>%
+ #                  select(region, period, tech, marg.storloss) %>% 
+ #                  # join with MCLOE for storage and grid technologies
+ #                  # add grid capacity MLCOE
+ #                  left_join(df.LCOE.VRE.preloss %>% 
+ #                              filter(tech == "gridwind") %>%
+ #                              select(-tech) %>% 
+ #                              rename(gridCap.MLCOE = `VRE LCOE preloss`)) %>% 
+ #                  # add storage capacity MLCOE
+ #                  left_join(df.LCOE.VRE.preloss %>%
+ #                              filter(tech %in% VRE2teStor[,2]) %>% 
+ #                              rename( teStor = tech, StorCap.MLCOE = `VRE LCOE preloss`) %>% 
+ #                              left_join(VRE2teStor) ) %>% 
+ #                  # add grid requirement factor, current IntC impl.: wind needs 1.5*gridwind capacity than solar 
+ #                  left_join(df.VRE2teGrid) %>%
+ #                  # add storage efficiencies 
+ #                  left_join(df.eff %>% 
+ #                              filter(tech %in% VRE2teStor[,2]) %>% 
+ #                              rename(teStor = tech)) %>% 
+ #                  # calculate marginal grid and storage capacity cost per unit of new VRE
+ #                  mutate( MLCOE.grid = marg.storloss / CapFac * GridReq * gridCap.MLCOE,
+ #                          MLCOE.stor = marg.storloss * eff / (1-eff) / CapFac * StorCap.MLCOE)
+ #                  
+ #    
+ #  
+ #                      
+ #                                                
+ #  
+ #  # o_te_marg_storloss_usable(ttot,regi,teReNoBio)       !!RP: This formula is an approximation of the marginal change of storage loss that was calculated outside ReMIND by hand.
+ #  # =  p_aux_loss(teReNoBio) 
+ #  # *   (p_aux_shareseel ** p_storexp(regi,teReNoBio)
+ #  #      +   (
+ #  #        p_aux_usablese_te * p_aux_shareseel ** (p_storexp(regi,teReNoBio) -1)
+ #  #        * ( 1 / p_aux_usablese - p_aux_usablese_te/(p_aux_usablese ** 2) )
+ #  #      )
+ #  # )
+ #  # / (1 - p_aux_loss(teReNoBio) * p_aux_shareseel ** p_storexp(regi,teReNoBio) )
+ #  # +   ( 
+ #  #   p_aux_loss(teReNoBio) ** 2  * p_aux_shareseel ** p_storexp(regi,teReNoBio) * p_storexp(regi,teReNoBio) * p_aux_shareseel ** (p_storexp(regi,teReNoBio) -1)
+ #  #   * ( 1 / p_aux_usablese - p_aux_usablese_te/(p_aux_usablese ** 2) )
+ #  # )
+ #  # / ( 
+ #  #   (1 - p_aux_loss(teReNoBio) * p_aux_shareseel ** p_storexp(regi,teReNoBio) ) 
+ #  #   ** 2
+ #  # );
+ #                              
+ # 
+ #  
+ #  #### calculate LCOE
+ #  df.LCOE <- df.LCOE %>% 
+ #    # investment cost LCOE in USD/MWh
+ #    mutate( `Investment Cost` = CAPEX * disc.fac / (CapFac*8760)*1e3) %>% 
+ #    # OMF cost LCOE in USD/MWh
+ #    mutate( `OMF Cost` = CAPEX * OMF / (CapFac*8760)*1e3) %>% 
+ #    mutate( `OMV Cost` = OMV) %>% 
   
   ### 15. calculate grid cost of VRE technologies
-  
   teVRE.grid <- data.frame(tech=c("spv","csp","wind"), gridtech = c("gridwind",
                                                                     "gridwind","gridwind") )
   
@@ -839,6 +1014,10 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
                     select(region, period, tech, grid.cost)
   
   
+  # Note: marginal grid cost calculation needs to be checked, see Robert's old version above,
+  # set to 0 meanwhile
+  df.gridcost <- df.gridcost %>% 
+                    mutate( grid.cost = 0)
   
   # 16. VRE electricity storage cost
   
@@ -877,7 +1056,10 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
                       mutate( VREstor.cost = ifelse(is.na(VREstor.cost), 0, VREstor.cost)) %>% 
                       select(region, period, tech, VREstor.cost)
   
-  
+    # Note: marginal storage cost calculation needs to be checked, see Robert's old version above,
+    # set to 0 meanwhile
+    df.VREstorcost <- df.VREstorcost %>% 
+                        mutate( VREstor.cost = 0)
   
     ### 17. CCS tax
     # following q21_taxrevCCS
@@ -905,6 +1087,11 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
                   rename(tech = all_te1, CCStax.cost = value) %>% 
                   select(region, period, tech, CCStax.cost)
     
+    # Note: CCS tax still to fix, set temporarily to 0
+    df.CCStax <- df.CCStax %>% 
+                  mutate( CCStax.cost = 0)
+
+    
     
     ### 18. CO2 Storage Cost
     p_teAnnuity <- readGDX(gdx, "p_teAnnuity", restore_zeros = F)
@@ -917,25 +1104,73 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
                     rename(tech = all_te, CCSCost = value) %>% 
                     select(region, period, tech, CCSCost)
     
+    # Note: CCS cost still to fix, set temporarily to 0
+    df.CCSCost <- df.CCSCost %>% 
+                    mutate( CCSCost = 0)
+    
     ### 19. Flexibility Tax
-    
-    vm_flexAdj <- readGDX(gdx, "vm_flexAdj", field = "l", restore_zeros = F)
-    if (is.null(vm_flexAdj)) {
-      vm_flexAdj <- vm_costTeCapital
-      vm_flexAdj[,,] <- 0
+    cm_FlexTax <- readGDX(gdx, "cm_flex_tax")
+    v32_flexPriceShare <- readGDX(gdx, "v32_flexPriceShare", field = "l", restore_zeros = F)
+    if (is.null(v32_flexPriceShare) | is.null(cm_FlexTax)) {
+      v32_flexPriceShare <- vm_costTeCapital
+      v32_flexPriceShare[,,] <- 1
+    } else {
+      if (cm_FlexTax == 0) {
+        v32_flexPriceShare <- vm_costTeCapital
+        v32_flexPriceShare[,,] <- 1
+      }
     }
+
+    df.flexPriceShare <- as.quitte(v32_flexPriceShare) %>% 
+                          rename(tech = all_te, FlexPriceShare = value) %>% 
+                          select(region, period, tech, FlexPriceShare) 
     
-    # convert from trUSD2005/TWa(output) to USD2015/MWh(output)
-    df.FlexTax <- as.quitte(vm_flexAdj*1e12*1.2/s_twa2mwh) %>%  
-                    rename(tech = all_te, FlexTax = value) %>% 
-                    select(region, period, tech, FlexTax)
-  
-  
+    ### 20. Final Energy Taxes
+    
+    # read fe to ppfen mapping (stationary)
+    # read fe to ue mapping (transport)
+    fe2ppfEn <- readGDX(gdx, "fe2ppfEn") %>% 
+      rename(output = all_enty) 
+    
+    fe2ue <- readGDX(gdx, "fe2ue") %>% 
+                rename(output = all_enty, all_in = all_enty1) %>% 
+                select(output, all_in)
+
+    
+    #read FE tax/subsidy levels
+    p21_tau_fe_tax_bit_st <- readGDX(gdx, "p21_tau_fe_tax_bit_st")[,ttot_from2005,unique(fe2ppfEn$all_in)]
+    p21_tau_fe_sub_bit_st <- readGDX(gdx, "p21_tau_fe_sub_bit_st")[,ttot_from2005,unique(fe2ppfEn$all_in)]
+    p21_tau_fe_tax_transport <- readGDX(gdx, "p21_tau_fe_tax_transport")[,ttot_from2005,unique(fe2ue$output)]
+    p21_tau_fe_sub_transport <- readGDX(gdx, "p21_tau_fe_sub_transport")[,ttot_from2005,unique(fe2ue$output)]
+    
+    FE_tax_level <- mbind((p21_tau_fe_tax_bit_st+p21_tau_fe_sub_bit_st),
+                          (p21_tau_fe_tax_transport+p21_tau_fe_sub_transport))
+    
+    df.FEtax <- as.quitte(FE_tax_level) %>%   
+                  left_join(fe2ppfEn) %>% 
+                  mutate( output = ifelse(is.na(output), all_in, output)) %>% 
+                  # add sector column for industry, buildings, transport FE tax
+                  mutate(sector = ifelse(substr(as.character(all_in), 
+                                                nchar(as.character(all_in)),
+                                                nchar(as.character(all_in))) == "i",
+                                         "industry", 
+                                         ifelse(substr(as.character(all_in), 
+                                                       nchar(as.character(all_in)),
+                                                       nchar(as.character(all_in))) == "b",
+                                                "buildings", "transport"))) %>% 
+                  rename( FEtax = value) %>% 
+                  # convert from trUSD2005/TWa to USD2015/MWh
+                  mutate(FEtax = FEtax * 1.2 / s_twa2mwh * 1e12 ) %>% 
+                  select(region, period, output, sector, FEtax)
+    
+    
+    # Note, this should still be checked: the stationary FE tax currently 
+    # is on the vm_cesIO (first CES level prodcution factor) and not on FE demand.
+    # Should be checked whether there are losses between FE and CES factor. 
+    
   ####################### LCOE calculation (New plant/marginal) ########################
   
-  
-  ### LCOE calculation: Investment cost and O&M cost ###
-  
+
   ### create table with all parmeters needed for LCOE calculation                      
   df.LCOE <- df.CAPEX %>% 
     left_join(df.OMF) %>% 
@@ -955,19 +1190,26 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
     left_join(df.VREstorcost) %>% 
     left_join(df.CCStax) %>% 
     left_join(df.CCSCost) %>% 
-    left_join(df.FlexTax) %>% 
-    # only LCOE for SE generating technologies for now
-    filter( tech %in% c(te_SE_gen)) 
+    left_join(df.flexPriceShare) %>%
+    left_join(df.FEtax) %>% 
+    # filter to only have LCOE technologies
+    filter( tech %in% c(te_LCOE)) 
   
   
   # replace NA by 0 in certain columns
   # columns where NA should be replaced by 0
   col.NA.zero <- c("OMF","OMV", "co2.price.weighted.mean", "fuel.price.weighted.mean","co2_dem","emiFac.se2fe","Co2.Capt.Price",
-                   "secfuel.prod", "secfuel.price", "grid.cost","VREstor.cost", "CCStax.cost","CCSCost","FlexTax")
+                   "secfuel.prod", "secfuel.price", "grid.cost","VREstor.cost", "CCStax.cost","CCSCost","FEtax")
   df.LCOE[,col.NA.zero][is.na(df.LCOE[,col.NA.zero])] <- 0
   
-  #
+  # replace NA by 1 in certain columns
+  # columns where NA should be replaced by 1
+  col.NA.one <- c("FlexPriceShare")
+  df.LCOE[,col.NA.one][is.na(df.LCOE[,col.NA.one])] <- 1
   
+  # replace NA for sectors by "supply-side" (for all SE generating technologies)
+  col.NA.sec <- c("sector")
+  df.LCOE[,col.NA.sec][is.na(df.LCOE[,col.NA.sec])] <- "supply-side"
   
   ### data preparation before LCOE calculation
   df.LCOE <- df.LCOE %>% 
@@ -994,36 +1236,58 @@ te_annual_inv_cost <- new.magpie(getRegions(te_inv_annuity[,ttot,]),getYears(te_
     mutate( `Second Fuel Cost` = -(secfuel.prod * secfuel.price)) %>% 
     mutate( `VRE Storage Cost` = VREstor.cost, `Grid Cost` = grid.cost) %>% 
     mutate( `CCS Tax Cost` = CCStax.cost, `CCS Cost` = CCSCost) %>%
-    mutate( `Flex Tax` = FlexTax) %>% 
+    mutate( `Flex Tax` = -(1-FlexPriceShare) * `Fuel Cost`) %>% 
+    mutate( `FE Tax` = FEtax) %>% 
     mutate( `Total LCOE` = `Investment Cost` + `OMF Cost` + `OMV Cost` + `Fuel Cost` + `CO2 Tax Cost` + 
-              `CO2 Provision Cost` + `Second Fuel Cost` + `VRE Storage Cost` + `Grid Cost` + `CCS Tax Cost` + `CCS Cost` + `Flex Tax`)
+              `CO2 Provision Cost` + `Second Fuel Cost` + `VRE Storage Cost` + `Grid Cost` + `CCS Tax Cost` + `CCS Cost` + `Flex Tax` + `FE Tax`)
   
+    
+  ### DAC: calculate Levelized Cost of CO2 from direct air capture
+  # DAC energy demand per unit captured CO2 (EJ/GtC)
+  p33_dac_fedem <- readGDX(gdx, "p33_dac_fedem", restore_zeros = F)
+  LCOD <- new.magpie(getRegions(vm_costTeCapital), getYears(vm_costTeCapital), 
+                     c("Investment Cost","OMF Cost","Electricity Cost","Heat Cost","Total LCOE"))
+  # capital cost in trUSD2005/GtC -> convert to USD2015/tCO2
+  LCOD[,,"Investment Cost"] <- vm_costTeCapital[,,"dac"] * 1.2 / 3.66 /vm_capFac[,,"dac"]*p_teAnnuity[,,"dac"]*1e3
+  LCOD[,,"OMF Cost"] <-  pm_data_omf[,,"dac"]*vm_costTeCapital[,,"dac"] * 1.2 / 3.66 /vm_capFac[,,"dac"]*1e3
+  # elecitricty cost (convert DAC FE demand to GJ/tCO2 and fuel price to USD/GJ)
+  LCOD[,,"Electricity Cost"] <- p33_dac_fedem[,,"feels"] / 3.66 * Fuel.Price[,,"seel"] / 3.66
+  # conversion as above, assume for now that heat is always supplied by H2
+  LCOD[,,"Heat Cost"] <- p33_dac_fedem[,,"feh2s"] / 3.66 * Fuel.Price[,,"seh2"]  / 3.66
+  LCOD[,,"Total LCOE"] <- LCOD[,,"Investment Cost"]+LCOD[,,"OMF Cost"]+LCOD[,,"Electricity Cost"]+LCOD[,,"Heat Cost"]
   
+  # add dimensions to fit to other tech LCOE
+  LCOD <- LCOD %>% 
+            add_dimension(add = "unit", nm = "US$2015/tCO2") %>%   
+            add_dimension(add = "tech", nm = "dac") %>%  
+            add_dimension(add = "output", nm = "cco2") %>% 
+            add_dimension(add = "type", nm = "marginal") %>% 
+            add_dimension(add = "sector", dim=3.4, nm = "supply-side")
   
-  # if extended.output = T 
-  # -> output is LCOE calculation table, 
-  # useful to check LCOE calculation, see calculation details per technology
-  if (extended.output) {
-    return(df.LCOE)
-  # if extended.output = F -> standard mif format LCOE output
-  } else {
-    # reduce to mif output table
+  # transform marginal LCOE to mif output format
     df.LCOE.out <- df.LCOE %>% 
-      select(region, period, tech, output, `Investment Cost`, `OMF Cost`, `OMV Cost`, `Fuel Cost` ,
+      select(region, period, tech, output, sector, `Investment Cost`, `OMF Cost`, `OMV Cost`, `Fuel Cost` ,
              `CO2 Tax Cost`,`CO2 Provision Cost`,`Second Fuel Cost`,`VRE Storage Cost` ,`Grid Cost`,
-             `CCS Tax Cost`, `CCS Cost`,`Flex Tax`,`Total LCOE`) %>% 
-      gather(cost, value, -region, -period, -tech, -output) %>% 
+             `CCS Tax Cost`, `CCS Cost`,`Flex Tax`,`FE Tax`,`Total LCOE`) %>% 
+      gather(cost, value, -region, -period, -tech, -output, -sector) %>% 
       mutate(unit = "US$2015/MWh", type="marginal") %>% 
-      select(region, period, type, output, tech, unit, cost, value)
+      select(region, period, type, output, tech, sector, unit, cost, value)
     
-    LCOE.mar.out <- as.magpie(df.LCOE.out, spatial = 1, temporal = 2, datacol=8)
-    
-    # bind standing system and new plant/marginal LCOE to one magpie object
-    LCOE.out <- mbind(LCOE.avg.out, LCOE.mar.out)
-    
-    return(LCOE.out)
-  }
+    LCOE.mar.out <- as.magpie(df.LCOE.out, spatial = 1, temporal = 2, datacol=9) 
+    # add DAC levelized cost
+    LCOE.mar.out <- mbind(LCOE.mar.out, LCOD)
+    # bind to previous calculations (if there are)
+    LCOE.out <- mbind(LCOE.out,LCOE.mar.out)
   
+ }
+ 
+ if (output.type %in% c("marginal detail")) {
+   return(df.LCOE)
+ } else {
+   return(LCOE.out)
+ }
+ 
+ return(LCOE.out)
 }
   
   
