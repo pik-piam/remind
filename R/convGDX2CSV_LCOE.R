@@ -27,6 +27,7 @@ convGDX2CSV_LCOE <- function(gdx,file=NULL,scen="default",t=c(seq(2005,2060,5),s
   period <- NULL
   type <- NULL
   cost <- NULL
+  sector <- NULL
   value <- NULL
   unit <- NULL
   tech <- NULL
@@ -42,7 +43,7 @@ convGDX2CSV_LCOE <- function(gdx,file=NULL,scen="default",t=c(seq(2005,2060,5),s
   } else {
     df.LCOE.report <- as.quitte(output) %>% 
       mutate(scenario = scen, model = "REMIND") %>% 
-      select(model, scenario, region, period, type, tech, output, unit, cost, value)
+      select(model, scenario, region, period, type, tech, output, sector, unit, cost, value)
   }
 
   # write the LCOE.mif or give back the magpie opject output

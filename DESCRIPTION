@@ -1,7 +1,7 @@
 Package: remind
 Type: Package
 Title: The REMIND R package
-Version: 36.176.1
+Version: 36.177.0
 Date: 2020-11-05
 Authors@R: as.person(c(
 	   "Anastasis Giannousakis <giannou@pik-potsdam.de> [aut,cre]",
@@ -39,7 +39,8 @@ Imports:
     rmarkdown,
     rmndt,
     scales,
-    tidyr
+    tidyr,
+	zoo
 Encoding: UTF-8
 License: LGPL-3
 RoxygenNote: 7.1.1
