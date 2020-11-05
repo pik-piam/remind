@@ -683,21 +683,19 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                  )
     if("segabio" %in% se_Gas){
       ## Bioshare in FEDIE and FEPET
-    if("seliqbio" %in% getNames(prodFE, dim=1)) {
       fedie_bioshare <- dimSums(prodFE[,,"seliqbio.fedie.tdbiodie"] /
-                                  (prodFE[,,"seliqbio.fedie.tdbiodie"] +
-                                     prodFE[,, "seliqfos.fedie.tdfosdie"]),dim=3)
+                                (prodFE[,,"seliqbio.fedie.tdbiodie"] +
+                                 prodFE[,, "seliqfos.fedie.tdfosdie"]),dim=3)
       fepet_bioshare <- dimSums(prodFE[,,"seliqbio.fepet.tdbiopet"] /
-                                  (prodFE[,,"seliqbio.fepet.tdbiopet"] +
-                                     prodFE[,, "seliqfos.fepet.tdfospet"]),dim=3)
-    } else {
-      fedie_bioshare <- NA
-      fepet_bioshare <- NA
-    }
+                                (prodFE[,,"seliqbio.fepet.tdbiopet"] +
+                                 prodFE[,, "seliqfos.fepet.tdfospet"]),dim=3)
 
       tmp2 <- mbind(tmp2,
-                 setNames(dimSums(prodFE[,,"segabio.fegas.tdbiogas"],dim=3),"FE|Other Sector|Gases|Biomass (EJ/yr)"),
-                 setNames(dimSums(prodFE[,,"segafos.fegas.tdfosgas"],dim=3),"FE|Other Sector|Gases|Non-Biomass (EJ/yr)"))
+                    setNames(dimSums(prodFE[,,"segabio.fegas.tdbiogas"],dim=3),
+                             "FE|Other Sector|Gases|Biomass (EJ/yr)"),
+                    setNames(dimSums(prodFE[,,"segafos.fegas.tdfosgas"],dim=3),
+                             "FE|Other Sector|Gases|Non-Biomass (EJ/yr)"))
+
       if(tran_mod == "edge_esm"){
         p35_pass_FE_share_transp <- dimSums(vm_demFeForEs_trnsp[,,"esdie_pass_",pmatch=TRUE], dim=3) /
           dimSums(vm_demFeForEs_trnsp[,,"esdie_",pmatch=TRUE], dim=3)
@@ -716,14 +714,15 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
                       tmp2[,,"FE|Transport|Freight|Liquids|Biomass (EJ/yr)"],
                       "FE|Transport|Liquids|Biomass (EJ/yr)"
                     ))
+
     }
 
     if("fegat" %in% fety && "segabio" %in% se_Gas){
       tmp2 <- mbind(tmp2,
-                 setNames(dimSums(prodFE[,,"segabio.fegat.tdbiogat"],dim=3),"FE|Transport|Gases|Biomass (EJ/yr)"),
-                 setNames(dimSums(prodFE[,,"segafos.fegat.tdfosgat"],dim=3),"FE|Transport|Gases|Non-Biomass (EJ/yr)")
-                 )
-
+                    setNames(dimSums(prodFE[,,"segabio.fegat.tdbiogat"],dim=3),
+                             "FE|Transport|Gases|Biomass (EJ/yr)"),
+                    setNames(dimSums(prodFE[,,"segafos.fegat.tdfosgat"],dim=3),
+                             "FE|Transport|Gases|Non-Biomass (EJ/yr)"))
     }
   }
     
