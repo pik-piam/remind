@@ -5,7 +5,9 @@ test_that("Test if REMIND reporting is produced as it should", {
   library(gdx)
 
   ## add GDXs for comparison here:
-  my_gdxs <- NULL
+  my_gdxs <- c(
+    # system.file('extdata/old.gdx', package = 'remind'),
+    NULL)
 
   runParallelTests <- function(gdxs=NULL,cores=0,par=FALSE){
 
