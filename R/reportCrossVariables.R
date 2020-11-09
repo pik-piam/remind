@@ -191,7 +191,7 @@ reportCrossVariables <- function(gdx,output=NULL,regionSubsetList=NULL){
   tmp <- mbind(tmp,dimSums(tmp,dim=1))
   # add other region aggregations
   if (!is.null(regionSubsetList))
-    tmp <- mbind(tmp,do.call("mbind",lapply(names(regionSubsetList), function(x) { result <- dimSums(tmp[regionSubsetList[[x]],,],dim=1); getRegions(result) <- x ; return(result) })))
+    tmp <- mbind(tmp, calc_regionSubset_sums(tmp, regionSubsetList))
   
   # correct global values for intensive variables (prices, LCOES, Capacity factors) 
   map <- data.frame(region=getRegions(tmp["GLO",,,invert=TRUE]),world="GLO",stringsAsFactors=FALSE)

@@ -162,7 +162,7 @@ reportCharts <- function(gdx=NULL, regionMapping=NULL, hist=NULL, reportfile=NUL
   pop <- readGDX(gdx, name = "pm_pop")[,getYears(data),] # pop in billions
   pop <- mbind(pop,dimSums(pop,dim=1)) # adding GLO
   if (!is.null(regionSubsetList))
-    pop <- mbind(pop,do.call("mbind",lapply(names(regionSubsetList), function(x) { result <- dimSums(pop[regionSubsetList[[x]],,],dim=1); getRegions(result) <- x ; return(result) }))) # adding regions aggregations
+    pop <- mbind(pop, calc_regionSubset_sums(pop, regionSubsetList))
   pop <- as.quitte(pop)
   pop <- pop[c("region","period","value")]
   colnames(pop) <- c("region","period","population")

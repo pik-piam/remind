@@ -806,7 +806,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   out <- mbind(out,dimSums(out,dim=1))
   # add other region aggregations
   if (!is.null(regionSubsetList))
-    out <- mbind(out,do.call("mbind",lapply(names(regionSubsetList), function(x) { result <- dimSums(out[regionSubsetList[[x]],,],dim=1); getRegions(result) <- x ; return(result) })))
+    out <- mbind(out, calc_regionSubset_sums(out, regionSubsetList))
   
   out2 <- mbind(out,
                 setNames(100 * out[,,"FE|Transport|Fuels (EJ/yr)"] / out[,,"FE|Transport (EJ/yr)"], "FE|Transport|Fuels|Share (Percent)"),

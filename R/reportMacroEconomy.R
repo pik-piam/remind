@@ -244,7 +244,7 @@ reportMacroEconomy <- function(gdx,regionSubsetList=NULL){
   out <- mbind(out,dimSums(out,dim=1))
   # add other region aggregations
   if (!is.null(regionSubsetList))
-    out <- mbind(out,do.call("mbind",lapply(names(regionSubsetList), function(x) { result <- dimSums(out[regionSubsetList[[x]],,],dim=1); getRegions(result) <- x ; return(result) })))
+    out <- mbind(out, calc_regionSubset_sums(out, regionSubsetList))
   
   # calculate interest rate
   inteRate <- new.magpie(getRegions(out),getYears(out),c("Interest Rate (t+1)/(t-1)|Real ()","Interest Rate t/(t-1)|Real ()"),fill=0)
