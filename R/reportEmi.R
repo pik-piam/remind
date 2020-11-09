@@ -27,7 +27,7 @@
 reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   
   if(is.null(output)){
-       output <- reportFE(gdx,regionSubsetList)["GLO",,invert = T]
+       output <- reportFE(gdx,regionSubsetList = NULL)["GLO",,invert = T]
   } else {
        output <- output[c("GLO",names(regionSubsetList)),,invert = T]
   }
