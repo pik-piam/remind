@@ -34,11 +34,14 @@ p21_taxrevCCS_iter        <- readGDX(gdx,c("p21_taxrevCCS_iter"),format="first_f
 p21_taxrevNetNegEmi_iter  <- readGDX(gdx,c("p21_taxrevNetNegEmi_iter"),format="first_found")[,y,iter]
 p21_taxrevFEtrans_iter    <- readGDX(gdx,c("p21_taxrevFEtrans_iter"),format="first_found")[,y,iter]
 p21_taxrevFEBuildInd_iter <- readGDX(gdx,c("p21_taxrevFEBuildInd_iter"),format="first_found")[,y,iter]
+p21_taxrevFE_Es_iter      <- readGDX(gdx,c("p21_taxrevFE_Es_iter"),format="first_found")[,y,iter]
 p21_taxrevResEx_iter      <- readGDX(gdx,c("p21_taxrevResEx_iter"),format="first_found")[,y,iter]
 p21_taxrevPE2SE_iter      <- readGDX(gdx,c("p21_taxrevPE2SE_iter"),format="first_found")[,y,iter]
 p21_taxrevXport_iter      <- readGDX(gdx,c("p21_taxrevXport_iter"),format="first_found")[,y,iter]
 p21_taxrevSO2_iter        <- readGDX(gdx,c("p21_taxrevSO2_iter"),format="first_found")[,y,iter]
 p21_taxrevBio_iter        <- readGDX(gdx,c("p21_taxrevBio_iter"),format="first_found")[,y,iter]
+p21_implicitDiscRate_iter <- readGDX(gdx,c("p21_implicitDiscRate_iter"),format="first_found")[,y,iter]
+p21_taxrevFlex_iter       <- readGDX(gdx,c("p21_taxrevFlex_iter"),format="first_found")[,y,iter]
 
 ###############################################################################
 
@@ -103,6 +106,15 @@ p <- magpie2ggplot2(p21_taxrevFEBuildInd_iter,color="Data1",color_pal=col,ncol=3
                     ylab='p21_taxrevFEBuildInd_iter',show_grid=TRUE,legend_ncol=4)
 swfigure(sw,print,p,sw_option="height=10,width=9")
 
+swlatex(sw,"\\subsection{taxrevFE_Es}")
+p <- magpie2ggplot2(p21_taxrevFE_Es_iter,xaxis="Data1",ncol=3,color="Year",color_pal=col_y,asDate=FALSE,
+                    ylab='p21_taxrevFE_Es_iter',xlab="iteration",show_grid=TRUE)
+swfigure(sw,print,p,sw_option="height=10,width=9")
+
+p <- magpie2ggplot2(p21_taxrevFE_Es_iter,color="Data1",color_pal=col,ncol=3,group=NULL,
+                    ylab='p21_taxrevFE_Es_iter',show_grid=TRUE,legend_ncol=4)
+swfigure(sw,print,p,sw_option="height=10,width=9")
+
 swlatex(sw,"\\subsection{taxrevResEx}")
 p <- magpie2ggplot2(p21_taxrevResEx_iter,xaxis="Data1",ncol=3,color="Year",color_pal=col_y,asDate=FALSE,
                     ylab='p21_taxrevResEx_iter',xlab="iteration",show_grid=TRUE)
@@ -148,6 +160,23 @@ p <- magpie2ggplot2(p21_taxrevBio_iter,color="Data1",color_pal=col,ncol=3,group=
                     ylab='p21_taxrevBio_iter',show_grid=TRUE,legend_ncol=4)
 swfigure(sw,print,p,sw_option="height=10,width=9")
 
+swlatex(sw,"\\subsection{implicitDiscRate}")
+p <- magpie2ggplot2(p21_implicitDiscRate_iter,xaxis="Data1",ncol=3,color="Year",color_pal=col_y,asDate=FALSE,
+                    ylab='p21_implicitDiscRate_iter',xlab="iteration",show_grid=TRUE)
+swfigure(sw,print,p,sw_option="height=10,width=9")
+
+p <- magpie2ggplot2(p21_implicitDiscRate_iter,color="Data1",color_pal=col,ncol=3,group=NULL,
+                    ylab='p21_implicitDiscRate_iter',show_grid=TRUE,legend_ncol=4)
+swfigure(sw,print,p,sw_option="height=10,width=9")
+
+swlatex(sw,"\\subsection{taxrevFlex}")
+p <- magpie2ggplot2(p21_taxrevFlex_iter,xaxis="Data1",ncol=3,color="Year",color_pal=col_y,asDate=FALSE,
+                    ylab='p21_taxrevFlex_iter',xlab="iteration",show_grid=TRUE)
+swfigure(sw,print,p,sw_option="height=10,width=9")
+
+p <- magpie2ggplot2(p21_taxrevFlex_iter,color="Data1",color_pal=col,ncol=3,group=NULL,
+                    ylab='p21_taxrevFlex_iter',show_grid=TRUE,legend_ncol=4)
+swfigure(sw,print,p,sw_option="height=10,width=9")
 
 ###############################################################################
 
