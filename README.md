@@ -1,6 +1,6 @@
 # The REMIND R package
 
-R package **remind**, version **36.177.0**
+R package **remind**, version **36.178.0**
 
   
 
@@ -46,7 +46,7 @@ In case of questions / problems please contact Anastasis Giannousakis <giannou@p
 
 To cite package **remind** in publications use:
 
-Giannousakis A, Pehl M (2020). _remind: The REMIND R package_. R package version 36.174.1.
+Giannousakis A, Pehl M (2020). _remind: The REMIND R package_. R package version 36.178.0.
 
 A BibTeX entry for LaTeX users is
 
@@ -55,7 +55,7 @@ A BibTeX entry for LaTeX users is
   title = {remind: The REMIND R package},
   author = {Anastasis Giannousakis and Michaja Pehl},
   year = {2020},
-  note = {R package version 36.174.1},
+  note = {R package version 36.178.0},
 }
 ```
 
