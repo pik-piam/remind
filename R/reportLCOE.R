@@ -58,6 +58,14 @@ reportLCOE <- function(gdx, output.type = "both"){
  #initialize output array
  LCOE.out <- NULL
  
+ 
+ # read in general data
+ s_twa2mwh <- readGDX(gdx,c("sm_TWa_2_MWh","s_TWa_2_MWh","s_twa2mwh"),format="first_found")
+ ttot     <- as.numeric(readGDX(gdx,"ttot"))
+ ttot_before2005 <- paste0("y",ttot[which(ttot <= 2000)])
+ ttot_from2005 <- paste0("y",ttot[which(ttot >= 2005)])
+ 
+ 
  ########################################################
  ### A) Calculation of average (standing system) LCOE ###
  ########################################################
@@ -65,13 +73,8 @@ reportLCOE <- function(gdx, output.type = "both"){
 
  ####### read in needed data #######################
 
- ## conversion factors
- s_twa2mwh <- readGDX(gdx,c("sm_TWa_2_MWh","s_TWa_2_MWh","s_twa2mwh"),format="first_found")
  ## sets
  opTimeYr <- readGDX(gdx,"opTimeYr")
- ttot     <- as.numeric(readGDX(gdx,"ttot"))
- ttot_before2005 <- paste0("y",ttot[which(ttot <= 2000)])
- ttot_from2005 <- paste0("y",ttot[which(ttot >= 2005)])
  opTimeYr2te   <- readGDX(gdx,"opTimeYr2te")
  temapse  <- readGDX(gdx,"en2se")
  temapall <- readGDX(gdx,c("en2en","temapall"),format="first_found")
@@ -1203,6 +1206,10 @@ reportLCOE <- function(gdx, output.type = "both"){
     left_join(df.FEtax) %>% 
     # filter to only have LCOE technologies
     filter( tech %in% c(te_LCOE)) 
+    
+  # only retain unique region, period, tech combinations  
+  df.LCOE <- df.LCOE %>% 
+              unique(by=c("region", "period", "tech"))
   
   
   # replace NA by 0 in certain columns
@@ -1264,6 +1271,8 @@ reportLCOE <- function(gdx, output.type = "both"){
   # conversion as above, assume for now that heat is always supplied by H2
   LCOD[,,"Heat Cost"] <- p33_dac_fedem[,,"feh2s"] / 3.66 * Fuel.Price[,,"seh2"]  / 3.66
   LCOD[,,"Total LCOE"] <- LCOD[,,"Investment Cost"]+LCOD[,,"OMF Cost"]+LCOD[,,"Electricity Cost"]+LCOD[,,"Heat Cost"]
+  
+  getSets(LCOD)[3] <- "cost"
   
   # add dimensions to fit to other tech LCOE
   LCOD <- LCOD %>% 
