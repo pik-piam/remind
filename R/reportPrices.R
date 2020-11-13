@@ -837,9 +837,7 @@ reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
   if ('subsectors' == indu_mod & !is.null(q37_limit_secondary_steel_share.m)) {
     .x <- q37_limit_secondary_steel_share.m[,y,] / budget.m
     
-    tmp <- mbind(
-      tmp,
-      
+    tmp2 <- mbind(
       # fake some GLO data
       setNames(
         mbind(.x, dimSums(.x * NA, dim = 1)),
@@ -862,6 +860,14 @@ reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
               ), 
               paste0('Debug|Price|Industry', x[2], ' (US$2005/', x[3], ')'))
           })
+      )
+    )
+    
+    tmp <- mbind(
+      tmp,
+      mbind(
+        tmp2,
+        calc_regionSubset_sums(tmp2, regionSubsetList)
       )
     )
   }

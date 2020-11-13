@@ -27,7 +27,7 @@
 reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   
   if(is.null(output)){
-       output <- reportFE(gdx,regionSubsetList)["GLO",,invert = T]
+       output <- reportFE(gdx,regionSubsetList = NULL)["GLO",,invert = T]
   } else {
        output <- output[c("GLO",names(regionSubsetList)),,invert = T]
   }
@@ -1648,7 +1648,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   out <- mbind(out,dimSums(out,dim=1))
   # add other region aggregations
   if (!is.null(regionSubsetList))
-    out <- mbind(out,do.call("mbind",lapply(names(regionSubsetList), function(x) { result <- dimSums(out[regionSubsetList[[x]],,],dim=1); getRegions(result) <- x ; return(result) })))
+    out <- mbind(out, calc_regionSubset_sums(out, regionSubsetList))
   
   # correction of variables containing bunker fuel emissions:
   all_regs <- getRegions(out)
@@ -1716,16 +1716,17 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
       out <- mbind(
         out,
         
-        mbind(  
+        mbind(
           lapply(
             list(
-              # <variables to calculate> by dividing <numerator> by <denominator>
+              # <variables to calculate> by dividing <numerator> by 
+              # <denominator>
               c('Carbon Intensity|Production|Cement (Mt CO2/Mt)',
                 'Emi|CO2|FFaI|Industry|Cement (Mt CO2/yr)',
                 'Production|Industry|Cement (Mt/yr)'),
               
-              c(paste0('Carbon Intensity|Production|Cement|Fossil|Energy|Demand|',
-                       'Industry (Mt CO2/Mt)'),
+              c(paste0('Carbon Intensity|Production|Cement|Fossil|Energy|',
+                       'Demand|Industry (Mt CO2/Mt)'),
                 'Emi|CO2|FFaI|Industry|Cement|Fuel (Mt CO2/yr)',
                 'Production|Industry|Cement (Mt/yr)'),
               
@@ -1738,21 +1739,25 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                 'Emi|CO2|FFaI|Industry|Steel (Mt CO2/yr)',
                 'Production|Industry|Steel (Mt/yr)'),
               
-              c(paste0('Carbon Intensity|Production|Steel|Fossil|Energy|Demand|',
-                       'Industry (Mt CO2/Mt)'),
+              c(paste0('Carbon Intensity|Production|Steel|Fossil|Energy|',
+                       'Demand|Industry (Mt CO2/Mt)'),
                 'Emi|CO2|FFaI|Industry|Steel|Fuel (Mt CO2/yr)',
                 'Production|Industry|Steel (Mt/yr)')),
             
             function(x) {
-              setNames(
-                ( out[,,x[[2]]]
-                  # add missing global totals
-                  / mbind(output[,,x[[3]]]['GLO',, invert = TRUE],
-                          dimSums(output[,,x[[3]]]['GLO',, invert = TRUE], 
-                                  dim = 1))
-                ),
-                x[[1]]
-              )
+              # denominator with same dimension names as out
+              tmp_denominator <- `getSets<-`(
+                output[,,x[[3]]][c('GLO', names(regionSubsetList)),, 
+                                 invert = TRUE],
+                value = getSets(out))
+              # add global and regional sums (can't be sure they exist in the 
+              # first place)
+              tmp_denominator <- mbind(
+                tmp_denominator,
+                dimSums(tmp_denominator, dim = 1),
+                calc_regionSubset_sums(tmp_denominator, regionSubsetList))
+              
+              setNames(out[,,x[[2]]] / tmp_denominator, x[[1]])
             }
           )
         )

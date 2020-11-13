@@ -79,8 +79,8 @@ reportTrade <- function(gdx,regionSubsetList=NULL) {
   trade <- mbind(trade,dimSums(trade,dim=1))
   # add other region aggregations
   if (!is.null(regionSubsetList)){
-    tmp <- mbind(tmp,do.call("mbind",lapply(names(regionSubsetList), function(x) { result <- dimSums(tmp[regionSubsetList[[x]],,],dim=1); getRegions(result) <- x ; return(result) })))
-    trade <- mbind(trade,do.call("mbind",lapply(names(regionSubsetList), function(x) { result <- dimSums(trade[regionSubsetList[[x]],,],dim=1); getRegions(result) <- x ; return(result) })))
+    tmp   <- mbind(tmp,   calc_regionSubset_sums(tmp,   regionSubsetList))
+    trade <- mbind(trade, calc_regionSubset_sums(trade, regionSubsetList))
   }
   
   # values use global prices

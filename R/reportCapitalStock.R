@@ -44,10 +44,10 @@ reportCapitalStock <- function(gdx,regionSubsetList=NULL) {
     vm_deltaCap  <- vm_deltaCap[,y,]
     v_investcost <- v_investcost[,y,]
     
-    # build reporting 
     tmp <- NULL
 
-    if(tran_mod == "complex"){
+    # ---- report transport capital stocks ----
+    if (tran_mod == "complex"){
         LDV35 <- readGDX(gdx,name=c("LDV35"),format="first_found")
         tmp <- mbind(tmp,setNames(dimSums( (vm_cap * v_investcost)[teue2rlf] 
                                          ,dim=c(3.1,3.2)) * 1000, "Est Capital Stock|ESM|Transp vehic (billion US$2005)"))
@@ -80,17 +80,9 @@ reportCapitalStock <- function(gdx,regionSubsetList=NULL) {
 
         ## add global values
         tmp <- mbind(tmp,dimSums(tmp,dim=1))
-        ## add other region aggregations
-        if (!is.null(regionSubsetList)){
-            tmp <- mbind(tmp,do.call("mbind",lapply(names(regionSubsetList),
-                                                    function(x) { result <- dimSums(tmp[regionSubsetList[[x]],,],dim=1)
-                                                        getRegions(result) <- x
-                                                        return(result) })))
-    
-        }
     }
     
-    ## report industry energy efficiency capital stocks
+    # ---- report industry energy efficiency capital stocks ----
     if (!is.null(ppfKap_Ind) & 0 < length(ppfKap_Ind)) {
       mixer <- tribble(
         ~pf,                     ~name,
@@ -117,6 +109,10 @@ reportCapitalStock <- function(gdx,regionSubsetList=NULL) {
       # add industry EEK and global totals
       tmp <- mbind(tmp, mbind(eek_Ind, dimSums(eek_Ind, dim = 1)))
     }
-             
+    
+    # ---- add region aggregates ----
+    if (!is.null(regionSubsetList))
+      tmp <- mbind(tmp, calc_regionSubset_sums(tmp, regionSubsetList))
+
     return(tmp)
 }

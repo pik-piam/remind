@@ -141,10 +141,36 @@ reportCrossVariables <- function(gdx,output=NULL,regionSubsetList=NULL){
 
 
   if(tran_mod == "complex"){
-      tmp <- mbind(tmp,setNames(
+    if ("seliq" %in% pe2se$all_enty1) {
+        ## before the split to seliqfos/seliqbio, SE level shares can be used to determine
+        ## the bioliquid shares on all levels
+        tmp <- mbind(tmp,
+                    setNames(
+                      output[r,,"FE|Transport|Pass|Liquids (EJ/yr)"]
+                      * output[r,,"SE|Liquids|Biomass (EJ/yr)"]
+                      / output[r,,"SE|Liquids (EJ/yr)"],
+                      "FE|Transport|Pass|Liquids|Biomass (EJ/yr)"),
+                    setNames(
+                      output[r,,"FE|Transport|Freight|Liquids (EJ/yr)"]
+                      * output[r,,"SE|Liquids|Biomass (EJ/yr)"]
+                      / output[r,,"SE|Liquids (EJ/yr)"],
+                      "FE|Transport|Freight|Liquids|Biomass (EJ/yr)"),
+                    setNames(
+                      output[r,,"FE|Transport|Liquids (EJ/yr)"]
+                      * output[r,,"SE|Liquids|Biomass (EJ/yr)"]
+                      / output[r,,"SE|Liquids (EJ/yr)"],
+                      "FE|Transport|Liquids|Biomass (EJ/yr)"),
+                    setNames(
+                      output[r,,"FE|Transport|Pass|Road|LDV|Liquids (EJ/yr)"]
+                      * output[r,,"SE|Liquids|Biomass (EJ/yr)"]
+                      / output[r,,"SE|Liquids (EJ/yr)"],
+                      "FE|Transport|Pass|Road|LDV|Liquids|Biomass (EJ/yr)"))
+      }else{
+        tmp <- mbind(tmp,setNames(
                            output[r,,"FE|Transport|Pass|Road|LDV|Liquids (EJ/yr)"] 
                            * output[r,,"FE|Transport|Pass|Liquids|Biomass (EJ/yr)"]
                            / output[r,,"FE|Transport|Pass|Liquids (EJ/yr)"],                     "FE|Transport|Pass|Road|LDV|Liquids|Biomass (EJ/yr)"))
+      }
       tmp <- mbind(tmp,setNames(
                            output[r,,"FE|Transport|Pass|Road|LDV|Liquids (EJ/yr)"] 
                            * output[r,,"SE|Liquids|Coal (EJ/yr)"]
@@ -165,7 +191,7 @@ reportCrossVariables <- function(gdx,output=NULL,regionSubsetList=NULL){
   tmp <- mbind(tmp,dimSums(tmp,dim=1))
   # add other region aggregations
   if (!is.null(regionSubsetList))
-    tmp <- mbind(tmp,do.call("mbind",lapply(names(regionSubsetList), function(x) { result <- dimSums(tmp[regionSubsetList[[x]],,],dim=1); getRegions(result) <- x ; return(result) })))
+    tmp <- mbind(tmp, calc_regionSubset_sums(tmp, regionSubsetList))
   
   # correct global values for intensive variables (prices, LCOES, Capacity factors) 
   map <- data.frame(region=getRegions(tmp["GLO",,,invert=TRUE]),world="GLO",stringsAsFactors=FALSE)
