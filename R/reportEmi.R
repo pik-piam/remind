@@ -129,6 +129,14 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   p_share_seh2_s    <- readGDX(gdx, "p_share_seh2_s")
   p_share_seliq_s   <- readGDX(gdx, "p_share_seliq_s")
   p_ef_dem          <- readGDX(gdx, "p_ef_dem")
+  ## temporary workaround to test reverted emission factors for the AR6 reporting
+  p_ef_dem[,, "fedie"] = 69.3;
+  p_ef_dem[,, "fehos"] = 69.3;
+  p_ef_dem[,, "fepet"] = 68.5;
+  p_ef_dem[,, "fegas"] = 50.3;
+  p_ef_dem[,, "fegat"] = 50.3;
+  p_ef_dem[,, "fesos"] = 90.5;
+
   p_bioshare        <- readGDX(gdx, "p_bioshare")
   ppfen_stat   <- readGDX(gdx,c("ppfen_stationary_dyn38","ppfen_stationary_dyn28","ppfen_stationary"),format="first_found", react = "silent")
   
