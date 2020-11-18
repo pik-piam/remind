@@ -753,13 +753,17 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   rm(tmp2)
 
   ### please note: at the end of this file, regional  FFI demand emissions are reduced by bunker emission values
+  # this variable should now only include energy demand emissions
   tmp <- mbind(
     tmp, 
     setNames(
-        tmp[,,"Emi|CO2|Fossil Fuels and Industry|Demand|Before IndustryCCS (Mt CO2/yr)"] 
-      - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS (Mt CO2/yr)"],
+      tmp[,,"Emi|CO2|Fossil Fuels and Industry|Demand|Before IndustryCCS (Mt CO2/yr)"] 
+      - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS (Mt CO2/yr)"] 
+      # add process CCS emissions again because process CCS is included in the above industry CCS variable 
+      # but the Fossil Fuels and Industry|Demand|Before IndustryCCS does not include process emissions
+      +  tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|Process (Mt CO2/yr)"],
       "Emi|CO2|Fossil Fuels and Industry|Demand|After IndustryCCS (Mt CO2/yr)")
-    )
+  )
   
   tmp <- mbind(
     tmp,
