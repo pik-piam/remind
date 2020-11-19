@@ -936,7 +936,24 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   }
   
   
+  ### total energy supply and energy demand emissions
+  tmp <- mbind(tmp, 
+               setNames(tmp[,,"Emi|CO2|Energy|Demand|Gases|After IndustryCCS (Mt CO2/yr)"] +
+                        tmp[,,"Emi|CO2|Energy|Demand|Liquids|After IndustryCCS (Mt CO2/yr)"] +
+                        tmp[,,"Emi|CO2|Energy|Demand|Solids|After IndustryCCS (Mt CO2/yr)"],
+                        "Emi|CO2|Energy|Demand (Mt CO2/yr)"))
   
+  
+  tmp <- mbind(tmp, 
+               setNames(tmp[,,"Emi|CO2|Energy|Supply|Solids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] +
+                          tmp[,,"Emi|CO2|Energy|Supply|Liquids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] +
+                          tmp[,,"Emi|CO2|Energy|Supply|Gases|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] +
+                          tmp[,,"Emi|CO2|Energy|Supply|Electricity|w/ couple prod (Mt CO2/yr)"] +
+                          tmp[,,"Emi|CO2|Energy|Supply|Hydrogen|w/ couple prod (Mt CO2/yr)"] +
+                          tmp[,,"Emi|CO2|Energy|Supply|Heat|w/ couple prod (Mt CO2/yr)"],
+                                 "Emi|CO2|Energy|Supply (Mt CO2/yr)"))
+  
+
   ### CDR/CCU emissions ##########################################################################################  
   ### moved here to include industry CCS
   
@@ -1106,12 +1123,12 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     )    
   
   tmp <- mbind(tmp,
-               setNames(tmp[,,"Emi|CO2|Fossil Fuels and Industry|Energy Supply (Mt CO2/yr)"] + tmp[,,"Emi|CO2|Fossil Fuels and Industry|Demand (Mt CO2/yr)"] ,
+               setNames(tmp[,,"Emi|CO2|Energy|Supply (Mt CO2/yr)"] + tmp[,,"Emi|CO2|Energy|Demand (Mt CO2/yr)"] ,
                         "Emi|CO2|Energy (Mt CO2/yr)"))
   
   
   tmp <- mbind(tmp,
-               setNames(tmp[,,"Emi|CO2|Fossil Fuels and Industry|Energy Supply (Mt CO2/yr)"] +
+               setNames(tmp[,,"Emi|CO2|Energy|Supply (Mt CO2/yr)"] +
                     tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Supply|w/ couple prod (Mt CO2/yr)"] -
                     tmp[,,"Emi|CO2|Energy|Supply|Electricity|Gross (Mt CO2/yr)"],
                    "Emi|CO2|Energy|Supply|Non-Elec|Gross (Mt CO2/yr)")
@@ -1120,7 +1137,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   tmp <- mbind(
     tmp,
     setNames(
-        tmp[,,"Emi|CO2|Fossil Fuels and Industry|Energy Supply (Mt CO2/yr)"] 
+        tmp[,,"Emi|CO2|Energy|Supply (Mt CO2/yr)"] 
       - tmp[,,"Emi|CO2|Energy|Supply|Electricity (Mt CO2/yr)"],
       "Emi|CO2|Energy|Supply|Non-Elec (Mt CO2/yr)")
     )
@@ -1130,7 +1147,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                setNames(-1 * tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass (Mt CO2/yr)"], 
                         "Emi|CO2|Carbon Capture and Storage|Biomass|Neg (Mt CO2/yr)") )
   tmp <- mbind(tmp,
-               setNames(tmp[,,"Emi|CO2|Fossil Fuels and Industry|Energy Supply (Mt CO2/yr)"] +
+               setNames(tmp[,,"Emi|CO2|Energy|Supply (Mt CO2/yr)"] +
                           tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Supply|w/ couple prod (Mt CO2/yr)"],
                         "Emi|CO2|Energy|Supply|Gross (Mt CO2/yr)"))
   
@@ -1670,6 +1687,8 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     setNames(  out[,,"Emi|CO2|Gross Fossil Fuels and Industry (Mt CO2/yr)"],    "Emi|CO2|Gross Fossil Fuels and Industry|w/ Bunkers (Mt CO2/yr)"),
     setNames(  out[,,"Emi|CO2|Fossil Fuels and Industry|Demand|Before IndustryCCS (Mt CO2/yr)"],"Emi|CO2|Fossil Fuels and Industry|Demand|Before IndustryCCS|w/ Bunkers (Mt CO2/yr)"), 
     setNames(  out[,,"Emi|CO2|Fossil Fuels and Industry|Demand|After IndustryCCS (Mt CO2/yr)"],"Emi|CO2|Fossil Fuels and Industry|Demand|After IndustryCCS|w/ Bunkers (Mt CO2/yr)"),
+    setNames(  out[,,"Emi|CO2|Energy (Mt CO2/yr)"],"Emi|CO2|Energy|w/ Bunkers (Mt CO2/yr)"),
+    setNames(  out[,,"Emi|CO2|Energy|Demand (Mt CO2/yr)"],"Emi|CO2|Energy|Demand|w/ Bunkers (Mt CO2/yr)"),
     setNames(  out[,,"Emi|Kyoto Gases (Mt CO2-equiv/yr)"],    "Emi|Kyoto Gases|w/ Bunkers (Mt CO2/yr)"),
     setNames(  out[,,"Emi|GHGtot (Mt CO2-equiv/yr)"],    "Emi|GHGtot|w/ Bunkers (Mt CO2-equiv/yr)"),
     setNames(  out[,,"Emi|CO2|Transport (Mt CO2/yr)"],    "Emi|CO2|Transport|w/ Bunkers (Mt CO2/yr)"),
@@ -1691,6 +1710,8 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                          "Emi|CO2|Fossil Fuels and Industry|Demand|Before IndustryCCS (Mt CO2/yr)",
                          "Emi|CO2|Fossil Fuels and Industry|Demand (Mt CO2/yr)",
                          "Emi|CO2|Fossil Fuels and Industry|Demand|After IndustryCCS (Mt CO2/yr)",
+                         "Emi|CO2|Energy (Mt CO2/yr)",
+                         "Emi|CO2|Energy|Demand (Mt CO2/yr)",
                          "Emi|Kyoto Gases (Mt CO2-equiv/yr)",
                          "Emi|GHGtot (Mt CO2-equiv/yr)",
                          "Emi|CO2|Transport (Mt CO2/yr)",
