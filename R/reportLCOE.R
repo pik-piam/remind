@@ -58,6 +58,14 @@ reportLCOE <- function(gdx, output.type = "both"){
  #initialize output array
  LCOE.out <- NULL
  
+ 
+ # read in general data
+ s_twa2mwh <- readGDX(gdx,c("sm_TWa_2_MWh","s_TWa_2_MWh","s_twa2mwh"),format="first_found")
+ ttot     <- as.numeric(readGDX(gdx,"ttot"))
+ ttot_before2005 <- paste0("y",ttot[which(ttot <= 2000)])
+ ttot_from2005 <- paste0("y",ttot[which(ttot >= 2005)])
+ 
+ 
  ########################################################
  ### A) Calculation of average (standing system) LCOE ###
  ########################################################
@@ -65,13 +73,8 @@ reportLCOE <- function(gdx, output.type = "both"){
 
  ####### read in needed data #######################
 
- ## conversion factors
- s_twa2mwh <- readGDX(gdx,c("sm_TWa_2_MWh","s_TWa_2_MWh","s_twa2mwh"),format="first_found")
  ## sets
  opTimeYr <- readGDX(gdx,"opTimeYr")
- ttot     <- as.numeric(readGDX(gdx,"ttot"))
- ttot_before2005 <- paste0("y",ttot[which(ttot <= 2000)])
- ttot_from2005 <- paste0("y",ttot[which(ttot >= 2005)])
  opTimeYr2te   <- readGDX(gdx,"opTimeYr2te")
  temapse  <- readGDX(gdx,"en2se")
  temapall <- readGDX(gdx,c("en2en","temapall"),format="first_found")
@@ -486,6 +489,8 @@ reportLCOE <- function(gdx, output.type = "both"){
   FEtax <- NULL
   `Flex Tax` <- NULL
   `FE Tax` <- NULL
+  all_esty <- NULL
+  all_teEs <- NULL
   
   
   ##############################################
@@ -1136,46 +1141,188 @@ reportLCOE <- function(gdx, output.type = "both"){
     
     ### 20. Final Energy Taxes
     
-    # read fe to ppfen mapping (stationary)
-    # read fe to ue mapping (transport)
-    fe2ppfEn <- readGDX(gdx, "fe2ppfEn") %>% 
-      rename(output = all_enty) 
     
-    fe2ue <- readGDX(gdx, "fe2ue") %>% 
+    module2realisation <- readGDX(gdx, "module2realisation")
+    
+    # read energy services types transport
+    esty_dyn35 <- readGDX(gdx, "esty_dyn35")
+    # read energy services buildings, detailed modules
+    esty_dyn36 <- readGDX(gdx, "esty_dyn36")
+    # read pffen for industry
+    ppfen_industry_dyn37 <- readGDX(gdx, "ppfen_industry_dyn37")
+    # read ppfen for buildilngs
+    ppfen_buildings_dyn36 <- readGDX(gdx, "ppfen_buildings_dyn36")
+    
+    
+    # read fe to pffen mapping 
+    # relevant for simple industry and buildings realization 
+    # and detailed industry realization)
+    fe2ppfEn <- readGDX(gdx, "fe2ppfEn") %>% 
+                  rename(output = all_enty) 
+  
+    
+    fe2ue <- readGDX(gdx, "fe2ue") %>%     
                 rename(output = all_enty, all_in = all_enty1) %>% 
                 select(output, all_in)
+                
+                
+    fe2es <- readGDX(gdx, "fe2es") %>%   
+              rename(output = all_enty) %>% 
+              select(output, all_esty)
+    
+    
+    # FE to UE CES node for simple transport
+    fe2ue.transport <- readGDX(gdx, "fe2ue") %>%     
+                          rename(output = all_enty, all_in = all_enty1) %>% 
+                          select(output, all_in)
+    
+    # FE to ES CES node for detailed transport
+    fe2es.transport <- fe2es %>% 
+                          filter(all_esty %in% as.vector(esty_dyn35) )
+    # FE to CES node for simple buildings
+    fe2ppfen.buildings <-  fe2ppfEn %>% 
+                              filter(all_in %in% as.vector(ppfen_buildings_dyn36))
+    # FE to UE CES nodes for detailed buildings
+    fe2es.buildings <- fe2es %>% 
+                          filter(all_esty %in% as.vector(esty_dyn36))
+    # FE to CES node for simple and detailed industry
+    fe2ppfen.industry <-  fe2ppfEn %>% 
+                            filter(all_in %in% as.vector(ppfen_industry_dyn37))
+    
+    
+    # FE to UE mapping for taxes
+    fe_tax_subEs36 <- readGDX(gdx, "fe_tax_subEs36")
+    
+    ### transport FE Tax
+    # transport FE tax simple module
+    if (any(module2realisation[,2]=="complex")) {
+      p21_tau_fe_tax_transport <- readGDX(gdx, "p21_tau_fe_tax_transport")[,ttot_from2005,unique(fe2ue$output)]
+      p21_tau_fe_sub_transport <- readGDX(gdx, "p21_tau_fe_sub_transport")[,ttot_from2005,unique(fe2ue$output)]
+    }
+    
+    # transport FE tax EDGE-T module
+    if (any(module2realisation[,2]=="edge_esm")) {
+      p21_tau_fe_tax_transport <- readGDX(gdx, "p21_tau_fe_tax_transport")[,ttot_from2005,unique(fe2es.transport$output)]
+      p21_tau_fe_sub_transport <- readGDX(gdx, "p21_tau_fe_sub_transport")[,ttot_from2005,unique(fe2es.transport$output)]
+    }
+    
+    
+    df.FEtax.transport <- as.quitte((p21_tau_fe_tax_transport+p21_tau_fe_sub_transport)* 1.2 / s_twa2mwh * 1e12) %>% 
+      mutate(sector = "transport") %>% 
+      rename(FEtax = value, output = all_enty) %>% 
+      select( region, period, output, sector, FEtax)
+    
+    ### stationary FE tax
+    
+    # read stationary FE tax
+    p21_tau_fe_tax_bit_st <- readGDX(gdx, "p21_tau_fe_tax_bit_st")[,ttot_from2005,unique(c(fe2ppfen.industry$all_in, fe2ppfen.buildings$all_in))]
+    p21_tau_fe_tax_sub_st <- readGDX(gdx, "p21_tau_fe_sub_bit_st")[,ttot_from2005,unique(c(fe2ppfen.industry$all_in, fe2ppfen.buildings$all_in))]
 
     
-    #read FE tax/subsidy levels
-    p21_tau_fe_tax_bit_st <- readGDX(gdx, "p21_tau_fe_tax_bit_st")[,ttot_from2005,unique(fe2ppfEn$all_in)]
-    p21_tau_fe_sub_bit_st <- readGDX(gdx, "p21_tau_fe_sub_bit_st")[,ttot_from2005,unique(fe2ppfEn$all_in)]
-    p21_tau_fe_tax_transport <- readGDX(gdx, "p21_tau_fe_tax_transport")[,ttot_from2005,unique(fe2ue$output)]
-    p21_tau_fe_sub_transport <- readGDX(gdx, "p21_tau_fe_sub_transport")[,ttot_from2005,unique(fe2ue$output)]
+    # ES service tax in buildings (detailed buildings realizations)
+    pm_tau_fe_tax_ES_st <- readGDX(gdx, "pm_tau_fe_tax_ES_st")[,ttot_from2005,]
+    pm_tau_fe_sub_ES_st <- readGDX(gdx, "pm_tau_fe_sub_ES_st")[,ttot_from2005,]
     
-    FE_tax_level <- mbind((p21_tau_fe_tax_bit_st+p21_tau_fe_sub_bit_st),
-                          (p21_tau_fe_tax_transport+p21_tau_fe_sub_transport))
     
-    df.FEtax <- as.quitte(FE_tax_level) %>%   
-                  left_join(fe2ppfEn) %>% 
-                  mutate( output = ifelse(is.na(output), all_in, output)) %>% 
-                  # add sector column for industry, buildings, transport FE tax
-                  mutate(sector = ifelse(substr(as.character(all_in), 
-                                                nchar(as.character(all_in)),
-                                                nchar(as.character(all_in))) == "i",
-                                         "industry", 
-                                         ifelse(substr(as.character(all_in), 
-                                                       nchar(as.character(all_in)),
-                                                       nchar(as.character(all_in))) == "b",
-                                                "buildings", "transport"))) %>% 
-                  rename( FEtax = value) %>% 
-                  # convert from trUSD2005/TWa to USD2015/MWh
-                  mutate(FEtax = FEtax * 1.2 / s_twa2mwh * 1e12 ) %>% 
-                  select(region, period, output, sector, FEtax)
+    #buildings FE tax
+    # if detailed buildings -> ES tax
+    if (nrow(fe2es.buildings) > 0) {
+      
+      
+      df.FEtax.buildings <- as.quitte((pm_tau_fe_tax_ES_st+pm_tau_fe_sub_ES_st)[,,unique(fe2es.buildings$all_esty)]* 1.2 / s_twa2mwh * 1e12) %>% 
+        mutate(sector = "buildings") %>% 
+        left_join(fe2es.buildings) %>% 
+        rename(FEtax = value) %>% 
+        # for now only keep one value and remove CES pffen as all 
+        # CES pffen have the same tax for each FE in detailed modules
+        select( region, period, output, sector, FEtax) %>% 
+        distinct()
+      
+      
+    } else {
+      # without ES tax
+      # for simple buildings: FE tax on all FE types
+      # for detailed buildings: FE tax only on electricity (other energy carriers taxed at UE level)
+      df.FEtax.buildings <- as.quitte((p21_tau_fe_tax_bit_st+p21_tau_fe_tax_sub_st)[,,unique(fe2ppfen.buildings$all_in)]* 1.2 / s_twa2mwh * 1e12) %>% 
+        mutate(sector = "buildings") %>%  
+        left_join(fe2ppfen.buildings) %>% 
+        rename(FEtax = value) %>% 
+        # for now only keep one value and remove CES pffen as all 
+        # CES pffen have the same tax for each FE in detailed modules
+        select( region, period, output, sector, FEtax) %>% 
+        distinct()
+      
+    }
     
+    
+    # add missing FEs with a 0, this is done such that the sectoral distinction in LCOE 
+    # is also maintained when there no FE tax is plaed on the FE
+    missing.FEs <- c("fehos","fegas","fesos","feels","feh2s","fehes")
+    missing.FEs <- missing.FEs[! missing.FEs %in% as.vector(unique(df.FEtax.buildings$output))]
+    
+    if (identical(missing.FEs, character(0))) {
+      missing.FEs <- NULL
+    }
+    
+    df.missing.FE.bld <- new.magpie(getRegions(p21_tau_fe_tax_bit_st), 
+                                    getYears(p21_tau_fe_tax_bit_st),
+                                    names=missing.FEs, 
+                                    sets = c("region", "year", "output"), 
+                                    fill = 0)  %>% 
+                            as.quitte() %>%  
+                            mutate(sector = "buildings") %>% 
+                            rename( FEtax = value) %>% 
+                            select(region, period, output, sector, FEtax)
+    
+    df.FEtax.buildings <- df.FEtax.buildings %>% 
+                            rbind(df.missing.FE.bld)
+    
+    
+    # for simple and detailed industry 
+    df.FEtax.industry <- as.quitte((p21_tau_fe_tax_bit_st+p21_tau_fe_tax_sub_st)[,,unique(fe2ppfen.industry$all_in)]* 1.2 / s_twa2mwh * 1e12) %>% 
+                            mutate(sector = "industry") %>%
+                            left_join(fe2ppfen.industry) %>% 
+                            rename(FEtax = value) %>% 
+                            # for now only keep one value and remove CES pffen as all 
+                            # CES pffen have the same tax for each FE in detailed modules
+                            select( region, period, output, sector, FEtax) %>% 
+                            distinct()
+    
+    # add missing FEs with a 0, this is done such that the sectoral distinction in LCOE 
+    # is also maintained when there no FE tax is plaed on the FE
+    missing.FEs <- c("fehos","fegas","fesos","feels","feh2s","fehes")
+    missing.FEs <- missing.FEs[! missing.FEs %in% as.vector(unique(df.FEtax.industry$output))]
+    
+    if (identical(missing.FEs, character(0))) {
+      missing.FEs <- NULL
+    }
+    
+    df.missing.FE.ind <- new.magpie(getRegions(p21_tau_fe_tax_bit_st), 
+                                    getYears(p21_tau_fe_tax_bit_st),
+                                    names=missing.FEs, 
+                                    sets = c("region", "year", "output"), 
+                                    fill = 0) %>% 
+                         as.quitte() %>% 
+                         mutate(sector = "industry") %>% 
+                         rename( FEtax = value) %>% 
+                         select(region, period, output, sector, FEtax)
+    
+    df.FEtax.industry <- df.FEtax.industry %>% 
+                          rbind(df.missing.FE.ind)
+  
+   
+    
+    df.FEtax <- df.FEtax.transport %>% 
+      rbind(df.FEtax.buildings) %>% 
+      rbind(df.FEtax.industry)
     
     # Note, this should still be checked: the stationary FE tax currently 
     # is on the vm_cesIO (first CES level prodcution factor) and not on FE demand.
     # Should be checked whether there are losses between FE and CES factor. 
+    
+    
+    # This only includes taxes that are placed on final energy ( to explain FE prices). 
+    # Not taxes on UE/ES level in the detailed buildings and industry sectors. 
     
   ####################### LCOE calculation (New plant/marginal) ########################
   
@@ -1203,6 +1350,10 @@ reportLCOE <- function(gdx, output.type = "both"){
     left_join(df.FEtax) %>% 
     # filter to only have LCOE technologies
     filter( tech %in% c(te_LCOE)) 
+    
+  # only retain unique region, period, tech combinations  
+  df.LCOE <- df.LCOE %>% 
+              unique(by=c("region", "period", "tech"))
   
   
   # replace NA by 0 in certain columns
@@ -1250,7 +1401,76 @@ reportLCOE <- function(gdx, output.type = "both"){
     mutate( `Total LCOE` = `Investment Cost` + `OMF Cost` + `OMV Cost` + `Fuel Cost` + `CO2 Tax Cost` + 
               `CO2 Provision Cost` + `Second Fuel Cost` + `VRE Storage Cost` + `Grid Cost` + `CCS Tax Cost` + `CCS Cost` + `Flex Tax` + `FE Tax`)
   
+   
+  
+  # if detailed buildings module on, calculate LCOE of fe2ue technologies 
+  # following 36_modules/buildings/services_putty/presolve.gms
+  
+  if (any(module2realisation$`*` == "services_putty")) {
+    p36_esCapCostImplicit <- readGDX(gdx, "p36_esCapCostImplicit", restore_zeros = F) # capital cost (incl. OMF and implicit discount rate)
+    t.run <- getYears(p36_esCapCostImplicit)
+    p36_fePrice <- readGDX(gdx, "p36_fePrice", restore_zeros = F)[,t.run,] # FE price
+    p36_inconvpen <- readGDX(gdx, "p36_inconvpen")[,t.run,getNames(p36_esCapCostImplicit)] # invonience penalty (on heating oil)
+    pm_fe2es <- readGDX(gdx, "pm_fe2es", restore_zeros = F)[,t.run,getNames(p36_esCapCostImplicit)] # fe2es efficiency
+    p36_logitCalibration <- readGDX(gdx, "p36_logitCalibration", restore_zeros = F)[,t.run,] # logit calibration factors (invoncenience cost for buildings technologies to match current UE)
+    fe2es_dyn36 <- readGDX(gdx,"fe2es_dyn36") # fe,ue,te mapping of fe2ue buildings technologies
     
+    # map FE price from FE dimension to technology dimension
+    p36_fePrice_ue <- p36_fePrice %>% 
+                        as.quitte() %>% 
+                        right_join(fe2es_dyn36) %>% 
+                        select(region, period, all_teEs, value) %>% 
+                        as.magpie(datacol=4)
+    
+    # map ES tax to technology dimensions
+    ES_tax <- (pm_tau_fe_tax_ES_st+pm_tau_fe_sub_ES_st)[,t.run,fe2es.buildings$all_esty] %>% 
+                as.quitte() %>% 
+                right_join(fe2es_dyn36) %>%
+                select(region, period, all_teEs, value) %>% 
+                as.magpie(datacol=4)
+    
+      
+    UE.LCOE.build <- new.magpie(getRegions(vm_costTeCapital), getYears(vm_costTeCapital), 
+              c("Investment Cost (incl OMF and impl discount)",
+                 "Fuel Cost",
+                 "Inconvenience Cost",
+                 "ES Taxes",
+                 "Calibration Factor Mark-up",
+                 "Total LCOE")) %>% 
+                add_dimension(dim=3.2, add = "all_teEs", nm = getNames(p36_esCapCostImplicit)) 
+    
+    
+    ### UE Buildings LCOE calculation
+    # always convert to  USD2015/MWh
+    # capital cost of UE technologies including OMF and including implicit discount rate on capital
+    UE.LCOE.build[,t.run,"Investment Cost (incl OMF and impl discount)"] <- p36_esCapCostImplicit * 1.2 / s_twa2mwh * 1e12
+    # fuel cost
+    UE.LCOE.build[,t.run,"Fuel Cost"] <- p36_fePrice_ue / pm_fe2es  * 1.2 / s_twa2mwh * 1e12
+    # inconvenience cost for environmental/health effects (e.g. traditional biomass, heating oil)
+    UE.LCOE.build[,t.run,"Inconvenience Cost"] <- p36_inconvpen / pm_fe2es  * 1.2 / s_twa2mwh * 1e12
+    # taxes on ES level (note: these taxes are also subsumed under FE taxes in the se2fe LCOE)
+    UE.LCOE.build[,t.run,"ES Taxes"] <- ES_tax / pm_fe2es  * 1.2 / s_twa2mwh * 1e12
+    # calibration factor mark-up on buildings technologies, these are other (inconvenience) cost to represent current UE shares, they fade-out over time
+    UE.LCOE.build[,t.run,"Calibration Factor Mark-up"] <- p36_logitCalibration  * 1.2 / s_twa2mwh * 1e12
+    # total LCOE
+    UE.LCOE.build[,,"Total LCOE"] <- UE.LCOE.build[,,"Investment Cost (incl OMF and impl discount)"] +
+                                      UE.LCOE.build[,,"Fuel Cost"] +
+                                      UE.LCOE.build[,,"Inconvenience Cost"] +
+                                      UE.LCOE.build[,,"Calibration Factor Mark-up"] +
+                                      UE.LCOE.build[,,"ES Taxes"]
+    
+    # add dimensions to fit to other tech LCOE
+    UE.LCOE.build <- UE.LCOE.build %>% 
+                          as.quitte() %>% 
+                          left_join(fe2es_dyn36) %>%
+                          mutate( sector = "buildings",  type = "marginal", unit ="US$2015/MWh", type ="marginal" ) %>% 
+                          rename(cost = data, tech = all_teEs, output = all_esty) %>% 
+                          select(region, period, type, output, tech, sector, unit,  cost, value) %>% 
+                          as.magpie(datacol=9)
+    
+  }
+  
+
   ### DAC: calculate Levelized Cost of CO2 from direct air capture
   # DAC energy demand per unit captured CO2 (EJ/GtC)
   p33_dac_fedem <- readGDX(gdx, "p33_dac_fedem", restore_zeros = F)
@@ -1264,6 +1484,8 @@ reportLCOE <- function(gdx, output.type = "both"){
   # conversion as above, assume for now that heat is always supplied by H2
   LCOD[,,"Heat Cost"] <- p33_dac_fedem[,,"feh2s"] / 3.66 * Fuel.Price[,,"seh2"]  / 3.66
   LCOD[,,"Total LCOE"] <- LCOD[,,"Investment Cost"]+LCOD[,,"OMF Cost"]+LCOD[,,"Electricity Cost"]+LCOD[,,"Heat Cost"]
+  
+  getSets(LCOD)[3] <- "cost"
   
   # add dimensions to fit to other tech LCOE
   LCOD <- LCOD %>% 
@@ -1283,8 +1505,14 @@ reportLCOE <- function(gdx, output.type = "both"){
       select(region, period, type, output, tech, sector, unit, cost, value)
     
     LCOE.mar.out <- as.magpie(df.LCOE.out, spatial = 1, temporal = 2, datacol=9) 
-    # add DAC levelized cost
+    
+    
+    
+    # add DAC levelized cost, buildings UE LCOE to marginal LCOE
     LCOE.mar.out <- mbind(LCOE.mar.out, LCOD)
+    if (any(module2realisation$`*` == "services_putty")) {
+      LCOE.mar.out <- mbind(LCOE.mar.out, UE.LCOE.build)
+    } 
     # bind to previous calculations (if there are)
     LCOE.out <- mbind(LCOE.out,LCOE.mar.out)
   
