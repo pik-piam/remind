@@ -758,10 +758,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     tmp, 
     setNames(
       tmp[,,"Emi|CO2|Fossil Fuels and Industry|Demand|Before IndustryCCS (Mt CO2/yr)"] 
-      - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS (Mt CO2/yr)"] 
-      # add process CCS emissions again because process CCS is included in the above industry CCS variable 
-      # but the Fossil Fuels and Industry|Demand|Before IndustryCCS does not include process emissions
-      +  tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|Process (Mt CO2/yr)"],
+      - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS (Mt CO2/yr)"], 
       "Emi|CO2|Fossil Fuels and Industry|Demand|After IndustryCCS (Mt CO2/yr)")
   )
   
