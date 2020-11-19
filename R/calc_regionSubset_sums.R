@@ -9,7 +9,8 @@
 #' @return A [`MAgPIE`][magclass::magclass] object.
 #' @author Michaja Pehl
 #' 
-#' @importFrom magclass mbind `getRegions<-` dimSums
+#' @importFrom magclass mbind getRegions<- dimSums
+#' 
 #'
 #' @examples
 #' calc_regionSubset_sums(population_magpie, list(xAM = c('LAM', 'NAM')))
