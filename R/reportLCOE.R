@@ -489,6 +489,8 @@ reportLCOE <- function(gdx, output.type = "both"){
   FEtax <- NULL
   `Flex Tax` <- NULL
   `FE Tax` <- NULL
+  all_esty <- NULL
+  all_teEs <- NULL
   
   
   ##############################################
