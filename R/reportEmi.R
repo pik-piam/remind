@@ -729,6 +729,17 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
       "Emi|CO2|Carbon Capture and Storage|IndustryCCS (Mt CO2/yr)")
   )
   
+  tmp2 <- mbind(
+    tmp2,
+    setNames( 
+      tmp2[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|fegas (Mt CO2/yr)"] 
+      + tmp2[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|fesos (Mt CO2/yr)"] 
+      + tmp2[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|fehos (Mt CO2/yr)"],
+      "Emi|CO2|Carbon Capture and Storage|IndustryCCS|Energy (Mt CO2/yr)")
+  )
+  
+  
+  
   # Rename all "Carbon Capture and Storage|IndustryCCS" to just 
   # "Carbon Capture|IndustryCCS" and calculate actual 
   # "Carbon Capture and Storage|IndustryCCS" by taking account of carbon 
@@ -758,10 +769,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     tmp, 
     setNames(
       tmp[,,"Emi|CO2|Fossil Fuels and Industry|Demand|Before IndustryCCS (Mt CO2/yr)"] 
-      - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS (Mt CO2/yr)"] 
-      # add process CCS emissions again because process CCS is included in the above industry CCS variable 
-      # but the Fossil Fuels and Industry|Demand|Before IndustryCCS does not include process emissions
-      +  tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|Process (Mt CO2/yr)"],
+      - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS (Mt CO2/yr)"], 
       "Emi|CO2|Fossil Fuels and Industry|Demand|After IndustryCCS (Mt CO2/yr)")
   )
   
@@ -939,7 +947,24 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   }
   
   
+  ### total energy supply and energy demand emissions
+  tmp <- mbind(tmp, 
+               setNames(tmp[,,"Emi|CO2|Energy|Demand|Gases|After IndustryCCS (Mt CO2/yr)"] +
+                        tmp[,,"Emi|CO2|Energy|Demand|Liquids|After IndustryCCS (Mt CO2/yr)"] +
+                        tmp[,,"Emi|CO2|Energy|Demand|Solids|After IndustryCCS (Mt CO2/yr)"],
+                        "Emi|CO2|Energy|Demand (Mt CO2/yr)"))
   
+  
+  tmp <- mbind(tmp, 
+               setNames(tmp[,,"Emi|CO2|Energy|Supply|Solids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] +
+                          tmp[,,"Emi|CO2|Energy|Supply|Liquids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] +
+                          tmp[,,"Emi|CO2|Energy|Supply|Gases|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] +
+                          tmp[,,"Emi|CO2|Energy|Supply|Electricity|w/ couple prod (Mt CO2/yr)"] +
+                          tmp[,,"Emi|CO2|Energy|Supply|Hydrogen|w/ couple prod (Mt CO2/yr)"] +
+                          tmp[,,"Emi|CO2|Energy|Supply|Heat|w/ couple prod (Mt CO2/yr)"],
+                                 "Emi|CO2|Energy|Supply (Mt CO2/yr)"))
+  
+
   ### CDR/CCU emissions ##########################################################################################  
   ### moved here to include industry CCS
   
@@ -1104,17 +1129,18 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                setNames(tmp[,,"Emi|CO2|Energy|Supply|Electricity|w/ couple prod (Mt CO2/yr)"], "Emi|CO2|Energy|Supply|Electricity (Mt CO2/yr)"),
     ### please note: at the end of this file, regional transport emissions are reduced by bunker emission values
     setNames(tmp[,,"Emi|CO2|Transport|w/ couple prod (Mt CO2/yr)"],                         "Emi|CO2|Transport (Mt CO2/yr)"),
+    setNames(tmp[,,"Emi|CO2|Transport|Demand (Mt CO2/yr)"],                         "Emi|CO2|Transport|Direct (Mt CO2/yr)"),
     setNames(tmp[,,"Emi|CO2|Other Sector|Direct and Indirect|w/ couple prod (Mt CO2/yr)"],  "Emi|CO2|Other Sector|Direct and Indirect (Mt CO2/yr)"),
     setNames(tmp[,,"Emi|CO2|Fossil Fuels and Industry|Demand|After IndustryCCS (Mt CO2/yr)"],  "Emi|CO2|Fossil Fuels and Industry|Demand (Mt CO2/yr)")
     )    
   
   tmp <- mbind(tmp,
-               setNames(tmp[,,"Emi|CO2|Fossil Fuels and Industry|Energy Supply (Mt CO2/yr)"] + tmp[,,"Emi|CO2|Fossil Fuels and Industry|Demand (Mt CO2/yr)"] ,
+               setNames(tmp[,,"Emi|CO2|Energy|Supply (Mt CO2/yr)"] + tmp[,,"Emi|CO2|Energy|Demand (Mt CO2/yr)"] ,
                         "Emi|CO2|Energy (Mt CO2/yr)"))
   
   
   tmp <- mbind(tmp,
-               setNames(tmp[,,"Emi|CO2|Fossil Fuels and Industry|Energy Supply (Mt CO2/yr)"] +
+               setNames(tmp[,,"Emi|CO2|Energy|Supply (Mt CO2/yr)"] +
                     tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Supply|w/ couple prod (Mt CO2/yr)"] -
                     tmp[,,"Emi|CO2|Energy|Supply|Electricity|Gross (Mt CO2/yr)"],
                    "Emi|CO2|Energy|Supply|Non-Elec|Gross (Mt CO2/yr)")
@@ -1123,7 +1149,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   tmp <- mbind(
     tmp,
     setNames(
-        tmp[,,"Emi|CO2|Fossil Fuels and Industry|Energy Supply (Mt CO2/yr)"] 
+        tmp[,,"Emi|CO2|Energy|Supply (Mt CO2/yr)"] 
       - tmp[,,"Emi|CO2|Energy|Supply|Electricity (Mt CO2/yr)"],
       "Emi|CO2|Energy|Supply|Non-Elec (Mt CO2/yr)")
     )
@@ -1133,7 +1159,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                setNames(-1 * tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass (Mt CO2/yr)"], 
                         "Emi|CO2|Carbon Capture and Storage|Biomass|Neg (Mt CO2/yr)") )
   tmp <- mbind(tmp,
-               setNames(tmp[,,"Emi|CO2|Fossil Fuels and Industry|Energy Supply (Mt CO2/yr)"] +
+               setNames(tmp[,,"Emi|CO2|Energy|Supply (Mt CO2/yr)"] +
                           tmp[,,"Emi|CO2|Carbon Capture and Storage|Biomass|Supply|w/ couple prod (Mt CO2/yr)"],
                         "Emi|CO2|Energy|Supply|Gross (Mt CO2/yr)"))
   
@@ -1160,7 +1186,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
         )
         * dimSums(mselect(vm_prodFe, all_enty1 = FE_Stat_fety), dim = c(3.1, 3.3)),
         dim = 3)
-        - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS (Mt CO2/yr)"],
+        - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|Energy (Mt CO2/yr)"],
         "Emi|CO2|Industry|Direct|BeforeTradBiomassCorr (Mt CO2/yr)")
     }
     
@@ -1176,7 +1202,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
           * dimSums(mselect(vm_prodFe, all_enty1 = FE_Stat_fety), 
                     dim = c(3.1, 3.3)), 
           dim = 3)
-        - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS (Mt CO2/yr)"]
+        - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|Energy (Mt CO2/yr)"]
         ), 
         "Emi|CO2|Industry|Direct|BeforeTradBiomassCorr (Mt CO2/yr)")
     )
@@ -1240,7 +1266,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                  + collapseNames(p_share_fegas_i * tmp[,,"Emi|CO2|Energy|SupplyandDemand|Gases|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"])
                  + collapseNames(p_share_fesos_i * tmp[,,"Emi|CO2|Energy|SupplyandDemand|Solids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"])
                  + collapseNames(p_share_fehes_i * tmp[,,"Emi|CO2|Energy|Supply|Heat|w/ couple prod (Mt CO2/yr)"])
-                 - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS (Mt CO2/yr)"]   ## all industry CCS happens in industry
+                 - tmp[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|Energy (Mt CO2/yr)"]   ## all industry CCS happens in industry
       ),       "Emi|CO2|Industry|Direct and Indirect|BeforeTradBiomassCorr (Mt CO2/yr)"),
       
       setNames(( collapseNames(p_share_feels_i * p_share_seel_s  * tmp[,,"Emi|CO2|Energy|Supply|Electricity|Gross|w/ couple prod (Mt CO2/yr)"])
@@ -1263,7 +1289,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   
     ### calculate indirect transport emissions
     tmp <- mbind(tmp,setNames( tmp[,,"Emi|CO2|Transport (Mt CO2/yr)"]
-                               - tmp[,,"Emi|CO2|Transport|Demand (Mt CO2/yr)"]
+                               - tmp[,,"Emi|CO2|Transport|Direct (Mt CO2/yr)"]
                                ,"Emi|CO2|Transport|Indirect (Mt CO2/yr)"))  # For Transport, "direct" was called "demand" before  
   
     ### cumulated
@@ -1673,10 +1699,13 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     setNames(  out[,,"Emi|CO2|Gross Fossil Fuels and Industry (Mt CO2/yr)"],    "Emi|CO2|Gross Fossil Fuels and Industry|w/ Bunkers (Mt CO2/yr)"),
     setNames(  out[,,"Emi|CO2|Fossil Fuels and Industry|Demand|Before IndustryCCS (Mt CO2/yr)"],"Emi|CO2|Fossil Fuels and Industry|Demand|Before IndustryCCS|w/ Bunkers (Mt CO2/yr)"), 
     setNames(  out[,,"Emi|CO2|Fossil Fuels and Industry|Demand|After IndustryCCS (Mt CO2/yr)"],"Emi|CO2|Fossil Fuels and Industry|Demand|After IndustryCCS|w/ Bunkers (Mt CO2/yr)"),
+    setNames(  out[,,"Emi|CO2|Energy (Mt CO2/yr)"],"Emi|CO2|Energy|w/ Bunkers (Mt CO2/yr)"),
+    setNames(  out[,,"Emi|CO2|Energy|Demand (Mt CO2/yr)"],"Emi|CO2|Energy|Demand|w/ Bunkers (Mt CO2/yr)"),
     setNames(  out[,,"Emi|Kyoto Gases (Mt CO2-equiv/yr)"],    "Emi|Kyoto Gases|w/ Bunkers (Mt CO2/yr)"),
     setNames(  out[,,"Emi|GHGtot (Mt CO2-equiv/yr)"],    "Emi|GHGtot|w/ Bunkers (Mt CO2-equiv/yr)"),
     setNames(  out[,,"Emi|CO2|Transport (Mt CO2/yr)"],    "Emi|CO2|Transport|w/ Bunkers (Mt CO2/yr)"),
     setNames(  out[,,"Emi|CO2|Transport|Demand (Mt CO2/yr)"],    "Emi|CO2|Transport|Demand|w/ Bunkers (Mt CO2/yr)"),
+    setNames(  out[,,"Emi|CO2|Transport|Direct (Mt CO2/yr)"],    "Emi|CO2|Transport|Direct|w/ Bunkers (Mt CO2/yr)"),
     setNames(  out[,,"Emi|CO2|Transport|w/o couple prod (Mt CO2/yr)"],    "Emi|CO2|Transport|w/o couple prod|w/ Bunkers (Mt CO2/yr)"),
     setNames(  out[,,"Emi|CO2|Cumulated (Mt CO2/yr)"],    "Emi|CO2|Cumulated|w/ Bunkers (Mt CO2/yr)"),
     setNames(  out[,,"Emi|CO2|Fossil Fuels and Industry|Cumulated (Mt CO2/yr)"],    "Emi|CO2|Fossil Fuels and Industry|Cumulated|w/ Bunkers (Mt CO2/yr)"),
@@ -1694,10 +1723,13 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                          "Emi|CO2|Fossil Fuels and Industry|Demand|Before IndustryCCS (Mt CO2/yr)",
                          "Emi|CO2|Fossil Fuels and Industry|Demand (Mt CO2/yr)",
                          "Emi|CO2|Fossil Fuels and Industry|Demand|After IndustryCCS (Mt CO2/yr)",
+                         "Emi|CO2|Energy (Mt CO2/yr)",
+                         "Emi|CO2|Energy|Demand (Mt CO2/yr)",
                          "Emi|Kyoto Gases (Mt CO2-equiv/yr)",
                          "Emi|GHGtot (Mt CO2-equiv/yr)",
                          "Emi|CO2|Transport (Mt CO2/yr)",
                          "Emi|CO2|Transport|Demand (Mt CO2/yr)",
+                         "Emi|CO2|Transport|Direct (Mt CO2/yr)",
                          "Emi|CO2|Transport|w/o couple prod (Mt CO2/yr)"
                          )
   for (var in vars_with_bunkers){
