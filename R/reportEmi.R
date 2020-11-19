@@ -1129,6 +1129,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                setNames(tmp[,,"Emi|CO2|Energy|Supply|Electricity|w/ couple prod (Mt CO2/yr)"], "Emi|CO2|Energy|Supply|Electricity (Mt CO2/yr)"),
     ### please note: at the end of this file, regional transport emissions are reduced by bunker emission values
     setNames(tmp[,,"Emi|CO2|Transport|w/ couple prod (Mt CO2/yr)"],                         "Emi|CO2|Transport (Mt CO2/yr)"),
+    setNames(tmp[,,"Emi|CO2|Transport|Demand (Mt CO2/yr)"],                         "Emi|CO2|Transport|Direct (Mt CO2/yr)"),
     setNames(tmp[,,"Emi|CO2|Other Sector|Direct and Indirect|w/ couple prod (Mt CO2/yr)"],  "Emi|CO2|Other Sector|Direct and Indirect (Mt CO2/yr)"),
     setNames(tmp[,,"Emi|CO2|Fossil Fuels and Industry|Demand|After IndustryCCS (Mt CO2/yr)"],  "Emi|CO2|Fossil Fuels and Industry|Demand (Mt CO2/yr)")
     )    
@@ -1288,7 +1289,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   
     ### calculate indirect transport emissions
     tmp <- mbind(tmp,setNames( tmp[,,"Emi|CO2|Transport (Mt CO2/yr)"]
-                               - tmp[,,"Emi|CO2|Transport|Demand (Mt CO2/yr)"]
+                               - tmp[,,"Emi|CO2|Transport|Direct (Mt CO2/yr)"]
                                ,"Emi|CO2|Transport|Indirect (Mt CO2/yr)"))  # For Transport, "direct" was called "demand" before  
   
     ### cumulated
@@ -1704,6 +1705,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     setNames(  out[,,"Emi|GHGtot (Mt CO2-equiv/yr)"],    "Emi|GHGtot|w/ Bunkers (Mt CO2-equiv/yr)"),
     setNames(  out[,,"Emi|CO2|Transport (Mt CO2/yr)"],    "Emi|CO2|Transport|w/ Bunkers (Mt CO2/yr)"),
     setNames(  out[,,"Emi|CO2|Transport|Demand (Mt CO2/yr)"],    "Emi|CO2|Transport|Demand|w/ Bunkers (Mt CO2/yr)"),
+    setNames(  out[,,"Emi|CO2|Transport|Direct (Mt CO2/yr)"],    "Emi|CO2|Transport|Direct|w/ Bunkers (Mt CO2/yr)"),
     setNames(  out[,,"Emi|CO2|Transport|w/o couple prod (Mt CO2/yr)"],    "Emi|CO2|Transport|w/o couple prod|w/ Bunkers (Mt CO2/yr)"),
     setNames(  out[,,"Emi|CO2|Cumulated (Mt CO2/yr)"],    "Emi|CO2|Cumulated|w/ Bunkers (Mt CO2/yr)"),
     setNames(  out[,,"Emi|CO2|Fossil Fuels and Industry|Cumulated (Mt CO2/yr)"],    "Emi|CO2|Fossil Fuels and Industry|Cumulated|w/ Bunkers (Mt CO2/yr)"),
@@ -1727,6 +1729,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
                          "Emi|GHGtot (Mt CO2-equiv/yr)",
                          "Emi|CO2|Transport (Mt CO2/yr)",
                          "Emi|CO2|Transport|Demand (Mt CO2/yr)",
+                         "Emi|CO2|Transport|Direct (Mt CO2/yr)",
                          "Emi|CO2|Transport|w/o couple prod (Mt CO2/yr)"
                          )
   for (var in vars_with_bunkers){
