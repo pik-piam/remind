@@ -588,7 +588,8 @@ compareScenarios <- function(mif, hist,
   items<- c (
     "FE|Transport|Electricity (EJ/yr)",
     "FE|Transport|Hydrogen (EJ/yr)",
-    "FE|Transport|Liquids (EJ/yr)"
+    "FE|Transport|Liquids (EJ/yr)",
+    "FE|Transport|Gases (EJ/yr)"
   )
 
   var <- data[,,intersect(items,getNames(data,dim=3))]
