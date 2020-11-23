@@ -109,10 +109,6 @@ reportCrossVariables <- function(gdx,output=NULL,regionSubsetList=NULL){
                  * output[r,,"SE|Liquids|Coal (EJ/yr)"]
                  / output[r,,"SE|Liquids (EJ/yr)"],                     "FE|Transport|Freight|Liquids|Coal (EJ/yr)"))
   tmp <- mbind(tmp,setNames(
-                   output[r,,"FE|Transport|Freight|Liquids (EJ/yr)"]
-                 * output[r,,"SE|Liquids|Hydrogen (EJ/yr)"]
-                 / output[r,,"SE|Liquids (EJ/yr)"],                     "FE|Transport|Freight|Liquids|Hydrogen (EJ/yr)"))
-  tmp <- mbind(tmp,setNames(
                    output[r,,"FE|Transport|Liquids (EJ/yr)"] 
                  * output[r,,"SE|Liquids|Coal (EJ/yr)"]
                  / output[r,,"SE|Liquids (EJ/yr)"],                     "FE|Transport|Liquids|Coal (EJ/yr)"))
@@ -120,11 +116,6 @@ reportCrossVariables <- function(gdx,output=NULL,regionSubsetList=NULL){
                    output[r,,"FE|Transport|Liquids (EJ/yr)"] 
                  * output[r,,"SE|Liquids|Oil (EJ/yr)"]
                  / output[r,,"SE|Liquids (EJ/yr)"],                     "FE|Transport|Liquids|Oil (EJ/yr)"))
-  tmp <- mbind(tmp,setNames(
-                   output[r,,"FE|Transport|Liquids (EJ/yr)"]
-                 * output[r,,"SE|Liquids|Hydrogen (EJ/yr)"]
-                 / output[r,,"SE|Liquids (EJ/yr)"],                     "FE|Transport|Liquids|Hydrogen (EJ/yr)"))
-
   tmp <- mbind(tmp,setNames(
                  output[r,,"FE|Transport|Pass|Liquids (EJ/yr)"]
                  * output[r,,"SE|Liquids|Oil (EJ/yr)"]
@@ -134,10 +125,6 @@ reportCrossVariables <- function(gdx,output=NULL,regionSubsetList=NULL){
                  * output[r,,"SE|Liquids|Coal (EJ/yr)"]
                  / output[r,,"SE|Liquids (EJ/yr)"],                     "FE|Transport|Pass|Liquids|Coal (EJ/yr)"))
 
-  tmp <- mbind(tmp,setNames(
-                     output[r,,"FE|Transport|Pass|Liquids (EJ/yr)"]
-                     * output[r,,"SE|Liquids|Hydrogen (EJ/yr)"]
-                     / output[r,,"SE|Liquids (EJ/yr)"],                     "FE|Transport|Pass|Liquids|Hydrogen (EJ/yr)"))
 
 
   if(tran_mod == "complex"){
