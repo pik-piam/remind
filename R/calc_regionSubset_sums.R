@@ -17,7 +17,7 @@
 
 #' @export
 calc_regionSubset_sums <- function(data, regionSubsetList) {
-  if (is.null(regionSubsetList))
+  if (any(is.null(regionSubsetList), is.null(data)))
     return(NULL)
   
   mbind(
