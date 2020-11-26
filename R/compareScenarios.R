@@ -655,7 +655,11 @@ compareScenarios <- function(mif, hist,
              "SE|Electricity|Solar|PV (EJ/yr)",
              "SE|Electricity|Wind (EJ/yr)",
              "SE|Electricity|Hydrogen (EJ/yr)")
+
   var <- data[,,intersect(items,getNames(data,dim=3))]
+  
+  # correct SE|Electricity|Hydrogen, current value is FE, SE can be calculated by estimating turbine efficiency
+  var[,,"SE|Electricity|Hydrogen (EJ/yr)"] <- var[,,"SE|Electricity|Hydrogen (EJ/yr)"] / 0.4
 
   p <- mipArea(var[mainReg,,],scales="free_y")
   p <- p + theme(legend.position="none")
@@ -1754,6 +1758,30 @@ compareScenarios <- function(mif, hist,
                          ylab='Primary Energy Production|Biomass|Energy Crops [EJ/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
   swfigure(sw,print,p,sw_option="height=9,width=8")
 
+  swlatex(sw,"\\subsubsection{PE|Coal|Extraction}")
+  p <- mipLineHistorical(data[mainReg,,"Res|Extraction|Coal (EJ/yr)"],x_hist=NULL,
+                         ylab='Res|Extraction|Coal [EJ/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
+  swfigure(sw,print,p,sw_option="height=8,width=8")
+  p <- mipLineHistorical(data[,,"Res|Extraction|Coal (EJ/yr)"][mainReg,,,invert=TRUE],x_hist=NULL,
+                         ylab='Res|Extraction|Coal [EJ/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
+  swfigure(sw,print,p,sw_option="height=9,width=8")
+  
+  swlatex(sw,"\\subsubsection{PE|Oil|Extraction}")
+  p <- mipLineHistorical(data[mainReg,,"Res|Extraction|Oil (EJ/yr)"],x_hist=NULL,
+                         ylab='Res|Extraction|Oil [EJ/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
+  swfigure(sw,print,p,sw_option="height=8,width=8")
+  p <- mipLineHistorical(data[,,"Res|Extraction|Oil (EJ/yr)"][mainReg,,,invert=TRUE],x_hist=NULL,
+                         ylab='Res|Extraction|Oil [EJ/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
+  swfigure(sw,print,p,sw_option="height=9,width=8")
+  
+  swlatex(sw,"\\subsubsection{PE|Gas|Extraction}")
+  p <- mipLineHistorical(data[mainReg,,"Res|Extraction|Gas (EJ/yr)"],x_hist=NULL,
+                         ylab='Res|Extraction|GAs [EJ/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"))
+  swfigure(sw,print,p,sw_option="height=8,width=8")
+  p <- mipLineHistorical(data[,,"Res|Extraction|Gas (EJ/yr)"][mainReg,,,invert=TRUE],x_hist=NULL,
+                         ylab='Res|Extraction|Gas [EJ/yr]',scales="free_y",plot.priority=c("x_hist","x","x_proj"),facet.ncol=3)
+  swfigure(sw,print,p,sw_option="height=9,width=8")
+  
   ## ---- SE Mix ----
 
   swlatex(sw,"\\subsection{Secondary Energy Mixes}")
@@ -1826,7 +1854,9 @@ compareScenarios <- function(mif, hist,
              "SE|Hydrogen|Coal|w/o CCS (EJ/yr)",
              "SE|Hydrogen|Gas|w/ CCS (EJ/yr)",
              "SE|Hydrogen|Gas|w/o CCS (EJ/yr)",
-             "SE|Hydrogen|Electricity (EJ/yr)")
+             "SE|Hydrogen|Electricity|from forced VRE storage electrolysis (EJ/yr)",
+             "SE|Hydrogen|Electricity|from general electrolysis (EJ/yr)")
+
   var <- data[,,intersect(items,getNames(data,dim=3))]
 
   p <- mipArea(var[mainReg,,],scales="free_y")
@@ -1845,6 +1875,33 @@ compareScenarios <- function(mif, hist,
   swfigure(sw,print,p,sw_option="height=8,width=16")
   swlatex(sw,"\\twocolumn")
 
+  ## ---- SE Hydrogen Usage ----
+  
+  swlatex(sw,"\\subsubsection{SE|Hydrogen - Usage}")
+  
+  items<- c ("FE|Industry|Hydrogen (EJ/yr)",
+             "FE|Buildings|Hydrogen (EJ/yr)",
+             "FE|Transport|Hydrogen (EJ/yr)",
+             "FE|CDR|Hydrogen (EJ/yr)")
+  
+  var <- data[,,intersect(items,getNames(data,dim=3))]
+  
+  p <- mipArea(var[mainReg,,],scales="free_y")
+  p <- p + theme(legend.position="none")
+  swfigure(sw,print,p,sw_option="height=3.5,width=7")
+  
+  p <- mipBarYearData(var[mainReg,y_bar,])
+  p <- p + theme(legend.position="none")
+  swfigure(sw,print,p,sw_option="height=4.5,width=7")
+  
+  p <- mipBarYearData(var[,y_bar,][mainReg,,,invert=TRUE])
+  swfigure(sw,print,p,sw_option="height=9,width=8")
+  
+  swlatex(sw,"\\onecolumn")
+  p <- mipArea(var[mainReg,,,invert=TRUE],scales="free_y")
+  swfigure(sw,print,p,sw_option="height=8,width=16")
+  swlatex(sw,"\\twocolumn")
+  
   ## ---- SE Mix Solids ----
 
   swlatex(sw,"\\subsubsection{SE|Solids}")
