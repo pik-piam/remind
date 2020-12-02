@@ -286,7 +286,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     rename(!!sym(names(attr(v_emi, 'dimnames'))[1]) := !!sym('Region'), 
            !!sym(names(attr(v_emi, 'dimnames'))[2]) := !!sym('Year'),
            !!sym(names(attr(v_emi, 'dimnames'))[3]) := !!sym('data')) %>% 
-    as.magpie(tidy = TRUE)
+    as.magpie(tidy = TRUE, replacement = ".")
 
   ###### Compute share parameter
   if (is.null(ppfen_stat)){
