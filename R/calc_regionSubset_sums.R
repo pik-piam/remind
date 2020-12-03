@@ -25,7 +25,7 @@ calc_regionSubset_sums <- function(data, regionSubsetList) {
       names(regionSubsetList),
       
       function(subset_name) {
-        `getRegions<-`(dimSums(data[regionSubsetList[[subset_name]]], dim = 1),
+        `getRegions<-`(dimSums(data[regionSubsetList[[subset_name]],,], dim = 1),
                        subset_name)
       }
     )
