@@ -46,13 +46,11 @@ reportEDGETransport <- function(output_folder=".",
     file.path(output_folder, sub_folder, fname)
   }
 
-  REMIND2ISO_MAPPING <- fread(file.path(remind_root, cfg$regionmapping))[, .(iso = CountryCode, region = RegionCode)]
-
   ## load input data from last EDGE run
   demand_km <- readRDS(datapath(fname = "demandF_plot_pkm.RDS"))[
     , demand_F := demand_F * 1e-3] ## million -> billion pkm
   load_factor <- readRDS(datapath(fname = "loadFactor.RDS"))
-  demand_vkm <- merge(demand_km, load_factor, by=c("year", "iso", "vehicle_type"))
+  demand_vkm <- merge(demand_km, load_factor, by=c("year", "region", "vehicle_type"))
   demand_vkm[, demand_VKM := demand_F/loadFactor] ## billion vkm
 
   demand_ej <- readRDS(datapath(fname = "demandF_plot_EJ.RDS")) ## detailed final energy demand, EJ
@@ -67,7 +65,6 @@ reportEDGETransport <- function(output_folder=".",
 
   reportingESandFE <- function(datatable, mode){
 
-    ## datatable <- datatable[, c("sector", "subsector_L3", "subsector_L2", "subsector_L1", "vehicle_type", "technology", "iso", "year", "demand_F")]
     datatable[, sector := ifelse(sector %in% c("trn_pass", "trn_aviation_intl"), "Pass", "Freight")]
 
     ## attribute aggregated mode and vehicle names for plotting purposes, and aggregate
@@ -109,8 +106,6 @@ reportEDGETransport <- function(output_folder=".",
 
     datatable[grepl("Motorcycle|Scooter|Moped", vehicle_type),
               det_veh := "Pass|Road|LDV|Two-Wheelers"]
-
-    datatable = datatable[REMIND2ISO_MAPPING, on = "iso"]
 
     prepare4MIF <- function(dt, remind_unit, valcol, varcol){
       ## REMIND years, loading from MIF File would take too long
@@ -198,7 +193,6 @@ reportEDGETransport <- function(output_folder=".",
       ## for energy services, it is better to refer to the actual technologies
       ## and not the fuel types (-> LCA)
       techmap[, remind_rep := technology]
-      techmap["LA-BEV", remind_rep := "BEV"]
       techmap["NG", remind_rep := "Gases"]
 
       datatable <- datatable[techmap, on="technology"]
