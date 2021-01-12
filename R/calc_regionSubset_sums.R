@@ -17,7 +17,7 @@
 
 #' @export
 calc_regionSubset_sums <- function(data, regionSubsetList) {
-  if (is.null(regionSubsetList))
+  if (any(is.null(regionSubsetList), is.null(data)))
     return(NULL)
   
   mbind(
@@ -25,7 +25,7 @@ calc_regionSubset_sums <- function(data, regionSubsetList) {
       names(regionSubsetList),
       
       function(subset_name) {
-        `getRegions<-`(dimSums(data[regionSubsetList[[subset_name]]], dim = 1),
+        `getRegions<-`(dimSums(data[regionSubsetList[[subset_name]],,], dim = 1),
                        subset_name)
       }
     )

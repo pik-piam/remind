@@ -211,7 +211,7 @@ validationSummary(gdx = gdx, reportfile = reportfile, outfile = outfile, hist = 
 So far the new code is only available on your local machine. To make it accessible for everyone and to install the updated remind package on the cluster please do the following. Make sure your are in the main folder of the source code of the remind package. Make sure to delte all files that might have been generated from the steps above (pdfs, tex files, figures folder, ...). Make sure your packages are up-to-date. Then rebuild the package
 
 ```{r, eval=FALSE}
-lucode::buildLibrary()
+lucode2::buildLibrary()
 ```
 
 If this runs through without errors follow the instructions. Then commit the changes to the SVN using the command line "SVN Commit" or any other SVN tool (e.g. Tortoise SVN). Along with your changes you will see the DESCRIPTION and NAMESPACE file, which have also been updated reflecting the new dependencies, reversion number etc.
