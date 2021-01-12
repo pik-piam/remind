@@ -54,6 +54,10 @@ reportLCOE <- function(gdx, output.type = "both"){
    return(new.magpie(cells_and_regions = "GLO", 
                      years = c(seq(2005,2060,5),seq(2070,2110,10),2130,2150)))
  }
+ 
+ 
+ # get module realizations
+ module2realisation <- readGDX(gdx, "module2realisation")
 
  #initialize output array
  LCOE.out <- NULL
@@ -176,11 +180,15 @@ reportLCOE <- function(gdx, output.type = "both"){
  ####### 1. sub-part: Investment Cost #################################
 
  # AnnualInvCost(t) = sum_(td) [annuity(td) * p_pmeg(t-td+1) * deltaT],
+ # where td in [t-lifetime,t]
+ 
+ # p_pmeg(t-td+1) = 1 for td = t (measure of how many capacities still standing from past investments)
+ # p_pmeg(t-td+1) = 0 for td = t-lifetime
 
  # where t is the year for which the investment cost are calculatet and
- # td is the year where the investment took place
- # so: annuity cost incurred by investment 20 years back is weighted with the still available capacities after 20 years
- # annuity cost = discounted investment cost spread over lifetime
+ # td are all past time steps before t back to t-lifetime of the technology
+ # so: annuity cost incurred over past lifetime years are are divided by current production
+ # (annuity cost = discounted investment cost spread over lifetime)
 
 
 
@@ -253,6 +261,8 @@ reportLCOE <- function(gdx, output.type = "both"){
  
  te_annual_grid_cost[,,te2grid$all_te] <- collapseNames(te_annual_inv_cost[,ttot_from2005,"gridwind"] +
                                            te_annual_OMF_cost[,,"gridwind"]) * 
+                                            # this multiplcative factor is added to reflect higher grid demand of wind
+                                            # see q32_limitCapTeGrid
                                            grid_factor_tech * vm_prodSe[,,te2grid$all_te] / 
                                            vm_VRE_prodSe_grid
  
@@ -513,15 +523,14 @@ reportLCOE <- function(gdx, output.type = "both"){
   teReNoBio <- readGDX(gdx, "teReNoBio") # renewable technologies without biomass
   teCCS <- readGDX(gdx, "teCCS") # ccs technologies
   teReNoBio <- c(teReNoBio) # renewables without biomass
+  teVRE   <- readGDX(gdx,"teVRE") # VRE technologies
   
   # energy carriers
   entyPe <- readGDX(gdx, "entyPe")
   entySe <- readGDX(gdx, "entySe")
   entyFe <- readGDX(gdx, "entyFe")
   
-  
-  # get module realization
-  module2realisation <- readGDX(gdx, "module2realisation")
+
   
   # conversion factors
   s_twa2mwh <- readGDX(gdx,c("sm_TWa_2_MWh","s_TWa_2_MWh","s_twa2mwh"),format="first_found")
@@ -596,38 +605,33 @@ reportLCOE <- function(gdx, output.type = "both"){
   vm_capDistr <- readGDX(gdx, c("vm_capDistr","v_capDistr"), field = "l", restore_zeros = F)
   pm_dataren <- readGDX(gdx, "pm_dataren", restore_zeros = F)
   
+  
+  ### determine capacity factor of highest free grade for renewables
   # RE capacity distribution over grades
   df.CapDistr <- as.quitte(vm_capDistr) %>% 
     select(region, all_te, period,  rlf, value) %>% 
     rename(tech = all_te, CapDistr = value)
   
+  # max. potential of renewable production per grade
+  df.RE.maxprod <- as.quitte(pm_dataren[,,c("maxprod","nur")]) %>% 
+                    rename(tech = all_te) %>%  
+                    select(region, tech, rlf, char, value) %>%   
+                    spread(char, value)
   
-  # determine worst grade that has non-zero capacities 
-  # (this is the grade where we assume the new plant is built as the best grades are built first)
-  # if no capcaities at any grade (full potential reached) -> CF of grade 9
-  df.ren.atbound  <- df.CapDistr %>% 
-                        group_by(region, period, tech) %>% 
-                        mutate( NotBuilt = ifelse(all(CapDistr < 1e-6), 1,0)) %>%  
-                        ungroup() %>% 
-                        mutate( CapDistr = ifelse(NotBuilt == 1 & as.numeric(rlf) == 9 ,
-                                                  1e-5, CapDistr )) %>% 
-                        filter(CapDistr >= 1e-6, as.numeric(rlf) <= 9) %>%   
-                        group_by(region, period, tech) %>% 
-                        summarise(last.grade = max(as.numeric(rlf))) %>% 
-                        ungroup()
-  
+  # calculate marginal renewable capacity factor
+  df.CapFac.ren <- df.CapDistr %>% 
+                      filter(tech %in% c(teReNoBio, teVRE)) %>% 
+                      left_join(df.RE.maxprod) %>% 
+                      # maximum capacity at maxprod
+                      mutate( maxcap = maxprod * s_twa2mwh / 8760 / nur * 1e-6 ) %>%      
+                      # filter for all grades which are still free (Capacity < 90% of capacity of max. potential)
+                      # but not smaller than ninth grade (last grade of spv; still check all REN technologies for number of last grade)
+                      filter( CapDistr <= 0.9 * maxcap | as.numeric(rlf) >= 9) %>%     
+                      # choose highest grade
+                      group_by(region, period, tech) %>% 
+                      summarise(CapFac = max(nur)) %>% 
+                      ungroup() 
 
-  df.CapFac.ren <- as.quitte(pm_dataren) %>% 
-    select(region, all_te, rlf, char, value) %>% 
-    filter( char %in% c("nur"), all_te %in% teReNoBio) %>%  
-    spread( char, value)  %>%
-    rename( tech = all_te, CapFac = nur) %>%
-    mutate( rlf = as.numeric(rlf)) %>% 
-    right_join(df.ren.atbound, by=c("rlf"="last.grade", "region"="region",
-                                     "tech"="tech")) %>% 
-    select(region, period, tech, CapFac)
-  
-  
   
   # CapFac, merge renewble and non renewable Cap Facs
   df.CapFac <- as.quitte(vm_capFac) %>% 
@@ -666,6 +670,11 @@ reportLCOE <- function(gdx, output.type = "both"){
   # retrieve capacity distribution over lifetime (fraction of capacity still standing in that year of plant lifetime)
   p_omeg  <- readGDX(gdx,c("pm_omeg","p_omeg"),format="first_found") 
   
+  # fuels to calculate price for
+  fuels <- c("peoil","pegas","pecoal","peur", "pebiolc" , "pebios","pebioil",
+             "seel","seliqbio", "seliqfos", "sesobio","sesofos","seh2","segabio" ,
+              "segafos","sehe")
+  
   # Primary Energy Price, convert from tr USD 2005/TWa to USD2015/MWh
   Pe.Price <- qm_pebal[,ttot_from2005,unique(pe2se$all_enty)] / (qm_budget+1e-10)*1e12/s_twa2mwh*1.2
   # Secondary Energy Electricity Price (for se2se and se2fe conversions), convert from tr USD 2005/TWa to USD2015/MWh
@@ -673,7 +682,7 @@ reportLCOE <- function(gdx, output.type = "both"){
   # Secondary Energy Price (for se2se and se2fe conversions), convert from tr USD 2005/TWa to USD2015/MWh
   Se.Price <- qm_sebal[,,as.vector(entySe)[as.vector(entySe) != "seel"]]/(qm_budget+1e-10)*1e12/s_twa2mwh*1.2 
   
-  Fuel.Price <- mbind(Pe.Price,Se.Seel.Price, Se.Price )
+  Fuel.Price <- mbind(Pe.Price,Se.Seel.Price, Se.Price )[,,fuels]
   
   # Fuel price
   df.Fuel.Price <- as.quitte(Fuel.Price) %>%  
@@ -813,8 +822,7 @@ reportLCOE <- function(gdx, output.type = "both"){
     p39_co2_dem <- readGDX(gdx, c("p39_co2_dem","p39_ratioCtoH"), restore_zeros = F)[,,]
   } else {
     # some dummy data, only needed to create the following data frame if CCU is off
-    p39_co2_dem <- new.magpie(cells_and_regions = "USA", years = "y2005", fill=0) %>% 
-                    add_dimension(dim=3.2, add = "all_te", nm = "biochp")
+    p39_co2_dem <- new.magpie(getRegions(vm_costTeCapital), getYears(vm_costTeCapital), fill = 0)
       }
 
   df.co2_dem <- as.quitte(p39_co2_dem) %>% 
@@ -1518,10 +1526,17 @@ reportLCOE <- function(gdx, output.type = "both"){
   
  }
  
+ ### calculate global average LCOE for region "World"
+ LCOE.out.inclGlobal <- new.magpie(c(getRegions(LCOE.out),"GLO"), getYears(LCOE.out), getNames(LCOE.out))
+ LCOE.out.inclGlobal[getRegions(LCOE.out),,] <- LCOE.out
+ LCOE.out.inclGlobal["GLO",,] <- dimSums(LCOE.out, dim=1) / length(getRegions(LCOE.out))
+ 
+
+ 
  if (output.type %in% c("marginal detail")) {
    return(df.LCOE)
  } else {
-   return(LCOE.out)
+   return(LCOE.out.inclGlobal)
  }
  
  return(LCOE.out)
