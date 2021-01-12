@@ -501,7 +501,7 @@ reportLCOE <- function(gdx, output.type = "both"){
   all_teEs <- NULL
   curtShare <- NULL
   `Curtailment Cost` <- NULL
-  
+   maxcap <- NULL
   
   ##############################################
   
