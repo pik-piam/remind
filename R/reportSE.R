@@ -44,6 +44,8 @@ reportSE <- function(gdx,regionSubsetList=NULL){
   pety     <- readGDX(gdx,c("entyPe","pety"),format="first_found")
   oc2te    <- readGDX(gdx,c("pc2te","oc2te"),format="first_found")
   
+
+  
   # the set liquids changed from sepet+sedie to seLiq in REMIND 1.7. Seliq, sega and seso changed to include biomass or Fossil origin after REMIND 2.0
   se_Liq    <- intersect(c("seliqfos", "seliqbio", "seliq", "sepet","sedie"),sety)
   se_Gas    <- intersect(c("segafos", "segabio", "sega"),sety)
@@ -109,11 +111,11 @@ reportSE <- function(gdx,regionSubsetList=NULL){
     ## identify all techs with secarrier as a main product
     # sub1_oc2te <- oc2te[(oc2te$all_enty %in% pecarrier) & (oc2te$all_enty1 %in% secarrier) & (oc2te$all_enty2 %in% sety)    & (oc2te$all_te %in% te),]
     ## secondary energy production with secarrier as a main product
-    x1 <- dimSums(mselect(prodSe,all_enty=enty.input,all_enty1=se.output,all_te=te),dim=3)
+    x1 <- dimSums(mselect(prodSe,all_enty=enty.input,all_enty1=se.output,all_te=te),dim=3, na.rm = T)
     ## secondary energy production with secarrier as a couple product
     ## identify all oc techs with secarrier as a couple product
     sub_oc2te <- oc2te[(oc2te$all_enty %in% enty.input) & (oc2te$all_enty1 %in% sety)    & (oc2te$all_enty2 %in% se.output) & (oc2te$all_te %in% te),]
-    x2 <- dimSums(prodSe[sub_oc2te]*dataoc[sub_oc2te],dim=3)
+    x2 <- dimSums(prodSe[sub_oc2te]*dataoc[sub_oc2te],dim=3, na.rm = T)
 
     ## storage losses
     input.pe2se <- pe2se[(pe2se$all_enty %in% enty.input) & (pe2se$all_enty1 %in% se.output) & (pe2se$all_te %in% te),]
@@ -129,10 +131,11 @@ reportSE <- function(gdx,regionSubsetList=NULL){
     return(out)
   }
 
+  
   ## copy the above function but only return the storage loss part of it. Maybe this is a bit complicated...
   se.prodLoss <- function(prodSe,dataoc,oc2te,sety,enty.input,se.output,te=te_pese2se,name=NULL,storageLoss=storLoss, all_pety = pety ){
 
-    # test if storage loss info exists (realisation dependable)
+  # test if storage loss info exists (realisation dependable)
     if (is.null(storageLoss))
       return(NULL)
 
@@ -182,7 +185,7 @@ reportSE <- function(gdx,regionSubsetList=NULL){
   }
 
   tmp1 <- mbind(tmp1,
-    se.prod(prodSe,dataoc,oc2te,sety,pety,sety,              name = "SE (EJ/yr)"),
+    se.prod(prodSe,dataoc,oc2te,sety,abind(pety,sety),sety,              name = "SE (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,pebio,sety,                         name = "SE|Biomass (EJ/yr)"),
     se.prod(prodSe,dataoc,oc2te,sety,append(pety, "seh2"),"seel",        name = "SE|Electricity (EJ/yr)"),  # seh2 to account for se2se prodution once we add h2 to elec technology
     se.prod(prodSe, dataoc, oc2te, sety, pety, 'seel', te = techp,       name = "SE|Electricity|CHP|w/o CCS (EJ/yr)"),
