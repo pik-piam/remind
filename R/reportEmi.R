@@ -529,28 +529,32 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   
   ### in case of synfuel production -> add CO2 flows into synfuels to liquids and gases supply&demand emissions
   ### synfuel emissions are not accounted in emissions factors, but in vm_co2CCUshort. 
-  if (module2realisation["CCU",2] == "on") {
-    p39_co2_dem <- readGDX(gdx, "p39_co2_dem",restore_zeros = F)
-    p39_co2_dem <- dimReduce(p39_co2_dem[,"y2030",]) # only take one year for now
-    
-    # calculate CO2 needed for synfuel production
-    tmp <- mbind(tmp,
-                 setNames(p39_co2_dem[,,"MeOH"] * vm_prodSE[,,"MeOH"] * GtC_2_MtCO2 / pm_conv_TWa_EJ,
-                          "Carbon Management|CCU|Liquids (Mt CO2/yr)"),
-                 setNames(p39_co2_dem[,,"h22ch4"] * vm_prodSE[,,"h22ch4"] * GtC_2_MtCO2 / pm_conv_TWa_EJ,
-                          "Carbon Management|CCU|Gases (Mt CO2/yr)"))
-    
-    
-    ## add to respective total energy emissions emissions
-    tmp[,,"Emi|CO2|Energy|SupplyandDemand|Liquids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] <- 
-      tmp[,,"Emi|CO2|Energy|SupplyandDemand|Liquids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] +
-      tmp[,,"Carbon Management|CCU|Liquids (Mt CO2/yr)"]
-    
-    tmp[,,"Emi|CO2|Energy|SupplyandDemand|Gases|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] <- 
-      tmp[,,"Emi|CO2|Energy|SupplyandDemand|Gases|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] +
-      tmp[,,"Carbon Management|CCU|Gases (Mt CO2/yr)"]
+  if ( "CCU" %in% module2realisation[,1]) {
+    if (module2realisation["CCU",2] == "on") {
+      p39_co2_dem <- readGDX(gdx, "p39_co2_dem",restore_zeros = F)
+      p39_co2_dem <- dimReduce(p39_co2_dem[,"y2030",]) # only take one year for now
+      
+      # calculate CO2 needed for synfuel production
+      tmp <- mbind(tmp,
+                   setNames(p39_co2_dem[,,"MeOH"] * vm_prodSE[,,"MeOH"] * GtC_2_MtCO2 / pm_conv_TWa_EJ,
+                            "Carbon Management|CCU|Liquids (Mt CO2/yr)"),
+                   setNames(p39_co2_dem[,,"h22ch4"] * vm_prodSE[,,"h22ch4"] * GtC_2_MtCO2 / pm_conv_TWa_EJ,
+                            "Carbon Management|CCU|Gases (Mt CO2/yr)"))
+      
+      
+      ## add to respective total energy emissions emissions
+      tmp[,,"Emi|CO2|Energy|SupplyandDemand|Liquids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] <- 
+        tmp[,,"Emi|CO2|Energy|SupplyandDemand|Liquids|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] +
+        tmp[,,"Carbon Management|CCU|Liquids (Mt CO2/yr)"]
+      
+      tmp[,,"Emi|CO2|Energy|SupplyandDemand|Gases|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] <- 
+        tmp[,,"Emi|CO2|Energy|SupplyandDemand|Gases|w/ couple prod|Before IndustryCCS (Mt CO2/yr)"] +
+        tmp[,,"Carbon Management|CCU|Gases (Mt CO2/yr)"]
+      
+    }
     
   }
+  
   
   tmp <- mbind(tmp,
                setNames(p_share_carbonCapture_stor * tmp[,,"Emi|CO2|Carbon Capture|Biomass|Supply|Electricity|w/ couple prod (Mt CO2/yr)"],

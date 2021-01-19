@@ -19,18 +19,26 @@
 #' @export
 #' @importFrom gdx readGDX
 #' @importFrom magclass getYears getSets collapseNames new.magpie getRegions getSets<- mbind setNames getNames
-
+#' @importFrom luscale speed_aggregate
 reportTechnology <- function(gdx,output=NULL,regionSubsetList=NULL) {
   if(is.null(output)){
     output <- mbind(
       reportSE(gdx, regionSubsetList),
-      reportFE(gdx, regionSubsetList)
+      reportFE(gdx, regionSubsetList),
+      reportEmi(gdx, regionSubsetList)
     )
   }
 
-  ## Check transport realisation
+  ## Check realisations
   module2realisation <- readGDX(gdx, "module2realisation", react = "silent")
   tran_mod = module2realisation[module2realisation$modules == "transport", 2]
+  if ("CCU" %in% module2realisation[,1]) {
+    CCU_mod = module2realisation[module2realisation$modules == "CCU", 2]
+  } else {
+    CCU_mod <- "off"
+  }
+  
+  CDR_mod = module2realisation[module2realisation$modules == "CDR", 2]
   
   sety       <- readGDX(gdx,c("entySe","sety"),format="first_found")
   # calculate maximal temporal resolution
@@ -121,6 +129,7 @@ reportTechnology <- function(gdx,output=NULL,regionSubsetList=NULL) {
       "biodiesel"="Liquids|Biomass|Biofuel|Biodiesel|w/o CCS",
       "coalftcrec"="Liquids|Coal|w/ CCS",
       "coalftrec"="Liquids|Coal|w/o CCS")
+  
   if(tran_mod == "complex"){
       carmap <- c(
           "apCarPeT"="Transport|Pass|Road|LDV|ICE",
@@ -128,6 +137,18 @@ reportTechnology <- function(gdx,output=NULL,regionSubsetList=NULL) {
           "apCarH2T"="Transport|Pass|Road|LDV|H2")
   }else{
       carmap <- c()
+  }
+  
+  if (CCU_mod == "on") {
+    techmap <- append(techmap, c("MeOH" = "Liquids|Hydrogen",
+                                 "h22ch4" = "Gases|Hydrogen"))
+  }
+  
+  if (CDR_mod != "off") {
+    cdrmap <- c("dac" = "DAC",
+                "ccsinje" = "CO2 Storage")
+  } else {
+    cdrmap <- c()
   }
   
   if (("seliq" %in% sety) || ("seliqbio" %in% sety)) {
@@ -168,7 +189,7 @@ reportTechnology <- function(gdx,output=NULL,regionSubsetList=NULL) {
       ## contributions. Conventionally, the SE value of the respective energy technology is used.
       ## For cars (technically a Energy Service), we use FEs.
       int2ext <- c()
-      if(all(map == techmap)){
+      if(all(map %in% techmap)){
           for(label in techmap){
               int2ext[[report_str(label, category, unit)]] <- report_str(label, unit="EJ/yr", predicate="SE")
           }
@@ -177,12 +198,17 @@ reportTechnology <- function(gdx,output=NULL,regionSubsetList=NULL) {
           int2ext[[report_str("Electricity|Storage|Battery|For CSP", category, unit)]] <- report_str("Electricity|Solar|CSP", unit="EJ/yr", predicate="SE")
           int2ext[[report_str("Electricity|Storage|Battery|For Wind", category, unit)]] <- report_str("Electricity|Wind", unit="EJ/yr", predicate="SE")
 
-      }else if(all(map == carmap)){
+      }else if(all(map %in% carmap)){
           ## cars need a special mapping, too
           ## for global avgs we use FEs as weights
           int2ext[[report_str("Transport|Pass|Road|LDV|ICE", category, unit)]] <- report_str("Transport|Pass|Road|LDV|Liquids", unit="EJ/yr", predicate="FE")
           int2ext[[report_str("Transport|Pass|Road|LDV|EV", category, unit)]] <- report_str("Transport|Pass|Road|LDV|Electricity", unit="EJ/yr", predicate="FE")
           int2ext[[report_str("Transport|Pass|Road|LDV|H2", category, unit)]] <- report_str("Transport|Pass|Road|LDV|Hydrogen", unit="EJ/yr", predicate="FE")
+      } else if(all(map %in% cdrmap)){
+        # CDR technologies need special mapping
+        # for global avgs we use CO2 flows as weights
+        int2ext[[report_str("DAC", category, unit)]] <- report_str("DAC", unit="Mt CO2/yr", predicate="Emi|CO2")
+        int2ext[[report_str("CO2 Storage", category, unit)]] <- report_str("Carbon Capture and Storage", unit="Mt CO2/yr", predicate="Emi|CO2")
       }
       return(int2ext)
   }
@@ -202,6 +228,13 @@ reportTechnology <- function(gdx,output=NULL,regionSubsetList=NULL) {
       unit <- "US$2005/veh"
       tmp <- bind_category(tmp, v_investcost, category, unit, factor, carmap)
       int2ext <- c(int2ext, get_global_mapping(category, unit, carmap))
+  }
+  
+  if(CDR_mod != "off"){
+    unit <- "US$2005/(tCO2/yr)"
+    factor <- 1000/3.6
+    tmp <- bind_category(tmp, v_investcost, category, unit, factor, cdrmap)
+    int2ext <- c(int2ext, get_global_mapping(category, unit, cdrmap))
   }
 
   ### efficiency ###
@@ -237,6 +270,13 @@ reportTechnology <- function(gdx,output=NULL,regionSubsetList=NULL) {
       int2ext <- c(int2ext, get_global_mapping(category, unit, carmap))
   }
   
+  if(CDR_mod != "off"){
+    tmp <- bind_category(tmp, lifetime, category, unit, 1., cdrmap)
+    int2ext <- c(int2ext, get_global_mapping(category, unit, cdrmap))
+  }
+  
+
+  
   ### o&m fix costs ###
   category <- "OM Cost|fixed"
   unit <- "US$2005/kW/yr"
@@ -249,6 +289,15 @@ reportTechnology <- function(gdx,output=NULL,regionSubsetList=NULL) {
       unit <- "US$2005/veh/yr"
       tmp <- bind_category(tmp, omf * v_investcost, category, unit, 1000., carmap)
       int2ext <- c(int2ext, get_global_mapping(category, unit, carmap))
+  }
+  
+
+  if(CDR_mod != "off"){
+    ## op costs for CDR technologies ###
+    category <- "OM Cost|fixed"
+    unit <- "US$2005/(tCO2/yr)"
+    tmp <- bind_category(tmp, omf * v_investcost, category, unit, 1000/3.66, cdrmap)
+    int2ext <- c(int2ext, get_global_mapping(category, unit, cdrmap))
   }
 
   ### o&m variable costs ###
