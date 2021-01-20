@@ -83,7 +83,7 @@ reportEDGETransport <- function(output_folder=".",
     datatable[subsector_L3 == "International Ship", aggr_veh := "Freight|International Shipping"]
     datatable[subsector_L3 == "Domestic Ship", aggr_veh := "Freight|Navigation"]
 
-    datatable[grepl("bus|Bus", vehicle_type), aggr_veh := "Pass|Road|Bus"]
+    datatable[grepl("Bus", vehicle_type), aggr_veh := "Pass|Road|Bus"]
     if(mode == "ES")
       datatable[grepl("Cycle|Walk", subsector_L3), aggr_nonmot := "Pass|Road|Non-Motorized"]
 
@@ -95,7 +95,7 @@ reportEDGETransport <- function(output_folder=".",
     ## High Detail: Ecoinvent-Compatible Output
     datatable[grepl("Subcompact", vehicle_type),
               det_veh := "Pass|Road|LDV|Small"]
-    datatable[grepl("Mini|Three-Wheeler", vehicle_type),
+    datatable[grepl("Mini", vehicle_type),
               det_veh := "Pass|Road|LDV|Mini"]
     datatable[vehicle_type == "Compact", det_veh := "Pass|Road|LDV|Medium"]
     datatable[vehicle_type == "Large Car|Midsize Car", det_veh := "Pass|Road|LDV|Large"]
@@ -249,10 +249,9 @@ reportEDGETransport <- function(output_folder=".",
     }else{
       techmap["BEV", remind_rep := "Electricity"]
       techmap["Electric", remind_rep := "Electricity"]
-      techmap["LA-BEV", remind_rep := "Electricity"]
       techmap["FCEV", remind_rep := "Hydrogen"]
+      techmap["Hydrogen", remind_rep := "Hydrogen"]
       techmap["Liquids", remind_rep := "Liquids"]
-      techmap["Hybrid Liquids", remind_rep := "Liquids"]
       techmap["NG", remind_rep := "Gases"]
 
       datatable <- datatable[techmap, on="technology"]
