@@ -17,7 +17,6 @@ check_eqs <- function(dt, eqs, scope="all", sens=1e-10){
   }
 
   for(LHS in names(eqs)){
-    stopifnot(!(c("total", "diff") %in% unique(dt[["variable"]])))
     exp <- parse(text=eqs[[LHS]])
     dt[, total := eval(exp), by=.(all_regi, ttot, scenario, model)]
 
@@ -39,6 +38,7 @@ test_that("Test if REMIND reporting is produced as it should and check data inte
   ## please add variable tests below
   check_integrity <- function(out){
     dt <- rmndt::magpie2dt(out)
+    stopifnot(!(c("total", "diff") %in% unique(dt[["variable"]])))
     dt_wide <- data.table::dcast(dt, ... ~ variable)
 
     check_eqs(
