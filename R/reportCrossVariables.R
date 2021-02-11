@@ -100,26 +100,6 @@ reportCrossVariables <- function(gdx,output=NULL,regionSubsetList=NULL){
                    output[r,,"SE|Liquids|Biomass (EJ/yr)"] 
                  * output[r,,"PE|Biomass|Energy Crops (EJ/yr)"]
                  / output[r,,"PE|+|Biomass (EJ/yr)"],                     "SE|Liquids|Biomass|Energy Crops (EJ/yr)"))
-  tmp <- mbind(tmp,setNames(
-                   output[r,,"FE|Transport|Freight|Liquids (EJ/yr)"]
-                 * output[r,,"SE|Liquids|Oil (EJ/yr)"]
-                 / output[r,,"SE|Liquids (EJ/yr)"],                     "FE|Transport|Freight|Liquids|Oil (EJ/yr)"))
-  tmp <- mbind(tmp,setNames(
-                   output[r,,"FE|Transport|Freight|Liquids (EJ/yr)"]
-                 * output[r,,"SE|Liquids|Coal (EJ/yr)"]
-                 / output[r,,"SE|Liquids (EJ/yr)"],                     "FE|Transport|Freight|Liquids|Coal (EJ/yr)"))
-  tmp <- mbind(tmp,setNames(
-                   output[r,,"FE|Transport|Liquids (EJ/yr)"] 
-                 * output[r,,"SE|Liquids|Coal (EJ/yr)"]
-                 / output[r,,"SE|Liquids (EJ/yr)"],                     "FE|Transport|Liquids|Coal (EJ/yr)"))
-  tmp <- mbind(tmp,setNames(
-                 output[r,,"FE|Transport|Pass|Liquids (EJ/yr)"]
-                 * output[r,,"SE|Liquids|Oil (EJ/yr)"]
-                 / output[r,,"SE|Liquids (EJ/yr)"],                     "FE|Transport|Pass|Liquids|Oil (EJ/yr)"))
-  tmp <- mbind(tmp,setNames(
-                 output[r,,"FE|Transport|Pass|Liquids (EJ/yr)"]
-                 * output[r,,"SE|Liquids|Coal (EJ/yr)"]
-                 / output[r,,"SE|Liquids (EJ/yr)"],                     "FE|Transport|Pass|Liquids|Coal (EJ/yr)"))
 
 
 
