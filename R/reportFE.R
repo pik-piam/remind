@@ -863,10 +863,19 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
       new.magpie(getRegions(vm_otherFEdemand),getYears(vm_otherFEdemand), "FE|Transport|Pass|Liquids|Hydrogen (EJ/yr)", fill=0),
       new.magpie(getRegions(vm_otherFEdemand),getYears(vm_otherFEdemand), "FE|Transport|Freight|Liquids|Hydrogen (EJ/yr)", fill=0),
       new.magpie(getRegions(vm_otherFEdemand),getYears(vm_otherFEdemand), "FE|Transport|Liquids|Hydrogen (EJ/yr)", fill=0))
+    p_share_synfuel_liq <- 0
 
   }
+
   out <- mbind(out, tmp8)
   
+  if("seliqbio" %in% se_Liq){
+    out <- mbind(
+      out, setNames(
+        (dimSums(prodFE[,,"fedie"], dim=3) - vm_otherFEdemand[,,'fedie']) * (1-fedie_bioshare) * (1 - p_share_synfuel_liq) +
+        dimSums(prodFE[,,"fepet"], dim=3) * (1 - fepet_bioshare) * (1 - p_share_synfuel_liq),
+        "FE|Transport|Liquids|Oil (EJ/yr)"))
+  }
   
   # add global values
   out <- mbind(out,dimSums(out,dim=1))
