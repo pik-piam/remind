@@ -877,7 +877,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
       tmp8,
       setNames(
         (dimSums(prodFE[,,"fedie"], dim=3) - vm_otherFEdemand[,,'fedie']) * (1-fedie_bioshare) * (1 - p_share_synfuel_liq) * (1 - p_share_coal_liq) +
-        dimSums(prodFE[,,"fepet"], dim=3) * (1 - fepet_bioshare) * (1 - p_share_synfuel_liq) * (1 - p_share_coal_liq),
+        dimSums(prodFE[,,"fepet"], dim=3) * (1 - fepet_bioshare - p_share_synfuel_liq) * (1 - p_share_coal_liq),
         "FE|Transport|Liquids|Oil (EJ/yr)"),
       setNames(
         (dimSums(prodFE[,,"fedie"], dim=3) - vm_otherFEdemand[,,'fedie']) * (1-fedie_bioshare) * p_share_coal_liq +
