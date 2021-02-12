@@ -1,11 +1,11 @@
 Package: remind
 Type: Package
-Title: The REMIND R package
+Title: The REMIND R Package
 Version: 36.184.0
 Date: 2021-02-11
-Authors@R: as.person(c(
-	   "Anastasis Giannousakis <giannou@pik-potsdam.de> [aut,cre]",
-	   "Michaja Pehl [aut]"))
+Authors@R: c(
+	person("Anastasis", "Giannousakis", email="giannou@pik-potsdam.de", role=c("aut","cre")),
+	person("Michaja", "Pehl", role=c("aut")))
 Description: Contains the REMIND-specific routines for data and model output manipulation.
 Depends:
     gdx(>= 1.29),
