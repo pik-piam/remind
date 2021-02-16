@@ -32,8 +32,18 @@ check_eqs <- function(dt, eqs, scope="all", sens=1e-10){
 
 test_that("Test if REMIND reporting is produced as it should and check data integrity", {
 
-  ## add GDXs for comparison here:
-  my_gdxs <- list.files("../testgdxs/", "*.gdx", full.names = TRUE)
+  ## add GDXs for comparison in this folder
+  testgdx_folder <- "../testgdxs/"
+  ## if no GDXs are found, we attempt to download
+  my_gdxs <- list.files(testgdx_folder, "*.gdx", full.names = TRUE)
+  if(length(my_gdxs) == 0){
+    if(!file.exists(testgdx_folder)){
+      dir.create(testgdx_folder)
+    }
+    download.file("https://paste.c-net.org/MasksGallons", file.path(testgdx_folder, "fulldata.gdx"))
+    download.file("https://paste.c-net.org/BroaderChevy", file.path(testgdx_folder, "old.gdx"))
+  }
+  my_gdxs <- list.files(testgdx_folder, "*.gdx", full.names = TRUE)
 
   ## please add variable tests below
   check_integrity <- function(out){

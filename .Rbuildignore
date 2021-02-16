@@ -1,6 +1,5 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.git$
-^tests/testgdxs/.*\.gdx$
 ^\.buildlibrary$
 ^.*\.zenodo.json$
