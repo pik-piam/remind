@@ -41,7 +41,13 @@ test_that("Test if REMIND reporting is produced as it should and check data inte
       dir.create(testgdx_folder)
     }
     download.file("https://paste.c-net.org/MasksGallons", file.path(testgdx_folder, "fulldata.gdx"))
+    if(md5sum(file.path(testgdx_folder, "fulldata.gdx")) != "9cbeaee916097d289905982c54fbf1f6"){
+      fail("Checksum for downloaded GDX not correct.")
+    }
     download.file("https://paste.c-net.org/BroaderChevy", file.path(testgdx_folder, "old.gdx"))
+    if(md5sum(file.path(testgdx_folder, "old.gdx")) != "252f9fe2c9a1c9acbbb9ffbca1aeb0f2"){
+      fail("Checksum for downloaded GDX not correct.")
+    }
   }
   my_gdxs <- list.files(testgdx_folder, "*.gdx", full.names = TRUE)
 
