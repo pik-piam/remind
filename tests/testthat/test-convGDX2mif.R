@@ -40,11 +40,11 @@ test_that("Test if REMIND reporting is produced as it should and check data inte
     if(!file.exists(testgdx_folder)){
       dir.create(testgdx_folder)
     }
-    download.file("http://www.pik-potsdam.de/~pehl/look_mum_no_external_hosting/fulldata.gdx", file.path(testgdx_folder, "fulldata.gdx"))
+    download.file("https://rse.pik-potsdam.de/data/example/fulldata.gdx", file.path(testgdx_folder, "fulldata.gdx"))
     if(md5sum(file.path(testgdx_folder, "fulldata.gdx")) != "9cbeaee916097d289905982c54fbf1f6"){
       fail("Checksum for downloaded GDX not correct.")
     }
-    download.file("http://www.pik-potsdam.de/~pehl/look_mum_no_external_hosting/old.gdx", file.path(testgdx_folder, "old.gdx"))
+    download.file("https://rse.pik-potsdam.de/data/example/old.gdx", file.path(testgdx_folder, "old.gdx"))
     if(md5sum(file.path(testgdx_folder, "old.gdx")) != "252f9fe2c9a1c9acbbb9ffbca1aeb0f2"){
       fail("Checksum for downloaded GDX not correct.")
     }
