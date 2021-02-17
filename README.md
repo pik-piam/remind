@@ -38,6 +38,10 @@ The package comes with a vignette describing the basic functionality of the pack
 vignette("remind_summary") # Adding plots to the REMIND_summary.pdf
 ```
 
+## Automated Tests
+
+When building the library, GDXs are downloaded to test the creation of the reporting. For requests to update the test specimen, please file an issue or contact the package maintainer. Note that you can also manually place one or multiple GDX files in the `tests/testgdxs` folder to have them tested instead of the default ones.
+
 ## Questions / Problems
 
 In case of questions / problems please contact Anastasis Giannousakis <giannou@pik-potsdam.de>.
