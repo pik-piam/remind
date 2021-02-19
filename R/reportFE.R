@@ -33,7 +33,8 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   TWa_2_EJ     <- 31.536
   ####### read in needed data #########
   ## sets
-  module2realisation <- readGDX(gdx, "module2realisation", react = "silent")
+  module2realisation <- readGDX(gdx, "module2realisation")
+  rownames(module2realisation) <- module2realisation$modules
   FE_Transp_fety35    <- readGDX(gdx,"FE_Transp_fety35")
   FE_Elec_fety35    <- readGDX(gdx,"FE_Elec_fety35")
   sety <- readGDX(gdx,c("entySe","sety"),format="first_found")
@@ -810,54 +811,63 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
   ### disclaimer: (!) SE synfuels in REMIND normal are temporarily are part of segafos/seliqfos (this is differnet in REMIND-EU!)
   
   
-  # calculate synfuel share in SE seliqbio
+  ## New Reporting variables ignore otherFEdemand (fedie for enhanced weathering)
+
+  ## calculate fossil and biofuels in total liquids for HDVs and LDVs
+  tmp8 <- mbind(
+    setNames(collapseNames(prodFE[,,"seliqbio.fepet.tdbiopet"]),
+             "FE|Transport|Liquids|LDV|Biomass|New Reporting (EJ/yr)"),
+    setNames(collapseNames(prodFE[,,"seliqbio.fedie.tdbiodie"]),
+             "FE|Transport|Liquids|HDV|Biomass|New Reporting (EJ/yr)"),
+    setNames(collapseNames(dimSums(prodFE[,,c("tdbiopet","tdbiodie")], dim=3)),
+             "FE|Transport|Liquids|Biomass|New Reporting (EJ/yr)"),
+    setNames((1-p_share_synfuel_liq) * collapseNames(prodFE[,,"seliqfos.fepet.tdfospet"]),
+             "FE|Transport|Liquids|LDV|Fossil|New Reporting (EJ/yr)"),
+    setNames((1-p_share_synfuel_liq) * collapseNames(prodFE[,,"seliqfos.fedie.tdfosdie"]),
+             "FE|Transport|Liquids|HDV|Fossil|New Reporting (EJ/yr)"),
+    setNames((1-p_share_synfuel_liq) * collapseNames(dimSums(prodFE[,,c("tdfospet","tdfosdie")], dim=3)),
+             "FE|Transport|Liquids|Fossil|New Reporting (EJ/yr)"),
+    setNames((dimSums(prodFE[,,"fedie"], dim=3) - vm_otherFEdemand[,,'fedie']) * (1-fedie_bioshare) * p_share_synfuel_liq * p35_pass_FE_share_transp +
+               dimSums(prodFE[,,"fepet"], dim=3) * (1-fepet_bioshare) * p_share_synfuel_liq,
+             "FE|Transport|Pass|Liquids|Hydrogen (EJ/yr)"),
+    setNames((dimSums(prodFE[,,"fedie"], dim=3) - vm_otherFEdemand[,,'fedie']) * (1-fedie_bioshare) * p_share_synfuel_liq * (1-p35_pass_FE_share_transp),
+             "FE|Transport|Freight|Liquids|Hydrogen (EJ/yr)"),
+    setNames((dimSums(prodFE[,,"fedie"], dim=3) - vm_otherFEdemand[,,'fedie']) * (1-fedie_bioshare) * p_share_synfuel_liq,
+             "FE|Transport|Liquids|Hydrogen (EJ/yr)"))
   
-  # only if CCU is on
-  if ("MeOH" %in% getNames(prodSE, dim=3)) {
+  if ("fegat" %in% getNames(prodFE, dim=2)) {
+    tmp8 <- mbind(
+      tmp8,
+      setNames(collapseNames(dimSums(prodFE[,,c("tdbiogat")], dim=3)),
+               "FE|Transport|Gases|Biomass|New Reporting (EJ/yr)"),
+      setNames((1-p_share_synfuel_liq) * collapseNames(dimSums(prodFE[,,c("tdfosgat")], dim=3)),
+               "FE|Transport|Gases|Fossil|New Reporting (EJ/yr)"))
+  }
+
+  ## only if CCU is on, calculate the synfuels in total liquids for LDVs and HDVs
+  if (module2realisation["CCU",2] == "on") {
     p_share_synfuel_liq <- replace_non_finite(
       collapseNames(prodSE[,,"seliqfos.MeOH"] / dimSums(mselect(prodSE, all_enty1="seliqfos"), dim=3)))
     p_share_synfuel_gas <- replace_non_finite(
       prodSE[,,"h22ch4"] / dimSums(mselect(prodSE, all_enty1="segafos"), dim=3))
-    
+
     ## New Reporting variables ignore otherFEdemand (fedie for enhanced weathering)
     tmp8 <- mbind(
+      tmp8,
       setNames(p_share_synfuel_liq * collapseNames(prodFE[,,"seliqfos.fepet.tdfospet"]),
                "FE|Transport|Liquids|LDV|Synthetic|New Reporting (EJ/yr)"),
       setNames(p_share_synfuel_liq * collapseNames(prodFE[,,"seliqfos.fedie.tdfosdie"]),
                "FE|Transport|Liquids|HDV|Synthetic|New Reporting (EJ/yr)"),
       setNames(p_share_synfuel_liq * collapseNames(dimSums(prodFE[,,c("tdfospet","tdfosdie")], dim=3)),
-               "FE|Transport|Liquids|Synthetic|New Reporting (EJ/yr)"),
-      setNames(collapseNames(prodFE[,,"seliqbio.fepet.tdbiopet"]),
-               "FE|Transport|Liquids|LDV|Biomass|New Reporting (EJ/yr)"),
-      setNames(collapseNames(prodFE[,,"seliqbio.fedie.tdbiodie"]),
-               "FE|Transport|Liquids|HDV|Biomass|New Reporting (EJ/yr)"),
-      setNames(collapseNames(dimSums(prodFE[,,c("tdbiopet","tdbiodie")], dim=3)),
-               "FE|Transport|Liquids|Biomass|New Reporting (EJ/yr)"),
-      setNames((1-p_share_synfuel_liq) * collapseNames(prodFE[,,"seliqfos.fepet.tdfospet"]),
-               "FE|Transport|Liquids|LDV|Fossil|New Reporting (EJ/yr)"),
-      setNames((1-p_share_synfuel_liq) * collapseNames(prodFE[,,"seliqfos.fedie.tdfosdie"]),
-               "FE|Transport|Liquids|HDV|Fossil|New Reporting (EJ/yr)"),
-      setNames((1-p_share_synfuel_liq) * collapseNames(dimSums(prodFE[,,c("tdfospet","tdfosdie")], dim=3)),
-               "FE|Transport|Liquids|Fossil|New Reporting (EJ/yr)"),
-      setNames((dimSums(prodFE[,,"fedie"], dim=3) - vm_otherFEdemand[,,'fedie']) * (1-fedie_bioshare) * p_share_synfuel_liq * p35_pass_FE_share_transp +
-               dimSums(prodFE[,,"fepet"], dim=3) * (1-fepet_bioshare) * p_share_synfuel_liq,
-               "FE|Transport|Pass|Liquids|Hydrogen (EJ/yr)"),
-      setNames((dimSums(prodFE[,,"fedie"], dim=3) - vm_otherFEdemand[,,'fedie']) * (1-fedie_bioshare) * p_share_synfuel_liq * (1-p35_pass_FE_share_transp),
-               "FE|Transport|Freight|Liquids|Hydrogen (EJ/yr)"),
-      setNames((dimSums(prodFE[,,"fedie"], dim=3) - vm_otherFEdemand[,,'fedie']) * (1-fedie_bioshare) * p_share_synfuel_liq,
-               "FE|Transport|Liquids|Hydrogen (EJ/yr)"))
+               "FE|Transport|Liquids|Synthetic|New Reporting (EJ/yr)"))
 
     if ("fegat" %in% getNames(prodFE, dim=2)) {
       tmp8 <- mbind(
         tmp8,
         setNames(p_share_synfuel_liq * collapseNames(dimSums(prodFE[,,c("tdfosgat")], dim=3)),
-                 "FE|Transport|Gases|Synthetic|New Reporting (EJ/yr)"),
-        setNames(collapseNames(dimSums(prodFE[,,c("tdbiogat")], dim=3)),
-                 "FE|Transport|Gases|Biomass|New Reporting (EJ/yr)"),
-        setNames((1-p_share_synfuel_liq) * collapseNames(dimSums(prodFE[,,c("tdfosgat")], dim=3)),
-                 "FE|Transport|Gases|Fossil|New Reporting (EJ/yr)"))
+                 "FE|Transport|Gases|Synthetic|New Reporting (EJ/yr)"))
     }
-    
+
   }else{
     tmp8 <- mbind(
       new.magpie(getRegions(vm_otherFEdemand),getYears(vm_otherFEdemand), "FE|Transport|Pass|Liquids|Hydrogen (EJ/yr)", fill=0),
@@ -865,6 +875,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
       new.magpie(getRegions(vm_otherFEdemand),getYears(vm_otherFEdemand), "FE|Transport|Liquids|Hydrogen (EJ/yr)", fill=0))
 
   }
+
   out <- mbind(out, tmp8)
   
   
