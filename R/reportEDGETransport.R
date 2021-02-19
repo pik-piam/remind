@@ -300,74 +300,25 @@ reportEDGETransport <- function(output_folder=".",
     emidem = emidem[p_ef_dem, on = "all_enty"]
     ## calculate emissions and attribute variable and unit names
     emidem[, value := value*ef][, c("variable", "unit") := list(gsub("FE", "Emi\\|CO2", variable), "Mt CO2/yr")]
-
+    ## create the "tailpipe" and the "demand" emissions starting from the same values
     emidem = rbind(emidem[region %in% unique(emidem$region)][,type := "tailpipe"], emidem[region %in% unique(emidem$region)][,type := "demand"])
-
-    ## create corresponding entries with share of biofuels+synfuels in total liquids, for passenger SM, LO, freight SM, LO
-    TWa_2_EJ <- 31.536
-    ## demSe: secondary energy demand, secondary energy carrier units
-    demSe <- readgdx(gdx, "vm_demSe")[, value := value*TWa_2_EJ]
-    setnames(demSe, c("year", "region", "se", "fe", "te", "value"))
-    ## prodSe: secondary energy production, secondary energy carrier units
-    prodSe <- readgdx(gdx, "vm_prodSe")[, value := value*TWa_2_EJ]
-    setnames(prodSe, c("year", "region", "pe", "se", "te", "value"))
-    ## energy conversion for the different technologies
-    etaconv = readgdx(gdx, "pm_eta_conv")
-    setnames(etaconv, c("year", "region", "te", "eff"))
-    ## separately see MeOH conversion
-    convMeOH = unique(etaconv[te == "MeOH", eff])
-
-    ## calculate the shares of seliqfos for the two sectors, transport and stationary (in seliqfos units)
-    shareLiqSec = demSe[se == "seliqfos"]
-    shareLiqSec[, sec := ifelse(fe %in% c("fepet", "fedie"), "trsp", "st")]
-    shareLiqSec = shareLiqSec[, .(value = sum(value)), by = .(region, year, sec)]
-    shareLiqSec[, share := value/sum(value), by =.(region, year)]
-    shareLiqSec[, c("value") := NULL]
-
-    ## create pathway in demSe for synfuels to transport and synfuels to stationary
-    demSeSyn = merge(demSe[fe == "seliqfos" & te == "MeOH", .(year, region, value)], shareLiqSec, all = TRUE, by = c("region", "year"))
-    demSeSyn[is.na(value), value := 0]
-    demSeSyn[, value := share*value*convMeOH]  ## convert in seliqfos values
-    demSeSyn[, share := NULL]
-    demSeSyn[, fe := ifelse(sec == "trsp", "fesynt", "fesyns")]
-    demSeSyn[, se := "seliqfos"]
-
-
-    ## calculate the seliqfos from synfuels as a share of the total seliqfos
-    demSeLiq = demSe[se =="seliqfos"]
-    demSeLiq = demSeLiq[, sec := ifelse(fe %in% c("fepet", "fedie"), "trsp", "st")]
-    demSeLiq = demSeLiq[,.(totseliq = sum(value)), by = c("year", "region", "sec")]
-    demSeLiq = merge(demSeLiq, demSeSyn, by = c("region", "year", "sec"))
-    demSeLiq[, sharesyn := value/(totseliq)]
-    demSeLiq = demSeLiq[, .(sharesyn = sum(sharesyn)), .(region, year, sec)]
-    setnames(demSeLiq, old = "year", new = "period")
-    demSeLiq[, period := as.numeric(period)]
-
-    ## calculate share of biofuels on total seliqfos+seliqbio
-    shareBioSec = demSe[se %in% c("seliqfos", "seliqbio")]
-    shareBioSec[, sec := ifelse(fe %in% c("fepet", "fedie"), "trsp", "st")]
-    shareBioSec = shareBioSec[sec == "trsp"]
-    shareBioSec = shareBioSec[, sharebio := value/sum(value), by = .(region, year)]
-    shareBioSec = shareBioSec[,.(sharebio = sum(sharebio)), .(region, year, se)]
-    shareBioSec = shareBioSec[se == "seliqbio"]
-    shareBioSec[, c("se") := NULL]
-    setnames(shareBioSec, old = "year", new = "period")
-    shareBioSec[, period := as.numeric(period)]
-
-    ## decrease the "demand" entries of the amount of biofuels
-    emidem = merge(emidem, shareBioSec, by = c("region", "period"))
-    emidem[type == "demand" & all_enty %in% c("fedie", "fepet"), value := value*(1-sharebio)]
-
-    ## merge demand and shares of synfuels+biofuels
-    emidem = merge(emidem, demSeLiq[sec == "trsp"][, sec := NULL], by = c("region", "period"))
-    emidem[type == "demand", value := value*(1-sharesyn)]
+    ## load the composition of liquids for the whole LDV sector->fepet and the HDV sector->fedie
+    liq_comp = miffile[variable %in% c("FE\\|Transport\\|Liquids\\|LDV\\|Synthetic\\|New Reporting", "FE\\|Transport\\|Liquids\\|LDV\\|Biomass\\|New Reporting", "FE\\|Transport\\|Liquids\\|LDV\\|Fossil\\|New Reporting",
+                                       "FE\\|Transport\\|Liquids\\|HDV\\|Synthetic\\|New Reporting", "FE\\|Transport\\|Liquids\\|HDV\\|Biomass\\|New Reporting", "FE\\|Transport\\|Liquids\\|HDV\\|Fossil\\|New Reporting")]
+    ## attribute fepet if LDV, fedie otherwise
+    liq_comp[, all_enty := ifelse(grepl("LDV", variable), "fepet", "fedie")]
+    ## calculate shares of the liquid fuels
+    liq_comp = liq_comp[, .(share = value/sum(value)), by = c("region", "year", "all_enty", "variable")]
+    ## decrease the "demand" entries by multiplying times the share of conventional liquids
+    emidem = merge(emidem, liq_comp[grepl("Fossil", variable)], by = c("region", "period", "all_enty"))
+    emidem[type == "demand" & all_enty %in% c("fedie", "fepet"), value := value*share]
 
     ## the taipipe emissions are to be labeled as "Tailpipe"
     emidem[type == "tailpipe", variable := paste0(variable, "|Tailpipe")]
     ## the demand emissions are to be labeled as "Demand"
     emidem[type == "demand", variable := paste0(variable, "|Demand")]
 
-    emidem[, c("sharesyn", "sharebio", "type", "ef", "V3", "V2", "all_enty") := NULL]
+    emidem[, c("share", "type", "ef", "V3", "V2", "all_enty") := NULL]
 
     ## aggregate removing the fuel dependency
     emidem[, variable_agg := gsub("\\|Liquids|\\|Electricity|\\|Hydrogen|\\|Gases", "", variable)]
