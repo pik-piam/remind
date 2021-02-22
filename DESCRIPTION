@@ -1,7 +1,7 @@
 Package: remind
 Type: Package
 Title: The REMIND R Package
-Version: 36.184.3
+Version: 36.184.2
 Date: 2021-02-22
 Authors@R: c(
 	person("Anastasis", "Giannousakis", email="giannou@pik-potsdam.de", role=c("aut","cre")),
