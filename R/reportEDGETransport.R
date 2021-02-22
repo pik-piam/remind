@@ -303,14 +303,23 @@ reportEDGETransport <- function(output_folder=".",
     ## create the "tailpipe" and the "demand" emissions starting from the same values
     emidem = rbind(emidem[region %in% unique(emidem$region)][,type := "tailpipe"], emidem[region %in% unique(emidem$region)][,type := "demand"])
     ## load the composition of liquids for the whole LDV sector->fepet and the HDV sector->fedie
-    liq_comp = miffile[variable %in% c("FE\\|Transport\\|Liquids\\|LDV\\|Synthetic\\|New Reporting", "FE\\|Transport\\|Liquids\\|LDV\\|Biomass\\|New Reporting", "FE\\|Transport\\|Liquids\\|LDV\\|Fossil\\|New Reporting",
-                                       "FE\\|Transport\\|Liquids\\|HDV\\|Synthetic\\|New Reporting", "FE\\|Transport\\|Liquids\\|HDV\\|Biomass\\|New Reporting", "FE\\|Transport\\|Liquids\\|HDV\\|Fossil\\|New Reporting")]
+    liq_comp = miffile[Variable %in% c("FE|Transport|Liquids|LDV|Synthetic|New Reporting", "FE|Transport|Liquids|LDV|Biomass|New Reporting", "FE|Transport|Liquids|LDV|Fossil|New Reporting",
+                                       "FE|Transport|Liquids|HDV|Synthetic|New Reporting", "FE|Transport|Liquids|HDV|Biomass|New Reporting", "FE|Transport|Liquids|HDV|Fossil|New Reporting")]
+    ## re-arrange liq_comp
+    liq_comp[, c("V25", "Model", "Scenario", "Unit"):=NULL]
+    liq_comp = data.table::melt(liq_comp, id.vars = c("Region", "Variable"))
+    ## change col names and type of numeric cols
+    setnames(liq_comp, old =c("variable", "Region"), new = c("period", "region"))
+    liq_comp[, value:= as.numeric(value)]
+    liq_comp[, period := as.numeric(as.character(period))]
     ## attribute fepet if LDV, fedie otherwise
-    liq_comp[, all_enty := ifelse(grepl("LDV", variable), "fepet", "fedie")]
+    liq_comp[, all_enty := ifelse(grepl("LDV", Variable), "fepet", "fedie")]
     ## calculate shares of the liquid fuels
-    liq_comp = liq_comp[, .(share = value/sum(value)), by = c("region", "year", "all_enty", "variable")]
+    liq_comp = liq_comp[, share := value/sum(value), by = c("region", "period", "all_enty")]
+    ## remove value col
+    liq_comp[, value := NULL]
     ## decrease the "demand" entries by multiplying times the share of conventional liquids
-    emidem = merge(emidem, liq_comp[grepl("Fossil", variable)], by = c("region", "period", "all_enty"))
+    emidem = merge(emidem, liq_comp[grepl("Fossil", Variable)], by = c("region", "period", "all_enty"))
     emidem[type == "demand" & all_enty %in% c("fedie", "fepet"), value := value*share]
 
     ## the taipipe emissions are to be labeled as "Tailpipe"
