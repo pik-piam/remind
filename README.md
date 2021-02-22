@@ -1,6 +1,6 @@
 # The REMIND R package
 
-R package **remind**, version **36.183.0**
+R package **remind**, version **36.183.2**
 
 [![CRAN status](https://www.r-pkg.org/badges/version/remind)](https://cran.r-project.org/package=remind)    
 
@@ -38,6 +38,10 @@ The package comes with a vignette describing the basic functionality of the pack
 vignette("remind_summary") # Adding plots to the REMIND_summary.pdf
 ```
 
+## Automated Tests
+
+When building the library, GDXs are downloaded to test the creation of the reporting. For requests to update the test specimen, please file an issue or contact the package maintainer. Note that you can also manually place one or multiple GDX files in the `tests/testgdxs` folder to have them tested instead of the default ones.
+
 ## Questions / Problems
 
 In case of questions / problems please contact Anastasis Giannousakis <giannou@pik-potsdam.de>.
@@ -46,8 +50,7 @@ In case of questions / problems please contact Anastasis Giannousakis <giannou@p
 
 To cite package **remind** in publications use:
 
-Giannousakis A, Pehl M (2021). _remind: The REMIND R package_. R package
-version 36.183.0.
+Giannousakis A, Pehl M (2021). _remind: The REMIND R package_. R package version 36.183.2.
 
 A BibTeX entry for LaTeX users is
 
@@ -56,7 +59,7 @@ A BibTeX entry for LaTeX users is
   title = {remind: The REMIND R package},
   author = {Anastasis Giannousakis and Michaja Pehl},
   year = {2021},
-  note = {R package version 36.183.0},
+  note = {R package version 36.183.2},
 }
 ```
 
