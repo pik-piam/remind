@@ -122,7 +122,7 @@ reportSE <- function(gdx,regionSubsetList=NULL){
     if ( (nrow(input.pe2se) == 0) || (is.null(storageLoss)) ){
       x3 <- 0
     } else {
-      x3 <- dimSums(storageLoss[input.pe2se], dim=3)
+      x3 <- dimSums(storageLoss[input.pe2se], dim=3, na.rm=T)
     }
 
     out <- (x1+x2-x3)
@@ -147,18 +147,18 @@ reportSE <- function(gdx,regionSubsetList=NULL){
     ## identify all techs with secarrier as a main product
     # sub1_oc2te <- oc2te[(oc2te$all_enty %in% pecarrier) & (oc2te$all_enty1 %in% secarrier) & (oc2te$all_enty2 %in% sety)    & (oc2te$all_te %in% te),]
     ## secondary energy production with secarrier as a main product
-    x1 <- dimSums(mselect(prodSe,all_enty=enty.input,all_enty1=se.output,all_te=te),dim=3)
+    x1 <- dimSums(mselect(prodSe,all_enty=enty.input,all_enty1=se.output,all_te=te),dim=3,na.rm=T)
     ## secondary energy production with secarrier as a couple product
     ## identify all oc techs with secarrier as a couple product
     sub_oc2te <- oc2te[(oc2te$all_enty %in% enty.input) & (oc2te$all_enty1 %in% sety)    & (oc2te$all_enty2 %in% se.output) & (oc2te$all_te %in% te),]
-    x2 <- dimSums(prodSe[sub_oc2te]*dataoc[sub_oc2te],dim=3)
+    x2 <- dimSums(prodSe[sub_oc2te]*dataoc[sub_oc2te],dim=3,na.rm=T)
 
     ## storage losses
     input.pe2se <- pe2se[(pe2se$all_enty %in% enty.input) & (pe2se$all_enty1 %in% se.output) & (pe2se$all_te %in% te),]
     if (nrow(input.pe2se) == 0) {
       x3 <- 0
     } else {
-      x3 <- dimSums(storageLoss[input.pe2se], dim=3)
+      x3 <- dimSums(storageLoss[input.pe2se], dim=3, na.rm=T)
     }
 
     out <- (x3)
