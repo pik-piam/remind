@@ -231,7 +231,7 @@ reportTechnology <- function(gdx,output=NULL,regionSubsetList=NULL) {
   }
   
   if(CDR_mod != "off"){
-    unit <- "US$2005/(tCO2/yr)"
+    unit <- "US$2005/tCO2*yr"
     factor <- 1000/3.6
     tmp <- bind_category(tmp, v_investcost, category, unit, factor, cdrmap)
     int2ext <- c(int2ext, get_global_mapping(category, unit, cdrmap))
