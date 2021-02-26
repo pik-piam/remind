@@ -168,14 +168,14 @@ reportCosts <- function(gdx,output=NULL,regionSubsetList=NULL) {
   
   op_costs_part2_foss <- function(pe,se,te,vm_prodSe,i_pe2se,p_dataeta,vm_costfu_ex,vm_fuelex,sm_tdptwyr2dpgj,pm_conv_TWa_EJ) {
     sub_pe2se         <- i_pe2se[(pe2se$all_enty %in% pe) & (i_pe2se$all_enty1 %in% se) & (i_pe2se$all_te %in% te),]
-    out <- dimSums( vm_costfu_ex[,,pe]   / dimSums(vm_fuelex[,,pe],dim=3), dim = 3) * sm_tdptwyr2dpgj * # Average supply costs
-           dimSums( vm_prodSe[sub_pe2se] / p_dataeta[,,sub_pe2se$all_te],  dim = 3) * pm_conv_TWa_EJ  
+    out <- dimSums( vm_costfu_ex[,,pe]   / dimSums(vm_fuelex[,,pe],dim = 3, na.rm = T), dim = 3, na.rm = T) * sm_tdptwyr2dpgj * # Average supply costs
+           dimSums( vm_prodSe[sub_pe2se] / p_dataeta[,,sub_pe2se$all_te],  dim = 3, na.rm = T) * pm_conv_TWa_EJ  
     return(out)
   }
 
   op_costs_part2_bio_nuc <- function(pe,se,te,vm_prodSe,i_pe2se,p_dataeta,pm_conv_TWa_EJ) {
     sub_pe2se         <- i_pe2se[(pe2se$all_enty %in% pe) & (i_pe2se$all_enty1 %in% se) & (i_pe2se$all_te %in% te),]
-    out <- dimSums( vm_prodSe[sub_pe2se] / p_dataeta[,,sub_pe2se$all_te],  dim = 3) * pm_conv_TWa_EJ  
+    out <- dimSums( vm_prodSe[sub_pe2se] / p_dataeta[,,sub_pe2se$all_te],  dim = 3, na.rm = T) * pm_conv_TWa_EJ  
     return(out)
   }
  
@@ -192,16 +192,16 @@ reportCosts <- function(gdx,output=NULL,regionSubsetList=NULL) {
       e2e_allte       <- te
     }
     
-    vm_cap <- dimSums(vm_cap,dim=3.2) # get rid of grades which are not used in calculations below because all other variables dont have them neither
+    vm_cap <- dimSums(vm_cap,dim=3.2,na.rm=T) # get rid of grades which are not used in calculations below because all other variables dont have them neither
     
     out <- dimSums(                                       # sum OMF over technologies
       collapseNames(pm_data[,,"omf"])[,,e2e_allte] *                                           
-        (dimSums((v_investcost[,,e2e_allte] * vm_cap[,,e2e_allte])[teall2rlf],dim=3.2)   # sum over rlf   
-        )[,, e2e_allte],dim=3)                                                                
+        (dimSums((v_investcost[,,e2e_allte] * vm_cap[,,e2e_allte])[teall2rlf],dim=3.2,na.rm=T)   # sum over rlf   
+        )[,, e2e_allte],dim = 3, na.rm = T)                                                                
     
     if(!is.null(vm_prodE) & !length(e2e_allte)==0) {     # if either SE or FE is produced, then variable O&M is added
-       out <- out + dimSums(collapseNames(pm_data[,,"omv"])[,,sub_e2e$all_te] * dimSums(vm_prodE[sub_e2e],dim=c(3.1,3.2))
-                            , dim=3) 
+       out <- out + dimSums(collapseNames(pm_data[,,"omv"])[,,sub_e2e$all_te] * dimSums(vm_prodE[sub_e2e],dim=c(3.1,3.2),na.rm=T)
+                            , dim = 3, na.rm = T) 
     }
     
     out <- out * 1000
@@ -210,7 +210,7 @@ reportCosts <- function(gdx,output=NULL,regionSubsetList=NULL) {
   }
 
   cost_Mport <- function(pety,pm_petradecost2_Mp_fin,pm_pvp,budget.m,Mport) {
-    out <- dimSums((pm_petradecost2_Mp_fin[,,pety] + (pm_pvp[,,pety] / (budget.m + 1.e-10))) * Mport[,,pety], dim=3) * 1000
+    out <- dimSums((pm_petradecost2_Mp_fin[,,pety] + (pm_pvp[,,pety] / (budget.m + 1.e-10))) * Mport[,,pety], dim = 3, na.rm = T) * 1000
     return(out)
   }
   
@@ -235,10 +235,10 @@ reportCosts <- function(gdx,output=NULL,regionSubsetList=NULL) {
   if(!is.null(totLUcosts))        {tmp <- mbind(tmp,setNames(totLUcosts                                 * 1000, "Costs|Land Use (billion US$2005/yr)"))}
   if(!is.null(totLUcostsWithMAC)) {tmp <- mbind(tmp,setNames(totLUcostsWithMAC                          * 1000, "Costs|Land Use with MAC-costs from MAgPIE (billion US$2005/yr)"))}
   if(!is.null(costsLuMACLookup))  {tmp <- mbind(tmp,setNames(costsLuMACLookup                           * 1000, "Costs|Land Use|MAC-costs Lookup (billion US$2005/yr)"))}
-  if(!is.null(getNames(costsMAC))) tmp <- mbind(tmp,setNames(dimSums(costsMAC[,,emiMacMagpie],   dim=3) * 1000, "Costs|Land Use|MAC-costs (billion US$2005/yr)"))
-  if(!is.null(getNames(costsMAC))) tmp <- mbind(tmp,setNames(dimSums(costsMAC[,,emiMacMagpieN2O],dim=3) * 1000, "Costs|Land Use|MAC-costs|N2O (billion US$2005/yr)"))
-  if(!is.null(getNames(costsMAC))) tmp <- mbind(tmp,setNames(dimSums(costsMAC[,,emiMacMagpieCH4],dim=3) * 1000, "Costs|Land Use|MAC-costs|CH4 (billion US$2005/yr)"))
-  if(!is.null(getNames(costsMAC))) tmp <- mbind(tmp,setNames(dimSums(costsMAC[,,emiMacMagpieCO2],dim=3) * 1000, "Costs|Land Use|MAC-costs|CO2 (billion US$2005/yr)"))
+  if(!is.null(getNames(costsMAC))) tmp <- mbind(tmp,setNames(dimSums(costsMAC[,,emiMacMagpie],   dim = 3, na.rm = T) * 1000, "Costs|Land Use|MAC-costs (billion US$2005/yr)"))
+  if(!is.null(getNames(costsMAC))) tmp <- mbind(tmp,setNames(dimSums(costsMAC[,,emiMacMagpieN2O],dim = 3, na.rm = T) * 1000, "Costs|Land Use|MAC-costs|N2O (billion US$2005/yr)"))
+  if(!is.null(getNames(costsMAC))) tmp <- mbind(tmp,setNames(dimSums(costsMAC[,,emiMacMagpieCH4],dim = 3, na.rm = T) * 1000, "Costs|Land Use|MAC-costs|CH4 (billion US$2005/yr)"))
+  if(!is.null(getNames(costsMAC))) tmp <- mbind(tmp,setNames(dimSums(costsMAC[,,emiMacMagpieCO2],dim = 3, na.rm = T) * 1000, "Costs|Land Use|MAC-costs|CO2 (billion US$2005/yr)"))
   
   tmp    <- tmp[,y,]
   
@@ -259,7 +259,7 @@ reportCosts <- function(gdx,output=NULL,regionSubsetList=NULL) {
                             setNames(output[regi_on_gdx,,"Res|Average Supply Costs|Oil ($/GJ)"]       * Xport[,,"peoil"]   * pm_conv_TWa_EJ,NULL) -  
                             setNames(output[regi_on_gdx,,"Price|Biomass|Primary Level (US$2005/GJ)"]  * Xport[,,"pebiolc"] * pm_conv_TWa_EJ,NULL) -
                             setNames(output[regi_on_gdx,,"Res|Average Supply Costs|Uranium ($/GJ)"]   * Xport[,,"peur"]    * pm_conv_TWa_EJ * 4.43,NULL) +
-                            dimSums(Mport[,,trade_pe] * pebal.m[,,trade_pe] / (budget.m + 1.e-10), dim=3) * 1000 # imports valued with domestic market price
+                            dimSums(Mport[,,trade_pe] * pebal.m[,,trade_pe] / (budget.m + 1.e-10), dim = 3, na.rm = T) * 1000 # imports valued with domestic market price
   
   tmp  <- mbind(tmp,setNames(cost, "Fuel costs for own ESM (billion US$2005/yr)"))
   
@@ -352,8 +352,8 @@ reportCosts <- function(gdx,output=NULL,regionSubsetList=NULL) {
         ( dimSums(
             mselect(balfinen.m, fe2ppfen37_feels) 
           * vm_cesIO[,y,fe2ppfen37_feels$all_in],
-          dim = 3) 
-        / dimSums(vm_cesIO[,y,fe2ppfen37_feels$all_in], dim = 3)
+          dim = 3, na.rm = T) 
+        / dimSums(vm_cesIO[,y,fe2ppfen37_feels$all_in], dim = 3, na.rm = T)
         )
         / (budget.m + 1e-10) * 1000 / pm_conv_TWa_EJ
       )
@@ -363,8 +363,8 @@ reportCosts <- function(gdx,output=NULL,regionSubsetList=NULL) {
         ( dimSums(
           mselect(balfinen.m, fe2ppfen37_fegas) 
           * vm_cesIO[,y,fe2ppfen37_fegas$all_in],
-          dim = 3) 
-          / dimSums(vm_cesIO[,y,fe2ppfen37_fegas$all_in], dim = 3)
+          dim = 3, na.rm = T) 
+          / dimSums(vm_cesIO[,y,fe2ppfen37_fegas$all_in], dim = 3, na.rm = T)
         )
         / (budget.m + 1e-10) * 1000 / pm_conv_TWa_EJ
       )
@@ -374,8 +374,8 @@ reportCosts <- function(gdx,output=NULL,regionSubsetList=NULL) {
         ( dimSums(
           mselect(balfinen.m, fe2ppfen37_feh2s) 
           * vm_cesIO[,y,fe2ppfen37_feh2s$all_in],
-          dim = 3) 
-          / dimSums(vm_cesIO[,y,fe2ppfen37_feh2s$all_in], dim = 3)
+          dim = 3, na.rm = T) 
+          / dimSums(vm_cesIO[,y,fe2ppfen37_feh2s$all_in], dim = 3, na.rm = T)
         )
         / (budget.m + 1e-10) * 1000 / pm_conv_TWa_EJ
       )
