@@ -108,9 +108,9 @@ reportCapacity <- function(gdx,regionSubsetList=NULL) {
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"storwind"],dim=3) * 1.2,         "New Cap|Electricity|Storage|Battery|For Wind (GW)"))
   # Newly built capacities hydrogen
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("bioh2c","bioh2")],dim=3),   "New Cap|Hydrogen|Biomass (GW)"))
-  tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("elh2","elh2VRE")],dim=3),                "New Cap|Hydrogen|Electricity (GW)"))
+  if (all(c("elh2VRE","elh2") %in% magclass::getNames(vm_cap,dim=1))) {tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("elh2","elh2VRE")],dim=3),                "New Cap|Hydrogen|Electricity (GW)"))}
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("gash2c","coalh2c","gash2","coalh2")],dim=3), "New Cap|Hydrogen|Fossil (GW)"))
-  tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("bioh2c","bioh2","elh2","elh2VRE","gash2c","coalh2c","gash2","coalh2")],dim=3),"New Cap|Hydrogen (GW)"))
+  if (all(c("elh2VRE","elh2") %in% magclass::getNames(vm_cap,dim=1))) {tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("bioh2c","bioh2","elh2","elh2VRE","gash2c","coalh2c","gash2","coalh2")],dim=3),"New Cap|Hydrogen (GW)"))}
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"bioh2c"],dim=3),              "New Cap|Hydrogen|Biomass|w/ CCS (GW)"))
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,"bioh2"],dim=3),               "New Cap|Hydrogen|Biomass|w/o CCS (GW)"))
   tmp2 <- mbind(tmp2,setNames(dimSums(vm_deltaCap[,,c("gash2c","coalh2c")],dim=3), "New Cap|Hydrogen|Fossil|w/ CCS (GW)"))
