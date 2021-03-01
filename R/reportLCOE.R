@@ -25,8 +25,7 @@
 #' @importFrom magclass new.magpie dimSums getRegions getYears getNames setNames clean_magpie dimReduce as.magpie magpie_expand
 #' @importFrom dplyr %>% mutate select rename group_by ungroup right_join filter full_join  arrange summarise
 #' @importFrom quitte as.quitte overwrite getRegs
-#' @importFrom tidyr spread gather expand
-#' @importFrom zoo na.locf
+#' @importFrom tidyr spread gather expand fill
 
 
 reportLCOE <- function(gdx, output.type = "both"){
@@ -684,16 +683,18 @@ reportLCOE <- function(gdx, output.type = "both"){
   
   Fuel.Price <- mbind(Pe.Price,Se.Seel.Price, Se.Price )[,,fuels]
   
+
   # Fuel price
   df.Fuel.Price <- as.quitte(Fuel.Price) %>%  
     select(region, period, all_enty, value) %>% 
     rename(fuel = all_enty, fuel.price = value, opTimeYr = period) %>% 
-    # replace zeros by last value of time series (marginals are sometimes zero if there are other constriants)
+    # replace zeros by last or (if not available) next value of time series (marginals are sometimes zero if there are other constriants)
     mutate( fuel.price = ifelse(fuel.price == 0, NA, fuel.price)) %>% 
     group_by(region, fuel) %>% 
-    na.locf() %>% 
-    ungroup()
+    tidyr::fill(fuel.price, .direction = "downup") %>% 
+    ungroup() 
   
+
   
   ### 7. retrieve carbon price
   pm_priceCO2 <- readGDX(gdx, "pm_priceCO2", restore_zeros = F)
