@@ -756,7 +756,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     tmp3 <- mbind(tmp2,
                   setNames(p35_freight_ES_efficiency * tmp2[,,"UE|Transport|Freight (EJ/yr)"],"ES|Transport|Freight (bn tkm/yr)"),
                   setNames(p35_pass_nonLDV_ES_efficiency * tmp2[,,"UE|Transport|Pass|non-LDV (EJ/yr)"],"ES|Transport|Pass|non-LDV (bn pkm/yr)"),
-                  setNames(tmp2[,,"FE|Transport|Pass|non-LDV (EJ/yr)"] + setNames(tmp2[,,"FE|Transport|Pass|Road|LDV (EJ/yr)"],NULL), "FE|Transport|Pass (EJ/yr)")
+                  setNames(tmp2[,,"FE|Transport|Pass|Liquids (EJ/yr)"] + tmp2[,,"FE|Transport|Pass|Hydrogen (EJ/yr)"] + tmp2[,,"FE|Transport|Pass|Electricity (EJ/yr)"], "FE|Transport|Pass (EJ/yr)")
     )
 
     tmp4 <- mbind(tmp3,
