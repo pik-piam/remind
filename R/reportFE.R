@@ -744,8 +744,7 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
 
   if (tran_mod == "complex") {
     tmp2 <- mbind(tmp2a,
-                  setNames(p35_pass_FE_share_transp * tmp1[,, "FE|Transport|non-LDV (EJ/yr)"], "FE|Transport|Pass|non-LDV (EJ/yr)"),
-                  setNames((1- p35_pass_FE_share_transp) * tmp1[,, "FE|Transport|non-LDV (EJ/yr)"], "FE|Transport|Freight (EJ/yr)"),
+                  setNames(tmp1[,, "FE|Transport|Freight|Liquids (EJ/yr)"], "FE|Transport|Freight (EJ/yr)"),
                   setNames(p35_pass_FE_share_transp * tmp1[,, "UE|Transport|HDV (EJ/yr)"], "UE|Transport|Pass|non-LDV (EJ/yr)"),
                   setNames((1- p35_pass_FE_share_transp) * tmp1[,, "UE|Transport|HDV (EJ/yr)"], "UE|Transport|Freight (EJ/yr)"),
                   NULL
@@ -760,7 +759,8 @@ reportFE <- function(gdx,regionSubsetList=NULL) {
     )
 
     tmp4 <- mbind(tmp3,
-                  setNames(tmp3[,,"ES|Transport|Pass|Road|LDV (bn pkm/yr)"] + tmp3[,,"ES|Transport|Pass|non-LDV (bn pkm/yr)"],"ES|Transport|Pass (bn pkm/yr)")
+                  setNames(tmp3[,,"FE|Transport|Pass (EJ/yr)"] - tmp3[,,"FE|Transport|Pass|Road|LDV (EJ/yr)"], "FE|Transport|Pass|non-LDV (EJ/yr)"),
+                  setNames(tmp3[,,"ES|Transport|Pass|Road|LDV (bn pkm/yr)"] + tmp3[,,"ES|Transport|Pass|non-LDV (bn pkm/yr)"], "ES|Transport|Pass (bn pkm/yr)")
     )
   }else{
     # we add no entries here for now. *TODO* check if these entries are used, e.g., in exoGAINSairpollutants, to sum up fes.
