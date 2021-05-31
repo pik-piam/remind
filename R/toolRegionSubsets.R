@@ -24,7 +24,7 @@
 #' 
 #' @export
 #' @importFrom gdx readGDX
-#' @importFrom madrat toolMappingFile
+#' @importFrom madrat toolGetMapping
 #' @importFrom utils read.csv
 #' 
 #' @export
@@ -33,7 +33,7 @@ toolRegionSubsets <- function(gdx=NULL,map=NULL,parentMapping=NULL,singleMatches
   
   # default to "regionmappingH12.csv" as default
   if (is.null(parentMapping))
-    parentMapping <- toolMappingFile("regional","regionmappingH12.csv")
+    parentMapping <- toolGetMapping(type = "regional", name = "regionmappingH12.csv", returnPathOnly = TRUE)
   
   # reading parent mapping
   if(!(is.data.frame(parentMapping))) {
