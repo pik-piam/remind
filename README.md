@@ -2,7 +2,7 @@
 
 R package **remind**, version **36.184.9**
 
-  
+[![CRAN status](https://www.r-pkg.org/badges/version/remind)](https://cran.r-project.org/package=remind)
 
 ## Purpose and Functionality
 
