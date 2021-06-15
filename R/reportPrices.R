@@ -118,6 +118,7 @@ reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
   ppfen_build <- setdiff(ppfen_build, ue_dyn36)
   ppfen_ind <- readGDX(gdx,c("ppfen_industry_dyn37","ppfen_industry_dyn28","ppfen_industry"),format="first_found", react = "silent")
   ppfen_stat_build_ind <- c(ppfen_stat,ppfen_build,ppfen_ind)
+  edge_scen <- readGDX(gdx,"EDGE_scenario",format="first_found", react = "silent")
   
   # Realisation of the different modules
   if ( !is.null(realisation) & (!"CES_structure" %in% realisation[, 1] )){
@@ -134,6 +135,11 @@ reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
       stat_mod = "off"
       indu_mod = "fixed_shares"
       buil_mod = "simple"
+    }
+    if ( !is.null(edge_scen)){    # In case the set realization did not exist, find out whether "edge_esm" or "complex" realization was chosen
+      tran_mod = "edge_esm"
+    } else {
+      tran_mod = "complex"
     }
   }
   
@@ -290,18 +296,33 @@ reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
   # energy services
   tmp <- mbind(tmp,setNames(abs(esm2macro.m[,,name_trsp[2]]/(budget.m+1e-10)) * tdptwyr2dpgj , "Price|Energy Service|Transport nonLDV (US$2005/GJ)"))
   tmp <- mbind(tmp,setNames(abs(esm2macro.m[,,name_trsp[1]]/(budget.m+1e-10)) * tdptwyr2dpgj , "Price|Energy Service|Transport LDV (US$2005/GJ)"))
-
-  tmp <- mbind(tmp,setNames(abs(febal.m[,,"feelt"]/(budget.m+1e-10)) * tdptwyr2dpgj, "Price|Final Energy|Electricity|Transport (US$2005/GJ)"))
-  if("fegat" %in% getNames(febal.m)){
-    tmp <- mbind(tmp,setNames(abs(febal.m[,,"fegat"]/(budget.m+1e-10)) * tdptwyr2dpgj, "Price|Final Energy|Gases|Transport (US$2005/GJ)"))
-  }
-  tmp <- mbind(tmp,setNames(abs(lowpass(febal.m[,,"feelt"]/(budget.m+1e-10), fix="both", altFilter=match(2010,time))) * tdptwyr2dpgj, "Price|Final Energy|Electricity|Transport|Moving Avg (US$2005/GJ)"))
-  tmp <- mbind(tmp,setNames(abs(febal.m[,,"feh2t"]/(budget.m+1e-10)) * tdptwyr2dpgj, "Price|Final Energy|Hydrogen|Transport (US$2005/GJ)"))
-  tmp <- mbind(tmp,setNames(abs(febal.m[,,"fedie"]/(budget.m+1e-10)) * tdptwyr2dpgj, "Price|Final Energy|Liquids|Transport (US$2005/GJ)"))
-  tmp <- mbind(tmp,setNames(abs(lowpass(febal.m[,,"fedie"]/(budget.m+1e-10), fix="both", altFilter=match(2010,time))) * tdptwyr2dpgj, "Price|Final Energy|Liquids|Transport|Moving Avg (US$2005/GJ)"))
-  tmp = compute_agg_price_fe(tmp,output,"Transport")
   
   #Final energy prices
+  #Transport (Taxes already included)
+  if (tran_mod == "complex"){
+    #Translate the marginal utility of the constraint into the marginal income (price).
+    #For transport liquids use average between diesel and petrol.
+    tmp <- mbind(tmp,setNames(abs(febal.m[,,"feelt"]/(budget.m+1e-10)) * tdptwyr2dpgj, "Price|Final Energy|Electricity|Transport (US$2005/GJ)"))
+    if("fegat" %in% getNames(febal.m)){
+      tmp <- mbind(tmp,setNames(abs(febal.m[,,"fegat"]/(budget.m+1e-10)) * tdptwyr2dpgj, "Price|Final Energy|Gases|Transport (US$2005/GJ)"))
+    }
+    tmp <- mbind(tmp,setNames(abs(lowpass(febal.m[,,"feelt"]/(budget.m+1e-10), fix="both", altFilter=match(2010,time))) * tdptwyr2dpgj, "Price|Final Energy|Electricity|Transport|Moving Avg (US$2005/GJ)"))
+    tmp <- mbind(tmp,setNames(abs(febal.m[,,"feh2t"]/(budget.m+1e-10)) * tdptwyr2dpgj, "Price|Final Energy|Hydrogen|Transport (US$2005/GJ)"))
+    tmp <- mbind(tmp,setNames(abs((febal.m[,,"fedie"]+febal.m[,,"fepet"])/(2*budget.m+1e-10)) * tdptwyr2dpgj, "Price|Final Energy|Liquids|Transport (US$2005/GJ)"))
+    tmp <- mbind(tmp,setNames(abs(lowpass((febal.m[,,"fedie"]+febal.m[,,"fepet"])/(2*budget.m+1e-10), fix="both", altFilter=match(2010,time))) * tdptwyr2dpgj, "Price|Final Energy|Liquids|Transport|Moving Avg (US$2005/GJ)"))
+  } else if(tran_mod == "edge_esm"){
+    #Translate the marginal utility of the constraint into the marginal income (price)
+    #For transport liquids use average between diesel and petrol.
+    tmp <- mbind(tmp,setNames(abs(balfinen.m[,,"feelt"]/(budget.m+1e-10)) * tdptwyr2dpgj, "Price|Final Energy|Electricity|Transport (US$2005/GJ)"))
+    tmp <- mbind(tmp,setNames(abs(balfinen.m[,,"fegat"]/(budget.m+1e-10)) * tdptwyr2dpgj, "Price|Final Energy|Gases|Transport (US$2005/GJ)"))
+    tmp <- mbind(tmp,setNames(abs(lowpass(balfinen.m[,,"feelt"]/(budget.m+1e-10), fix="both", altFilter=match(2010,time))) * tdptwyr2dpgj, "Price|Final Energy|Electricity|Transport|Moving Avg (US$2005/GJ)"))
+    tmp <- mbind(tmp,setNames(abs(balfinen.m[,,"feh2t"]/(budget.m+1e-10)) * tdptwyr2dpgj, "Price|Final Energy|Hydrogen|Transport (US$2005/GJ)"))
+    tmp <- mbind(tmp,setNames(abs((balfinen.m[,,"fedie"]+balfinen.m[,,"fepet"])/(2*budget.m+1e-10)) * tdptwyr2dpgj, "Price|Final Energy|Liquids|Transport (US$2005/GJ)"))
+    tmp <- mbind(tmp,setNames(abs(lowpass((balfinen.m[,,"fedie"]+balfinen.m[,,"fepet"])/(2*budget.m+1e-10), fix="both", altFilter=match(2010,time))) * tdptwyr2dpgj, "Price|Final Energy|Liquids|Transport|Moving Avg (US$2005/GJ)"))
+  }
+  tmp = compute_agg_price_fe(tmp,output,"Transport")
+  
+  #Buildings and Industry (Taxes need to be added)
   a = abs(mselect(balfinen.m[,y,][rbind(finenbal,fe2es)]))/abs((budget.m+1e-10)) # Translate the marginal utility of the constraint into the marginal income (price)
   b = complete_magpie(a) # Due to a strange behaviour of magclass objects addition, we need to use complete_magpie to make the addition
   prices_fe_bi = (b + mbind(fe_taxCES[,y,getColValues(finenbal,"all_in")],
