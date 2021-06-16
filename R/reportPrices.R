@@ -308,7 +308,7 @@ reportPrices <- function(gdx,output=NULL,regionSubsetList=NULL) {
     }
     tmp <- mbind(tmp,setNames(abs(lowpass(febal.m[,,"feelt"]/(budget.m+1e-10), fix="both", altFilter=match(2010,time))) * tdptwyr2dpgj, "Price|Final Energy|Electricity|Transport|Moving Avg (US$2005/GJ)"))
     tmp <- mbind(tmp,setNames(abs(febal.m[,,"feh2t"]/(budget.m+1e-10)) * tdptwyr2dpgj, "Price|Final Energy|Hydrogen|Transport (US$2005/GJ)"))
-    tmp <- mbind(tmp,setNames(abs((febal.m[,,"fedie"]+febal.m[,,"fepet"])/(2*budget.m+1e-10)) * tdptwyr2dpgj, "Price|Final Energy|Liquids|Transport (US$2005/GJ)"))
+    tmp <- mbind(tmp,setNames(abs(febal.m[,,"fedie"]/(budget.m+1e-10)) * tdptwyr2dpgj, "Price|Final Energy|Liquids|Transport (US$2005/GJ)"))
     tmp <- mbind(tmp,setNames(abs(lowpass((febal.m[,,"fedie"]+febal.m[,,"fepet"])/(2*budget.m+1e-10), fix="both", altFilter=match(2010,time))) * tdptwyr2dpgj, "Price|Final Energy|Liquids|Transport|Moving Avg (US$2005/GJ)"))
   } else if(tran_mod == "edge_esm"){
     #Translate the marginal utility of the constraint into the marginal income (price)
