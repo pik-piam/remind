@@ -288,11 +288,12 @@ reportEDGETransport <- function(output_folder=".",
 
     ## load emission factors for fossil fuels
     p_ef_dem <- readGDX(gdx, "p_ef_dem")  ## MtCO2/EJ
-    p_ef_dem <- as.data.table(p_ef_dem)[all_enty %in% c("fepet", "fegas", "feelt", "feh2t")]  ## emissions factor for Electricity and Hydrogen are 0, as we are calculating tailpipe emissions
+    p_ef_dem <- as.data.table(p_ef_dem)[all_enty %in% c("fepet", "fedie", "fegas", "feelt", "feh2t")]  ## emissions factor for Electricity and Hydrogen are 0, as we are calculating tailpipe emissions
     setnames(p_ef_dem, old = "value", new = "ef")
     ## attribute explicitly fuel used to the FE values
     emidem = repFE[grepl("Liquids|Gases|Hydrogen|Electricity", variable) & region != "World"]   ## EJ
-    emidem[, all_enty := ifelse(grepl("Liquids", variable), "fepet", NA)]
+    emidem[grepl("LDV", variable), all_enty := ifelse(grepl("Liquids", variable), "fepet", NA)]
+    emidem[!grepl("LDV", variable) | grepl("non-LDV", variable), all_enty := ifelse(grepl("Liquids", variable), "fedie", all_enty)]
     emidem[, all_enty := ifelse(grepl("Gases", variable), "fegas", all_enty)]
     emidem[, all_enty := ifelse(grepl("Electricity", variable), "feelt", all_enty)]
     emidem[, all_enty := ifelse(grepl("Hydrogen", variable), "feh2t", all_enty)]
