@@ -140,7 +140,6 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   p_ef_dem[,, "fegat"] = 50.3;
   p_ef_dem[,, "fesos"] = 90.5;
 
-  p_bioshare        <- readGDX(gdx, "p_bioshare")
   ppfen_stat   <- readGDX(gdx,c("ppfen_stationary_dyn38","ppfen_stationary_dyn28","ppfen_stationary"),format="first_found", react = "silent")
   
   pm_ts             <- readGDX(gdx,"pm_ts")
@@ -182,6 +181,24 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   vm_prodSE      <- vm_prodSE[rbind(pe2se,se2se)]
   vm_prodFe      <- readGDX(gdx,name=c("vm_prodFe","v_feprod","vm_feprod"),field="l",restore_zeros=FALSE,format="first_found") * pm_conv_TWa_EJ
   vm_prodFe      <- vm_prodFe[se2fe]
+
+  if("seliqbio" %in% sety){
+    p_bioshare <- do.call(
+      "mbind",
+      lapply(fety, function(FE) {
+        setNames(
+          dimSums(
+            vm_prodFe[,,FE][,, intersect(
+                       getNames(vm_prodFe[,,FE],dim=1),
+                       c("seliqbio","sesobio","segabio"))],
+            dim=3,na.rm=T) /
+          dimSums(vm_prodFe[,,FE],dim=3,na.rm=T), FE)}))
+    getSets(p_bioshare)["d3.1"] <- "all_enty"
+  }else{
+    p_bioshare        <- readGDX(gdx, "p_bioshare")
+  }
+
+  
   vm_demFe       <- readGDX(gdx,name=c("v_demFe","vm_demFe"),field="l",restore_zeros=FALSE,format="first_found") * pm_conv_TWa_EJ
   vm_demFe       <- vm_demFe[fe2ue]
 
@@ -1451,7 +1468,9 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
     
   }else if(tran_mod == "edge_esm"){
     ## Int. Freight and Aviation (Bunker) Emissions
-    tmp4 <- mbind(tmp4, setNames(p35_share_feliq_lo * tmp[,,"Emi|CO2|Transport|Demand (Mt CO2/yr)"], "Emi|CO2|Transport|Bunkers (Mt CO2/yr)"))
+    tmp4 <- mbind(tmp4, setNames((
+      p_ef_dem[,,"fedie"] * (1-p_bioshare[,,"fedie"])) *
+      dimSums(vm_demFeForEs[,, c("fedie.esdie_frgt_lo", "fedie.esdie_pass_lo"),pmatch=TRUE],dim=c(3.2, 3.3),na.rm=T), "Emi|CO2|Transport|Bunkers (Mt CO2/yr)"))
     
     ## Kyoto w/o bunkers
     tmp4 <- mbind(tmp4, setNames(tmp4[,,"Emi|Kyoto Gases (Mt CO2-equiv/yr)"]-tmp4[,,"Emi|CO2|Transport|Bunkers (Mt CO2/yr)"], "Emi|Kyoto Gases|w/o Bunkers (Mt CO2-equiv/yr)"))
