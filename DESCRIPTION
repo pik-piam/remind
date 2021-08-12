@@ -27,7 +27,6 @@ Imports:
     luscale,
     lusweave,
     madrat,
-    magpie,
     mip,
     plotly,
     quitte,
