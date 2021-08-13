@@ -9,7 +9,6 @@
 #' @param mult_on Should the multiplication factor (read from the gdx) be applied on the entire forumla ("all"), or on the slope only ("slope"). Use "all" for REMIND 2.0 (this is the default) and "slope" for REMIND 1.7
 #' @importFrom gdx readGDX
 #' @importFrom magclass mbind collapseNames add_dimension getSets
-#' @importFrom magpie read_all
 #' @importFrom remulator calc_supplycurve
 #' @author David Klein
 #' @seealso \code{\link[remulator]{emulator}} \code{\link{calc_supplycurve}}
@@ -57,9 +56,9 @@ readSupplycurveBio <- function(outputdirs, userfun = function(param,x) {return(p
   ############ Read in fit coefficients ###################################
   #########################################################################
   
-  a <- read_all(gdx_path, .readpar, name= c("i30_bioen_price_a","i30_bioen_price_at1"),as.list=FALSE)
+  a <- readAll(gdx_path, .readpar, name= c("i30_bioen_price_a","i30_bioen_price_at1"),asList=FALSE)
   a <- add_dimension(a,dim=3.2,add="coeff",nm="a")
-  b <- read_all(gdx_path, .readpar, name= c("i30_bioen_price_b","i30_bioen_price_at2"),as.list=FALSE)
+  b <- readAll(gdx_path, .readpar, name= c("i30_bioen_price_b","i30_bioen_price_at2"),asList=FALSE)
   b <- add_dimension(b,dim=3.2,add="coeff",nm="b")
   
   fitcoef <- mbind(a,b)
@@ -71,9 +70,9 @@ readSupplycurveBio <- function(outputdirs, userfun = function(param,x) {return(p
   #########################################################################
   
   # demand
-  x <- read_all(gdx_path,.readvar,name="vm_fuExtr",enty="pebiolc",as.list=FALSE)[,,"1"]
+  x <- readAll(gdx_path,.readvar,name="vm_fuExtr",enty="pebiolc",asList=FALSE)[,,"1"]
   # price
-  y <- read_all(gdx_path,.readvar,name="vm_pebiolc_price",as.list=FALSE)
+  y <- readAll(gdx_path,.readvar,name="vm_pebiolc_price",asList=FALSE)
   
   x <- add_dimension(x,dim=3.3,add="variable",nm="x")
   y <- add_dimension(y,dim=3.2,add="sample",nm="1")
@@ -89,7 +88,7 @@ readSupplycurveBio <- function(outputdirs, userfun = function(param,x) {return(p
   
   supplycurve_unshifted <- calc_supplycurve(rem_point,fitcoef,userfun)
   
-  mult <- read_all(gdx_path,.readvar,name="v30_pricemult",as.list=FALSE)
+  mult <- readAll(gdx_path,.readvar,name="v30_pricemult",asList=FALSE)
   
   supplycurve_shifted <- supplycurve_unshifted
   supplycurve_shifted[,,"y"] <- supplycurve_unshifted[,,"y"] * mult
@@ -117,9 +116,9 @@ readSupplycurveBio <- function(outputdirs, userfun = function(param,x) {return(p
   #########################################################################
   
   # demand
-  dem_mag <- read_all(gdx_path,.readpar,name="p30_pebiolc_demandmag",as.list=FALSE)
+  dem_mag <- readAll(gdx_path,.readpar,name="p30_pebiolc_demandmag",asList=FALSE)
   # price
-  pri_mag <- read_all(gdx_path,.readvar,name="p30_pebiolc_pricemag",as.list=FALSE)
+  pri_mag <- readAll(gdx_path,.readvar,name="p30_pebiolc_pricemag",asList=FALSE)
   
   dem_mag <- add_dimension(dem_mag,dim=3.2,add="sample",nm="1")
   dem_mag <- add_dimension(dem_mag,dim=3.3,add="variable",nm="x")
