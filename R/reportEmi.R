@@ -756,7 +756,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   tmp2 <- mbind(
     tmp2,
     setNames( 
-      tmp2[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|fegas (Mt CO2/yr)"] 
+        tmp2[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|fegas (Mt CO2/yr)"] 
       + tmp2[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|fesos (Mt CO2/yr)"] 
       + tmp2[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|fehos (Mt CO2/yr)"]
       + tmp2[,,'Emi|CO2|Carbon Capture and Storage|IndustryCCS|Process (Mt CO2/yr)'],
@@ -766,7 +766,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   tmp2 <- mbind(
     tmp2,
     setNames( 
-      tmp2[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|fegas (Mt CO2/yr)"] 
+        tmp2[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|fegas (Mt CO2/yr)"] 
       + tmp2[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|fesos (Mt CO2/yr)"] 
       + tmp2[,,"Emi|CO2|Carbon Capture and Storage|IndustryCCS|fehos (Mt CO2/yr)"],
       "Emi|CO2|Carbon Capture and Storage|IndustryCCS|Energy (Mt CO2/yr)")
@@ -778,7 +778,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
   # "Carbon Capture|IndustryCCS" and calculate actual 
   # "Carbon Capture and Storage|IndustryCCS" by taking account of carbon 
   # captured, but not sequestered, through v_co2capturevalve
-  mbind(
+  tmp2 <- mbind(
     lapply(
       sub(paste0('^Emi\\|CO2\\|Carbon Capture and Storage\\|IndustryCCS',
                  '(\\|?.*) \\(Mt CO2/yr\\)$'), '\\1', getNames(tmp2)),
@@ -793,7 +793,7 @@ reportEmi <- function(gdx, output=NULL, regionSubsetList=NULL){
       }
     )
   )
-
+  
   tmp <- mbind(tmp, tmp2)
   rm(tmp2)
 

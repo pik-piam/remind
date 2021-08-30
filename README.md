@@ -1,8 +1,8 @@
 # The REMIND R Package
 
-R package **remind**, version **36.185.0**
+R package **remind**, version **36.185.1**
 
-[![CRAN status](https://www.r-pkg.org/badges/version/remind)](https://cran.r-project.org/package=remind)     [![r-universe](https://pik-piam.r-universe.dev/badges/remind)](https://pik-piam.r-universe.dev/ui#builds)
+[![CRAN status](https://www.r-pkg.org/badges/version/remind)](https://cran.r-project.org/package=remind)    
 
 ## Purpose and Functionality
 
@@ -46,7 +46,7 @@ In case of questions / problems please contact Anastasis Giannousakis <giannou@p
 
 To cite package **remind** in publications use:
 
-Giannousakis A, Pehl M (2021). _remind: The REMIND R Package_. R package version 36.185.0.
+Giannousakis A, Pehl M (2021). _remind: The REMIND R Package_. R package version 36.185.1.
 
 A BibTeX entry for LaTeX users is
 
@@ -55,7 +55,7 @@ A BibTeX entry for LaTeX users is
   title = {remind: The REMIND R Package},
   author = {Anastasis Giannousakis and Michaja Pehl},
   year = {2021},
-  note = {R package version 36.185.0},
+  note = {R package version 36.185.1},
 }
 ```
 
