@@ -21,7 +21,8 @@
 
 reportEDGETransport <- function(output_folder=".",
                                 remind_root=NULL) {
-
+  unit <- NULL
+  
   if(is.null(remind_root)){
     remind_root <- file.path(output_folder, "../..")
   }

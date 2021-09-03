@@ -23,6 +23,7 @@
 
 plotLCOE <- function(LCOEfile, gdx, y=c(2015,2020,2030,2040,2050,2060),reg="all_regi",fileName="LCOE_plots.pdf") {
   
+  unit <- NULL
   
   df.LCOE.in <- read.csv(LCOEfile, sep = ";") 
   

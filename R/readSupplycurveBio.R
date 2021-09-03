@@ -11,7 +11,6 @@
 #' @importFrom magclass mbind collapseNames add_dimension getSets
 #' @importFrom remulator calc_supplycurve
 #' @author David Klein
-#' @seealso \code{\link[remulator]{emulator}} \code{\link{calc_supplycurve}}
 #' @export
 
 readSupplycurveBio <- function(outputdirs, userfun = function(param,x) {return(param[[1]] + param[[2]] * x)}, mult_on = "all") {

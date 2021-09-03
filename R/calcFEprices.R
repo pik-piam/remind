@@ -91,10 +91,10 @@ calcFEprices <- function(gdx) {
             mbind(
                 q_febal.m[,,c("fepet", "fedie")] * vm_prodFe.l[,,c("fepet", "fedie")],
                 q_balfinen.m[,,"fehos"] * vm_prodFe.l[,,"fehos"])),
-        dims = 3
+        dim = 3
     ) 
-    / dimSums(vm_prodFe.l, dims = 3)
-    / (abs(dimSums(qm_budget.m, dims = 3)) + 1e-10)
+    / dimSums(vm_prodFe.l, dim = 3)
+    / (abs(dimSums(qm_budget.m, dim = 3)) + 1e-10)
     * 1000
     / TWa_2_EJ
     ) -> liquids.p
